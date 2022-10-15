@@ -1,11 +1,12 @@
 ﻿using MikuMikuPlugin;
+using MMDUtil;
 using MyUtility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace FaceExpressionHelper.UI
 {
@@ -24,61 +25,96 @@ namespace FaceExpressionHelper.UI
             this._applicationForm = applicationForm;
         }
 
-        private long _prevAppliedFrame = -1;
-
         /// <summary>
-        /// 現在のモーフ情報を表示します。
+        /// 現在のアクティブモデルの名前を返します。
         /// </summary>
-        public override void ApplyCurrentMorph()
+        protected override string ActiveModelName
         {
-            if (_scene.MarkerPosition != _prevAppliedFrame)
+            get
             {
-                //描画停止
-                this.BeginUpdate();
-                try
-                {
-                    base.lstValue.Items.Clear();
-                    var currentMorphs = this.CreateCurrentMorphList(false);
-                    if (currentMorphs != null)
-                    {
-                        base.lstValue.Items.AddRange(currentMorphs.ToArray());
-                    }
-                }
-                finally
-                {
-                    //描画再開
-                    this.EndUpdate();
-                }
+                if (this._scene.ActiveModel == null)
+                    return string.Empty;
+
+                return this._scene.ActiveModel.Name;
             }
-            _prevAppliedFrame = _scene.MarkerPosition;
         }
 
         /// <summary>
-        /// モーフ一覧情報を返します。
+        /// 今のアクティブモデルの有効なモーフをすべて返します。
         /// </summary>
-        /// <returns>null:無効な状態</returns>
-        protected override List<MorphItem> CreateCurrentMorphList(bool showErrorMsgbox)
+        /// <returns></returns>
+        protected override List<MorphItem> GetAllMorphsForActiveModel()
         {
             var activeModel = this._scene.ActiveModel;
             if (activeModel == null)
             {
-                if (showErrorMsgbox)
-                    MessageBox.Show("モデルを選択してください");
+                return null;
+            }
+
+            return activeModel.Morphs.Select(n =>
+            {
+                return new MorphItem()
+                {
+                    MorphName = n.Name,
+                    Weight = n.CurrentWeight,
+                    MorphType = n.PanelType.ToMyPanelType()
+                };
+            }).ToList();
+        }
+
+        /// <summary>
+        /// アクティブモデルの今のフレームのモーフ適用状態を返します。
+        /// </summary>
+        /// <returns>null:アクティブモデルなし</returns>
+        protected override List<MorphItem> GetCurrentMorphState()
+        {
+            var activeModel = this._scene.ActiveModel;
+            if (activeModel == null)
+            {
                 return null;
             }
             var ret = new List<MorphItem>();
-
             foreach (Morph morph in activeModel.Morphs)
             {
+                if (this._args.ExceptionMainMorphs.Contains(morph.Name))
+                    //対象外モーフ
+                    continue;
+
+                MMDUtil.MMDUtilility.MorphType morphtype = morph.PanelType.ToMyPanelType();
+
                 if (morph.CurrentWeight != 0)
                 {
                     var morphitem = new MorphItem()
                     {
                         MorphName = morph.DisplayName,
                         Weight = morph.CurrentWeight,
+                        MorphType = morphtype,
                     };
                     ret.Add(morphitem);
                 }
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        protected override List<MorphItem> GetMissingMorphs(ExpressionItem item)
+        {
+            var activeModel = this._scene.ActiveModel;
+            if (activeModel == null)
+            {
+                return null;
+            }
+            var ret = new List<MorphItem>();
+            var allMorphs = activeModel.Morphs.Where(n => !this._args.ExceptionMainMorphs.Contains(n.Name)).ToList();
+            foreach (MorphItem mi in item.MorphItems)
+            {
+                if (!allMorphs.Any(n => n.Name == mi.MorphName))
+                    ret.Add(mi);
             }
             return ret;
         }
@@ -97,16 +133,11 @@ namespace FaceExpressionHelper.UI
             }
             var ret = new List<MorphItem>();
 
-            //操作対象モーフ一覧
-            var applyingMorphs = activeModel.Morphs.ToList();
+            //操作対象モーフ一覧(対象外モーフを除く)
+            var allMorphs = activeModel.Morphs.Where(n => !this._args.ExceptionMainMorphs.Contains(n.Name)).ToList();
 
-            //無いモーフが無いかチェック
-            var missingMorphs = new List<MorphItem>();
-            foreach (MorphItem mi in item.MorphItems)
-            {
-                if (!applyingMorphs.Any(n => n.Name == mi.MorphName))
-                    missingMorphs.Add(mi);
-            }
+            //無いモーフチェック
+            var missingMorphs = this.GetMissingMorphs(item);
             if (missingMorphs.Count > 0)
             {
                 var msg = $@"{string.Join("\r\n", missingMorphs.Select(n => n.MorphName).ToArray())}
@@ -117,32 +148,61 @@ namespace FaceExpressionHelper.UI
                     return false;
             }
 
-            //適用
-            foreach (Morph morph in applyingMorphs)
+            //描画を止める
+            MMMUtilility.BeginAndEndUpdate(false);
+
+            try
             {
-                var framelist = new List<MorphFrameData>();
-                var applyingMI = item.MorphItems.Where(n => n.MorphName == morph.Name).FirstOrDefault();
-                if (applyingMI != null)
+                //適用
+                var notTargetMorphs = new List<(float, Morph)>();
+                foreach (Morph morph in allMorphs)
                 {
-                    //対象のモーフ
-                    framelist.Add(new MorphFrameData(this._scene.MarkerPosition, morph.CurrentWeight));
-                    framelist.Add(new MorphFrameData(this._scene.MarkerPosition + bufferFrames, applyingMI.Weight));
-                }
-                else
-                {
-                    //対象外のモーフ
-                    if (morph.PanelType != PanelType.Etc && morph.PanelType != PanelType.None)//「その他」パネル、パネル外のモーフは初期化対象外
+                    var framelist = new List<MorphFrameData>();
+                    var applyingMI = item.MorphItems.Where(n => n.MorphName == morph.Name).FirstOrDefault();
+                    if (applyingMI != null)
                     {
-                        if (morph.CurrentWeight != 0)
-                        {
-                            framelist.Add(new MorphFrameData(this._scene.MarkerPosition, morph.CurrentWeight));
-                            framelist.Add(new MorphFrameData(this._scene.MarkerPosition + bufferFrames, 0));
-                        }
+                        //対象のモーフ
+                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition, morph.CurrentWeight));
+                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition + bufferFrames, applyingMI.Weight));
                     }
+                    else
+                    {
+                        //対象外のモーフ
+                        notTargetMorphs.Add((morph.CurrentWeight, morph));
+                    }
+
+                    if (framelist.Count > 0)
+                        morph.Frames.AddKeyFrame(framelist);
                 }
-                if (framelist.Count > 0)
-                    morph.Frames.AddKeyFrame(framelist);
+
+                //対象外のモーフの処理を行う
+                this._scene.MarkerPosition += bufferFrames;
+                foreach ((float, Morph) tuple in notTargetMorphs)
+                {
+                    var prevWeight = tuple.Item1;
+                    var morph = tuple.Item2;
+
+                    var framelist = new List<MorphFrameData>();
+                    if (morph.CurrentWeight != 0)
+                    {
+                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition - bufferFrames, prevWeight));
+                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition, 0));
+                    }
+                    if (framelist.Count > 0)
+                        morph.Frames.AddKeyFrame(framelist);
+                }
+                this._scene.MarkerPosition -= bufferFrames;
             }
+            catch (Exception)
+            {
+                Debugger.Break();
+            }
+            finally
+            {
+                //描画を再開する
+                MMMUtilility.BeginAndEndUpdate(true);
+            }
+
             //画面のリフレッシュ
             this._scene.MarkerPosition += bufferFrames;
 
@@ -152,8 +212,14 @@ namespace FaceExpressionHelper.UI
             return true;
         }
 
-        private void _frmPic_Load(object sender, EventArgs e)
+        /// <summary>
+        /// アクティブモデルが変更された
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected override void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
         {
+            base.OnActiveModelChanged(sender, e);
         }
     }
 }

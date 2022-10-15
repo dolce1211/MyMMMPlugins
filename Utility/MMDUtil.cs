@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Management;
+using System.Runtime.CompilerServices;
+using MyUtility;
 
 namespace MMDUtil
 {
@@ -28,7 +30,7 @@ namespace MMDUtil
         {
             get
             {
-                if (_text == null)
+                if (_text == null || ClassName == "ComboBox" || ClassName == "Edit")
                 {
                     StringBuilder sbb = new StringBuilder(256);
                     SendMessage(hWnd, WM_GETTEXT, 255, sbb);
@@ -204,13 +206,19 @@ namespace MMDUtil
             Eye,
             Lip,
             Brow,
-            Other
+            Other,
+            none
         }
 
         /// <summary>
         /// 「フレーム操作」テキストボックス
         /// </summary>
         private const int _FRAMESOUSA = 417;
+
+        /// <summary>
+        /// 「モデル操作」コンボ
+        /// </summary>
+        private const int _Combo_Model = 436;
 
         /// <summary>
         /// 目モーフ
@@ -246,6 +254,42 @@ namespace MMDUtil
         private const int _BUTTON_MORPH_OTHER = 526;
 
         #endregion "MMD内部定数"
+
+        /// <summary>
+        /// アクティブモデル名称を取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns></returns>
+        public static string TryGetActiveModelName(IntPtr parentHandle)
+        {
+            Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
+            if (mmdhash == null || !mmdhash.ContainsKey(_Combo_Model))
+                return string.Empty;
+            var modelCombo = mmdhash[_Combo_Model];
+
+            return modelCombo.Text;
+            int textLen = GetWindowTextLength(modelCombo.hWnd);
+            string windowText = null;
+            if (0 < textLen)
+            {
+                // ウィンドウのタイトルを取得する
+                StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
+                GetWindowText(modelCombo.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
+                windowText = windowTextBuffer.ToString();
+            }
+
+            return windowText;
+
+            if (modelCombo == null)
+                return String.Empty;
+            var selectedIndex = SendMessage(modelCombo.hWnd, CB_GETCURSEL, 0, "");
+
+            var textlength = SendMessage(modelCombo.hWnd, CB_GETLBTEXTLEN, selectedIndex, "");
+            var sb = new StringBuilder(textlength);
+            SendMessage(modelCombo.hWnd, CB_GETLBTEXT, selectedIndex, sb);
+
+            return sb.ToString();
+        }
 
         /// <summary>
         /// フレーム数をセットします。
@@ -414,10 +458,92 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// アクティブモデルのモーフをすべて取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <returns></returns>
+        public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle)
+        {
+            var ret = new Dictionary<MorphType, List<string>>();
+            foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
+            {
+                if (morphtype == MorphType.none)
+                    continue;
+                var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+                if (morphwindow == null || morphwindow.ComboBox == null)
+                    return ret;
+
+                var lst = GetAllComboItems(morphwindow.ComboBox);
+                ret.Add(morphtype, lst);
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// 各モーフタイプ用の操作コントロール群を取得します。
+        /// </summary>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <returns></returns>
+        public static MorphWindows TryGetMorphWindows(IntPtr parentHandle, MorphType morphtype)
+        {
+            Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
+            if (mmdhash == null)
+                return null;
+
+            try
+            {
+                var ret = new MorphWindows();
+                ret.Parent = mmdhash.FirstOrDefault().Value;
+
+                switch (morphtype)
+                {
+                    case MorphType.Eye:
+                        //目
+                        ret.ComboBox = mmdhash[_Combo_MORPH_EYE];
+                        ret.Edit = mmdhash[_EDIT_MORPH_EYE];
+                        ret.Button = mmdhash[_BUTTON_MORPH_EYE];
+                        break;
+
+                    case MorphType.Lip:
+                        //リップ
+                        ret.ComboBox = mmdhash[_Combo_MORPH_LIP];
+                        ret.Edit = mmdhash[_EDIT_MORPH_LIP];
+                        ret.Button = mmdhash[_BUTTON_MORPH_LIP];
+                        break;
+
+                    case MorphType.Brow:
+                        //まゆ
+                        ret.ComboBox = mmdhash[_Combo_MORPH_BROW];
+                        ret.Edit = mmdhash[_EDIT_MORPH_BROW];
+                        ret.Button = mmdhash[_BUTTON_MORPH_BROW];
+                        break;
+
+                    case MorphType.Other:
+                        //その他
+                        ret.ComboBox = mmdhash[_Combo_MORPH_OTHER];
+                        ret.Edit = mmdhash[_EDIT_MORPH_OTHER];
+                        ret.Button = mmdhash[_BUTTON_MORPH_OTHER];
+                        break;
+
+                    default:
+                        break;
+                }
+                return ret;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// 指定した名称のモーフを指定した値にセットします。
         /// </summary>
-        /// <param name="win"></param>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
         /// <param name="morphName">モーフ名</param>
+        /// <param name="value">値</param>
         /// <param name="determine">確定するならtrue</param>
         /// <returns></returns>
         public static bool TrySetMorphValue(IntPtr parentHandle, MorphType morphtype, string morphName, float value, bool determine = true)
@@ -463,6 +589,91 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// 指定した名称のモーフを指定した値にセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <param name="morphIndex">いくつめのモーフ？</param>
+        /// <param name="value">値</param>
+        /// <param name="determine">確定するならtrue</param>
+        /// <returns></returns>
+        public static bool TrySetMorphValue(IntPtr parentHandle, MorphType morphtype, int morphIndex, float value, bool determine = true)
+        {
+            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+            if (morphwindow == null)
+                return false;
+
+            //コンボのインデックスをそれに合わせる
+            var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
+            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+            //値を入れる
+            System.Threading.Thread.Sleep(10);
+            TrySetText(morphwindow.Edit, value.ToString(), true);
+            System.Threading.Thread.Sleep(10);
+            if (determine)
+            {
+                //確定までやるなら、登録ボタンを押す
+                PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
+                System.Threading.Thread.Sleep(10);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 今の状態でキーを打ちます。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype"></param>
+        /// <param name="morphIndex"></param>
+        /// <returns></returns>
+        public static bool TrySetMorphValueAsIs(IntPtr parentHandle, MorphType morphtype, int morphIndex)
+        {
+            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+            if (morphwindow == null)
+                return false;
+
+            //コンボのインデックスをそれに合わせる
+            var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
+            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+            //登録ボタンを押す
+            PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
+            System.Threading.Thread.Sleep(10);
+
+            return true;
+        }
+
+        /// <summary>
+        /// 指定した名称のモーフを指定した値にセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <param name="morphIndex">いくつめのモーフ？</param>
+        /// <param name="value">値</param>
+        /// <param name="determine">確定するならtrue</param>
+        /// <returns></returns>
+        public static float TryGetMorphValue(IntPtr parentHandle, MorphType morphtype, int morphIndex)
+        {
+            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+            if (morphwindow == null)
+                return float.MaxValue * -1;
+
+            //コンボのインデックスをそれに合わせる
+            var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
+            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+            return Convert.ToSingle(morphwindow.Edit.Text);
+        }
+
+        /// <summary>
         /// メッセージボックスにエンターを押します
         /// </summary>
         /// <param name="parentHandle"></param>
@@ -496,6 +707,43 @@ namespace MMDUtil
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// コンボボックスの中身を取得します。
+        /// </summary>
+        /// <param name="win"></param>
+        /// <returns></returns>
+        private static List<string> GetAllComboItems(Window win)
+        {
+            var ret = new List<string>();
+            if (win == null)
+                return ret;
+            if (win.ClassName == "ComboBox")
+            {
+                var count = SendMessage(win.hWnd, CB_GETCOUNT, null, null);
+                int textLen = GetWindowTextLength(win.hWnd);
+                string windowText = null;
+                if (0 < textLen)
+                {
+                    // ウィンドウのタイトルを取得する
+                    StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
+                    GetWindowText(win.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
+                    windowText = windowTextBuffer.ToString();
+                }
+                //var selectedIndex = SendMessage(win.hWnd, CB_GETCURSEL, 0, "");
+                for (int i = 0; i < count; i++)
+                {
+                    var textlength = SendMessage(win.hWnd, CB_GETLBTEXTLEN, i, "");
+                    if (textlength > 0)
+                    {
+                        var sb = new StringBuilder(textlength);
+                        SendMessage(win.hWnd, CB_GETLBTEXT, i, sb);
+                        ret.Add(sb.ToString());
+                    }
+                }
+            }
+            return ret;
         }
 
         private static Dictionary<IntPtr, Dictionary<int, Window>> _cache = null;
@@ -545,18 +793,6 @@ namespace MMDUtil
                             StringBuilder sb = new StringBuilder(256);
                             SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
                             addedstr.Append(sb.ToString());
-                            switch (win.ID)
-                            {
-                                case 524:
-                                case 525:
-                                case 526:
-                                case 527:
-                                    SendMessage(win.hWnd, WM_SETTEXT, 0, win.ID.ToString());
-                                    break;
-
-                                default:
-                                    break;
-                            }
                         }
                         if (win.ClassName == "Edit")
                         {
@@ -564,7 +800,7 @@ namespace MMDUtil
                             SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
                             addedstr.Append(sb.ToString());
                         }
-                        Console.WriteLine($"{win.ID},{win.ClassName},{win.ClassName},{win.Text},{addedstr.ToString()}");
+                        Console.WriteLine($"{win.ID},{win.ClassName},{win.Text},{addedstr.ToString()}");
                     }
                 }
 
@@ -803,63 +1039,6 @@ namespace MMDUtil
             return ret > 0;
         }
 
-        /// <summary>
-        /// 各モーフタイプ用の操作コントロール群を取得します。
-        /// </summary>
-        /// <param name="morphtype"></param>
-        /// <returns></returns>
-        private static MorphWindows TryGetMorphWindows(IntPtr parentHandle, MorphType morphtype)
-        {
-            Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
-            if (mmdhash == null)
-                return null;
-
-            try
-            {
-                var ret = new MorphWindows();
-                ret.Parent = mmdhash.FirstOrDefault().Value;
-
-                switch (morphtype)
-                {
-                    case MorphType.Eye:
-                        //目
-                        ret.ComboBox = mmdhash[_Combo_MORPH_EYE];
-                        ret.Edit = mmdhash[_EDIT_MORPH_EYE];
-                        ret.Button = mmdhash[_BUTTON_MORPH_EYE];
-                        break;
-
-                    case MorphType.Lip:
-                        //リップ
-                        ret.ComboBox = mmdhash[_Combo_MORPH_LIP];
-                        ret.Edit = mmdhash[_EDIT_MORPH_LIP];
-                        ret.Button = mmdhash[_BUTTON_MORPH_LIP];
-                        break;
-
-                    case MorphType.Brow:
-                        //まゆ
-                        ret.ComboBox = mmdhash[_Combo_MORPH_BROW];
-                        ret.Edit = mmdhash[_EDIT_MORPH_BROW];
-                        ret.Button = mmdhash[_BUTTON_MORPH_BROW];
-                        break;
-
-                    case MorphType.Other:
-                        //その他
-                        ret.ComboBox = mmdhash[_Combo_MORPH_OTHER];
-                        ret.Edit = mmdhash[_EDIT_MORPH_OTHER];
-                        ret.Button = mmdhash[_BUTTON_MORPH_OTHER];
-                        break;
-
-                    default:
-                        break;
-                }
-                return ret;
-            }
-            catch (Exception)
-            {
-                return null;
-            }
-        }
-
         #endregion "汎用操作"
     }
 
@@ -877,13 +1056,16 @@ namespace MMDUtil
         private string _mmPlusPath = string.Empty;
         private string _mmPlusIniPath = string.Empty;
 
+        private Form _parentForm;
         private Label _lblMMPlus = null;
         private Label _lblMMD = null;
         private IMMDSelector _mmdSelector = null;
 
-        public MMDFinder(Process currentMMD = null, Label lblMMD = null, Label lblMMPlus = null, IMMDSelector mmdSelector = null)
+        public MMDFinder(Form parentForm, Process currentMMD = null, Label lblMMD = null, Label lblMMPlus = null, IMMDSelector mmdSelector = null)
         {
+            this._parentForm = parentForm;
             this._currentmmd = currentMMD;
+
             this._lblMMD = lblMMD;
             this._lblMMPlus = lblMMPlus;
             this._mmdSelector = mmdSelector;
@@ -892,10 +1074,10 @@ namespace MMDUtil
         /// <summary>
         /// 動いているMMDのプロセスから対象のものを選択します。
         /// </summary>
-        /// <param name="nomsg"></param>
-        /// <param name="forceUpdate"></param>
+        /// <param name="showmsg">true:見つからなかった時にメッセージを出す</param>
+        /// <param name="forceUpdate">true:現在選択中のMMDがあっても選択フォームを出す</param>
         /// <returns></returns>
-        public Process TryFindMMDProcess(bool nomsg, bool forceUpdate)
+        public Process TryFindMMDProcess(bool showmsg, bool forceUpdate)
         {
             var unchanged = true;
             _mmPlusPath = null;
@@ -926,7 +1108,7 @@ namespace MMDUtil
                 unchanged = false;
                 if (!mmds.Any())
                 {
-                    if (!nomsg)
+                    if (showmsg)
                         MessageBox.Show("MikuMikuDanceが起動していません");
                     return null;
                 }
@@ -966,38 +1148,44 @@ namespace MMDUtil
             {
                 if (!unchanged)
                 {
-                    if (this._lblMMD != null && this._lblMMPlus != null)
+                    this._parentForm.Invoke((Action)(() =>
                     {
-                        this._lblMMPlus.Visible = false;
-                        this._lblMMD.Text = "MikuMikuDanceが起動していません";
-                    }
-
-                    if (mmd != null)
-                    {
-                        var mmdwindow = MMDUtil.MMDUtilility.GetWindow(mmd.MainWindowHandle);
-
-                        var title = "(無題のプロジェクト)";
-                        if (mmdwindow != null && mmdwindow.Title.Contains(" ["))
-                            title = mmdwindow.Title.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
-
-                        if (this._lblMMD != null)
-                            this._lblMMD.Text = title;//WindowFinder.FindMMDTitle(mmd);
-
-                        //mmPlusが入っているか確認
-                        var mmdPath = GetMMDPath(mmd);
-                        var mmdDir = System.IO.Path.GetDirectoryName(mmdPath);
-                        var mmPlusPath = System.IO.Path.Combine(mmdDir, "MMPlus.dll");
-                        var mmPlusIniPath = System.IO.Path.Combine(mmdDir, "MMPlus.ini");
-                        if (System.IO.File.Exists(mmPlusPath))
+                        if (this._lblMMD != null && this._lblMMPlus != null)
                         {
-                            this._mmPlusPath = mmPlusPath;
-                            if (this._lblMMPlus != null)
-                                this._lblMMPlus.Visible = true;
+                            this._lblMMPlus.Visible = false;
+                            this._lblMMD.Text = "MikuMikuDanceが起動していません";
                         }
 
-                        if (System.IO.File.Exists(mmPlusIniPath))
-                            this._mmPlusIniPath = mmPlusIniPath;
-                    }
+                        if (mmd != null)
+                        {
+                            var mmdwindow = MMDUtil.MMDUtilility.GetWindow(mmd.MainWindowHandle);
+
+                            var title = "(無題のプロジェクト)";
+                            if (mmdwindow != null && mmdwindow.Title.TrimSafe().Contains(" ["))
+                                title = mmdwindow.Title.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
+
+                            if (this._lblMMD != null)
+                                this._lblMMD.Text = title;//WindowFinder.FindMMDTitle(mmd);
+
+                            //mmPlusが入っているか確認
+                            var mmdPath = GetMMDPath(mmd);
+                            var mmdDir = System.IO.Path.GetDirectoryName(mmdPath);
+                            if (System.IO.Directory.Exists(mmdDir))
+                            {
+                                var mmPlusPath = System.IO.Path.Combine(mmdDir, "MMPlus.dll");
+                                var mmPlusIniPath = System.IO.Path.Combine(mmdDir, "MMPlus.ini");
+                                if (System.IO.File.Exists(mmPlusPath))
+                                {
+                                    this._mmPlusPath = mmPlusPath;
+                                    if (this._lblMMPlus != null)
+                                        this._lblMMPlus.Visible = true;
+                                }
+
+                                if (System.IO.File.Exists(mmPlusIniPath))
+                                    this._mmPlusIniPath = mmPlusIniPath;
+                            }
+                        }
+                    }));
                 }
                 _isBusy = false;
             }
@@ -1035,4 +1223,107 @@ namespace MMDUtil
     }
 
     #endregion "プロセス検索"
+
+    public class WindowFinder
+    {
+        private delegate bool EnumWindowsDelegate(IntPtr hWnd, IntPtr lparam);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool EnumWindows(EnumWindowsDelegate lpEnumFunc,
+            IntPtr lparam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowText(IntPtr hWnd,
+            StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowTextLength(IntPtr hWnd);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetClassName(IntPtr hWnd,
+            StringBuilder lpClassName, int nMaxCount);
+
+        private const int GW_HWNDNEXT = 2;
+
+        [DllImport("user32")]
+        private static extern int GetParent(int hwnd);
+
+        [DllImport("user32")]
+        private static extern int GetWindow(int hwnd, int wCmd);
+
+        [DllImport("user32")]
+        private static extern int FindWindow(
+            String lpClassName, String lpWindowName);
+
+        [DllImport("user32")]
+        private static extern int GetWindowThreadProcessId(
+            IntPtr hwnd, out int lpdwprocessid);
+
+        [DllImport("user32")]
+        private static extern int IsWindowVisible(int hwnd);
+
+        private static object _lockObj = new object();
+        private static Process _mmd = null;
+        private static string _windowName = null;
+
+        /// <summary>
+        /// エントリポイント
+        /// </summary>
+        public static string FindMMDTitle(Process mmd)
+        {
+            if (mmd.MainWindowTitle.Contains(" ["))
+            {
+                _windowName = mmd.MainWindowTitle;
+            }
+            else
+            {
+                lock (_lockObj)
+                {
+                    _windowName = null;
+                    _mmd = mmd;
+                    //ウィンドウを列挙する
+                    EnumWindows(new EnumWindowsDelegate(EnumWindowCallBack), IntPtr.Zero);
+
+                    Console.ReadLine();
+                }
+            }
+            if (_windowName != null && _windowName.Contains(" ["))
+                return _windowName.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
+            else
+                return "(無題のプロジェクト)";
+        }
+
+        private static bool EnumWindowCallBack(IntPtr hWnd, IntPtr lparam)
+        {
+            //ウィンドウのタイトルの長さを取得する
+            int textLen = GetWindowTextLength(hWnd);
+            if (0 < textLen)
+            {
+                //ウィンドウのタイトルを取得する
+                StringBuilder tsb = new StringBuilder(textLen + 1);
+                GetWindowText(hWnd, tsb, tsb.Capacity);
+
+                //ウィンドウのクラス名を取得する
+                StringBuilder csb = new StringBuilder(256);
+                GetClassName(hWnd, csb, csb.Capacity);
+                if (csb.ToString() == "Polygon Movie Maker")
+                {
+                    int pid;
+                    GetWindowThreadProcessId(hWnd, out pid);
+                    if (pid == _mmd.Id)
+                    {
+                        _windowName = tsb.ToString();
+                    }
+                }
+                ////結果を表示する
+                //Console.WriteLine("ハンドル:" + hWnd);
+                //Console.WriteLine("クラス名:" + csb.ToString());
+                //Console.WriteLine("タイトル:" + tsb.ToString());
+            }
+
+            //すべてのウィンドウを列挙する
+            return true;
+        }
+    }
 }

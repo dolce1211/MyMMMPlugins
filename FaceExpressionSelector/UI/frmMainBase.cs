@@ -12,16 +12,17 @@ namespace FaceExpressionHelper
 {
     public partial class frmMainBase : Form
     {
+        public EventHandler<ActiveModelChangedEventArgs> ActiveModelChangedEventHandler;
         protected Args _args = null;
         protected frmPicture _frmPic = null;
         protected frmScrShot _frmshot = null;
 
         private ListControlConvertEventHandler _listboxformatHandler = new ListControlConvertEventHandler((s, e) =>
-        {
-            var morph = e.Value as MorphItem;
-            if (morph != null)
-                e.Value = $"{morph.MorphName}：  {Math.Round(morph.Weight, 3)}";
-        });
+                {
+                    var morph = e.Value as MorphItem;
+                    if (morph != null)
+                        e.Value = $"{morph.MorphName}：  {Math.Round(morph.Weight, 3)}";
+                });
 
         /// <summary>
         /// constructor
@@ -37,13 +38,26 @@ namespace FaceExpressionHelper
 
             this.CreateListBox();
 
-            this.lstValue.Format += this._listboxformatHandler;
-            this.lstValue.Disposed += (s, e) => this.lstValue.Format -= this._listboxformatHandler;
+            this.lstMissingMorphs.Format += this._listboxformatHandler;
 
             this.chkTopMost.Checked = this._args.TopMost;
+            ActiveModelChangedEventHandler += this.OnActiveModelChanged;
+
+            this.Disposed += ((s, e) =>
+            {
+                ActiveModelChangedEventHandler -= this.OnActiveModelChanged;
+                this.lstMissingMorphs.Format -= this._listboxformatHandler;
+            });
         }
 
+        /// <summary>
+        /// 処理中フラグ
+        /// </summary>
+        public bool IsBusy { get; protected set; }
+
         #region "protected virtual"
+
+        protected virtual string ActiveModelName => "";
 
         /// <summary>
         /// モーフ一覧情報を返します。
@@ -55,22 +69,56 @@ namespace FaceExpressionHelper
         }
 
         /// <summary>
-        /// モーフ一覧情報を返します。
+        /// 今のアクティブモデルの有効なモーフをすべて返します。
         /// </summary>
         /// <returns></returns>
-        protected virtual List<MorphItem> CreateCurrentMorphList(bool showErrorMsgbox)
+        protected virtual List<MorphItem> GetAllMorphsForActiveModel()
         {
             return null;
         }
 
-        #endregion "protected virtual"
+        /// <summary>
+        /// アクティブモデルの今のフレームのモーフ適用状態を返します。
+        /// </summary>
+        /// <returns>null:アクティブモデルなし</returns>
+        protected virtual List<MorphItem> GetCurrentMorphState()
+        {
+            return null;
+        }
 
         /// <summary>
-        /// 現在のモーフ情報を表示します。
+        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
         /// </summary>
-        public virtual void ApplyCurrentMorph()
+        /// <param name="item"></param>
+        /// <returns></returns>
+        protected virtual List<MorphItem> GetMissingMorphs(ExpressionItem item)
         {
+            return null;
         }
+
+        /// <summary>
+        /// アクティブモデルが変わった時に発火するイベントです。
+        /// </summary>
+        protected virtual void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
+        {
+            var enabled = true;
+            this.lblActiveModel.Text = String.Empty;
+            if (!string.IsNullOrWhiteSpace(e.CurrentActiveModelName))
+            {
+                this.lblActiveModel.Text = e.CurrentActiveModelName;
+            }
+            else
+            {
+                enabled = false;
+            }
+            this.listBox1.Enabled = enabled;
+            this.btnOK.Enabled = enabled;
+            this.btnAdd.Enabled = enabled;
+
+            this.listBox1_SelectedIndexChanged(null, null);
+        }
+
+        #endregion "protected virtual"
 
         /// <summary>
         /// 表情情報の追加・編集
@@ -85,11 +133,11 @@ namespace FaceExpressionHelper
             if (currentItem != null)
                 prevName = currentItem.Name;
 
-            var currentMorphs = this.CreateCurrentMorphList(true);
+            var currentMorphItems = this.GetCurrentMorphState();
             if (currentItem != null)
                 //編集
-                currentMorphs = currentItem.MorphItems;
-            using (frmName frmname = new frmName(this._listboxformatHandler, this._args, currentItem, currentMorphs, prevName))
+                currentMorphItems = currentItem.MorphItems;
+            using (frmName frmname = new frmName(this._listboxformatHandler, this._args, currentItem, currentMorphItems, prevName))
             {
                 frmname.ShowDialog(this);
                 if (frmname.DialogResult != DialogResult.OK)
@@ -134,11 +182,10 @@ namespace FaceExpressionHelper
                         {
                             //新規追加
                             //モーフ一覧を取得します。
-                            var morphitems = this.CreateCurrentMorphList(false);
                             var item = new ExpressionItem()
                             {
                                 Name = expName.TrimSafe(),
-                                MorphItems = morphitems,
+                                MorphItems = currentMorphItems,
                             };
                             this._args.Items.Add(item);
                         }
@@ -165,7 +212,7 @@ namespace FaceExpressionHelper
             }
             else if (currentItem != null)
             {
-                currentItem.Name = expName;
+                currentItem.ChangeName(expName);
                 this.CreateListBox();
                 this.TrySaveSettings();
             }
@@ -205,6 +252,9 @@ namespace FaceExpressionHelper
 
         #region "Events"
 
+        private frmExceptions _frmExceptions = null;
+        private frmReplacedMorphs _frmReplacedMorphs = null;
+
         /// <summary>
         /// 追加ボタン
         /// </summary>
@@ -230,20 +280,72 @@ namespace FaceExpressionHelper
                 makeScreenShot = true;
             }
 
-            if (this.CreateCurrentMorphList(true) == null)
+            if (string.IsNullOrWhiteSpace(this.ActiveModelName))
+            {
+                //モデルが選択されていない
+                MessageBox.Show(this, "モデルを選択してください");
                 return;
+            }
 
             AddOrEditItem(currentItem, makeScreenShot);
         }
 
+        private void btnReplace_Click(object sender, EventArgs e)
+        {
+            if (this._frmReplacedMorphs != null)
+                return;
+
+            var morphNames = this.GetAllMorphsForActiveModel();
+            if (morphNames == null)
+                morphNames = new List<MorphItem>();
+            morphNames = morphNames.Where(n => !this._args.ExceptionMainMorphs.Contains(n.MorphName)).ToList();
+
+            if (morphNames?.Count == 0)
+                return;
+
+            var rmn = this._args.ReplacedMorphs.Where(n => n.ModelName == this.lblActiveModel.Text).FirstOrDefault();
+            if (rmn == null)
+                rmn = new ReplacedMorphNameItem();
+
+            var exceptionlist = new List<string>();
+            exceptionlist.AddRange(this._args.ExceptionMainMorphs);
+
+            this._frmReplacedMorphs = new frmReplacedMorphs(this.lblActiveModel.Text, morphNames, this._args, rmn);
+            this._frmReplacedMorphs.Show(this);
+            this._frmReplacedMorphs.FormClosed += (ss, ee) =>
+            {
+                if (this._frmReplacedMorphs.DialogResult == DialogResult.OK)
+                {
+                    this._args.ExceptionMainMorphs.Clear();
+                    //this._args.ExceptionMorphs.AddRange(this._frmReplacedMorphs.Result);
+                    this.TrySaveSettings();
+                }
+                this._frmReplacedMorphs = null;
+            };
+        }
+
         private void btnOK_Click(object sender, EventArgs e)
         {
+            if (!this.btnOK.Enabled)
+                return;
             var item = this.listBox1.SelectedItem as ExpressionItem;
             if (item == null)
                 return;
-
+            if (string.IsNullOrWhiteSpace(this.ActiveModelName))
+            {
+                MessageBox.Show(this, "モデルを選択してください");
+                return;
+            }
             //**フレーム後に表情をつける
-            this.ApplyExpression((int)numericUpDown1.Value, item);
+            this.IsBusy = true;
+            try
+            {
+                this.ApplyExpression((int)numericUpDown1.Value, item);
+            }
+            finally
+            {
+                this.IsBusy = false;
+            }
         }
 
         private void btnUp_Click(object sender, EventArgs e)
@@ -273,6 +375,16 @@ namespace FaceExpressionHelper
             this.listBox1.SelectedItem = selectedItem;
         }
 
+        private void chkTopMost_CheckedChanged(object sender, EventArgs e)
+        {
+            this.TopMost = this.chkTopMost.Checked;
+            if (this.Visible)
+            {
+                this._args.TopMost = this.chkTopMost.Checked;
+                this.TrySaveSettings();
+            }
+        }
+
         /// <summary>
         /// ListBoxを作成します。
         /// </summary>
@@ -284,7 +396,7 @@ namespace FaceExpressionHelper
 
             this.listBox1.Items.AddRange(this._args.Items.ToArray());
 
-            this.lstValue.Items.Clear();
+            this.lstMissingMorphs.Items.Clear();
         }
 
         private void frmMainBase_FormClosed(object sender, FormClosedEventArgs e)
@@ -316,8 +428,9 @@ namespace FaceExpressionHelper
             }
         }
 
-        private void listBox1_MouseLeave(object sender, EventArgs e)
+        private async void listBox1_MouseLeave(object sender, EventArgs e)
         {
+            await Task.Delay(100);
             if (this._frmPic != null && !this._frmPic.IsMouseOn)
                 this._frmPic.Hide();
         }
@@ -355,6 +468,23 @@ namespace FaceExpressionHelper
             }
         }
 
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var item = this.listBox1.SelectedItem as ExpressionItem;
+            if (item == null)
+                return;
+
+            this.lblMissingMorphs.Visible = false;
+            this.lstMissingMorphs.Items.Clear();
+            var missingMorphs = this.GetMissingMorphs(item);
+            if (missingMorphs?.Count > 0)
+            {
+                //足りないモーフあり
+                this.lblMissingMorphs.Visible = true;
+                this.lstMissingMorphs.Items.AddRange(missingMorphs.ToArray());
+            }
+        }
+
         private void 削除ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var item = this.listBox1.SelectedItem as ExpressionItem;
@@ -372,16 +502,81 @@ namespace FaceExpressionHelper
             this.CreateListBox();
         }
 
-        private void chkTopMost_CheckedChanged(object sender, EventArgs e)
+        private void 閉じるXToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.TopMost = this._args.TopMost;
-            if (this.Visible)
-            {
-                this._args.TopMost = this.chkTopMost.Checked;                
-                this.TrySaveSettings();
-            }
+            this.Close();
         }
 
         #endregion "Events"
+
+        private void 対象外の目眉リップモーフToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (this._frmExceptions != null)
+                return;
+
+            var targetMorphs = new List<string>();
+            int mode = 0;//0:対象外の目まゆリップモーフ 1:対象のその他モーフ
+            if (sender == this.対象外の目まゆリップモーフToolStripMenuItem)
+            {
+                targetMorphs.AddRange(this._args.ExceptionMainMorphs);
+                mode = 0;
+            }
+            else if (sender == this.対象のその他モーフToolStripMenuItem)
+            {
+                targetMorphs.AddRange(this._args.TargetOtherMorphs);
+                mode = 1;
+            }
+
+            var morphNames = this.GetAllMorphsForActiveModel()?.Select(n => n.MorphName).Distinct().ToList();
+
+            if (morphNames == null || morphNames.Count == 0)
+                return;
+
+            this._frmExceptions = new frmExceptions(mode, this.lblActiveModel.Text, morphNames, targetMorphs);
+            this._frmExceptions.Show(this);
+            this._frmExceptions.FormClosed += (ss, ee) =>
+            {
+                if (this._frmExceptions.DialogResult == DialogResult.OK)
+                {
+                    if (sender == this.対象外の目まゆリップモーフToolStripMenuItem)
+                    {
+                        this._args.ExceptionMainMorphs.Clear();
+                        this._args.ExceptionMainMorphs.AddRange(this._frmExceptions.Result);
+                    }
+                    else if (sender == this.対象のその他モーフToolStripMenuItem)
+                    {
+                        this._args.TargetOtherMorphs.Clear();
+                        this._args.TargetOtherMorphs.AddRange(this._frmExceptions.Result);
+                    }
+
+                    this.TrySaveSettings();
+                }
+                this._frmExceptions = null;
+            };
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+    }
+
+    /// <summary>
+    /// アクティブモデル変更時イベントの引数クラスです。
+    /// </summary>
+    public class ActiveModelChangedEventArgs : EventArgs
+    {
+        public ActiveModelChangedEventArgs(string currentActiveModelName)
+        {
+            this.CurrentActiveModelName = currentActiveModelName;
+        }
+
+        /// <summary>
+        /// 現在のアクティブなモデル名
+        /// </summary>
+        public string CurrentActiveModelName { get; }
     }
 }

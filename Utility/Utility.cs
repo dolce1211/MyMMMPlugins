@@ -7,6 +7,8 @@ using System.Runtime.InteropServices;
 using System.Windows.Media.Media3D;
 using System.ComponentModel;
 using System.Drawing;
+using MikuMikuPlugin;
+using static MMDUtil.MMDUtilility;
 
 namespace MyUtility
 
@@ -291,6 +293,21 @@ namespace MyUtility
         private const int WM_PAINT = 0x000F;
 
         /// <summary>
+        /// コントロールの描画を止めます。
+        /// </summary>
+        /// <param name="flg">
+        /// false:描画を止める
+        /// true:描画を再開する
+        /// </param>
+        public static void BeginAndEndUpdate(this Control control, bool flg)
+        {
+            if (flg)
+                control.EndUpdate();
+            else
+                control.BeginUpdate();
+        }
+
+        /// <summary>
         /// コントロールの再描画を停止させる
         /// </summary>
         /// <param name="control">対象のコントロール</param>
@@ -407,6 +424,43 @@ namespace MyUtility
         }
 
         /// <summary>
+        /// カタカナに変換します。
+        /// </summary>
+        /// <param name="str"></param>
+        /// <returns></returns>
+        public static string ToKatakana(this string str)
+        {
+            return Microsoft.VisualBasic.Strings.StrConv(str, Microsoft.VisualBasic.VbStrConv.Katakana, 0x411);
+        }
+
+        public static MMDUtil.MMDUtilility.MorphType ToMyPanelType(this PanelType pnltype)
+        {
+            var morphtype = MMDUtil.MMDUtilility.MorphType.none;
+            switch (pnltype)
+            {
+                case PanelType.Brow:
+                    morphtype = MMDUtil.MMDUtilility.MorphType.Brow;
+                    break;
+
+                case PanelType.Eyes:
+                    morphtype = MMDUtil.MMDUtilility.MorphType.Eye;
+                    break;
+
+                case PanelType.Mouth:
+                    morphtype = MMDUtil.MMDUtilility.MorphType.Lip;
+                    break;
+
+                case PanelType.Etc:
+                    morphtype = MMDUtil.MMDUtilility.MorphType.Other;
+                    break;
+
+                default:
+                    break;
+            }
+            return morphtype;
+        }
+
+        /// <summary>
         /// 画像に文字を書き込みます。
         /// </summary>
         /// <param name="g"></param>
@@ -421,11 +475,11 @@ namespace MyUtility
             Size nopadSize = TextRenderer.MeasureText(g, letters, font
                             , new Size(1000, 1000), TextFormatFlags.NoPadding);
 
-            int top = 5;
+            int top = 10;
             if (pos == 1)
             {
                 //下
-                top = rect.Height - nopadSize.Height - 5;
+                top = rect.Height - nopadSize.Height + top;
             }
 
             System.Drawing.Drawing2D.SmoothingMode prevsm = g.SmoothingMode;

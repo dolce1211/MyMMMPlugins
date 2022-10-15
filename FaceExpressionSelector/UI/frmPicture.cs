@@ -80,7 +80,17 @@ namespace FaceExpressionHelper.UI
         private void frmPicture_MouseLeave(object sender, EventArgs e)
         {
             this.IsMouseOn = false;
-            this.Hide();
+            this.BeginInvoke(new Action(async () =>
+            {
+                await Task.Delay(100);
+                if (!this.IsMouseOn)
+                    this.Hide();
+            }));
+        }
+
+        private void pictureBox1_MouseHover(object sender, EventArgs e)
+        {
+            this.IsMouseOn = true;
         }
     }
 }

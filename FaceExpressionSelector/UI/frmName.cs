@@ -46,6 +46,14 @@ namespace FaceExpressionHelper.UI
             this.Result = string.Empty;
             if (sender == this.btnOK)
             {
+                //ファイル名に使用できない文字を取得
+                char[] invalidChars = System.IO.Path.GetInvalidFileNameChars();
+                if (this.txtName.Text.IndexOfAny(invalidChars) >= 0)
+                {
+                    MessageBox.Show("ファイル名に使用できない文字が使われています");
+                    return;
+                }
+
                 if (this._args.Items.Where(n => n != this._currentItem).Any(n => n.Name.ToLower().TrimSafe() == this.txtName.Text.ToLower().TrimSafe()))
                 {
                     MessageBox.Show("この表情名は存在します");

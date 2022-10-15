@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceExpressionSelector", "FaceExpressionSelector\FaceExpressionSelector.csproj", "{A6138EF1-50D5-4EFF-A511-A0749C84688D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceExpressionSelectorPlugin", "FaceExpressionSelector\FaceExpressionSelectorPlugin.csproj", "{A6138EF1-50D5-4EFF-A511-A0749C84688D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FaceExpressionSelectorMMD", "FaceExpressionSelectorMMD\FaceExpressionSelectorMMD.csproj", "{39FBB6DF-2355-4E89-B4D1-54A01786BD93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A6138EF1-50D5-4EFF-A511-A0749C84688D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6138EF1-50D5-4EFF-A511-A0749C84688D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6138EF1-50D5-4EFF-A511-A0749C84688D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39FBB6DF-2355-4E89-B4D1-54A01786BD93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39FBB6DF-2355-4E89-B4D1-54A01786BD93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39FBB6DF-2355-4E89-B4D1-54A01786BD93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39FBB6DF-2355-4E89-B4D1-54A01786BD93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

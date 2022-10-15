@@ -49,6 +49,7 @@
             // 
             this.txtName.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtName.ImeMode = System.Windows.Forms.ImeMode.On;
             this.txtName.Location = new System.Drawing.Point(7, 9);
             this.txtName.Name = "txtName";
             this.txtName.Size = new System.Drawing.Size(387, 19);

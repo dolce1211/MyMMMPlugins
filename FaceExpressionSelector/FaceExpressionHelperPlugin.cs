@@ -47,6 +47,8 @@ namespace FaceExpressionHelper
 
         public void Enabled()
         {
+            MMMUtilility.Initialize(this.ApplicationForm as Form, this.Scene);
+
             if (this._frmMain != null)
             {
                 this._frmMain.Dispose();
@@ -71,13 +73,27 @@ namespace FaceExpressionHelper
             }
         }
 
+        private string _prevActiveModelName = String.Empty;
+
         public void Update(float Frame, float ElapsedTime)
         {
             if (this.Scene.State != SceneState.Editing)
                 return;
 
-            if (this._frmMain != null)
-                this._frmMain.ApplyCurrentMorph();
+            if (this._frmMain != null && !this._frmMain.IsBusy)
+            {
+                var activeModelName = string.Empty;
+
+                if (this.Scene.ActiveModel != null)
+                    activeModelName = this.Scene.ActiveModel.Name;
+                if (this._prevActiveModelName != activeModelName)
+                {
+                    //アクティブモデルが変わった
+                    this._frmMain.ActiveModelChangedEventHandler?.Invoke(null, new ActiveModelChangedEventArgs(activeModelName));
+                    this._prevActiveModelName = activeModelName;
+                }
+            }
+
             //if (_frmMain != null && _frmMain.Visible)
             //    if (!_frmMain.IsBusy)
             //        this._frmMain.ApplyFrame(Frame);

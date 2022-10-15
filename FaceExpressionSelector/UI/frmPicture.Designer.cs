@@ -47,6 +47,9 @@ namespace FaceExpressionHelper.UI
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 3;
             this.pictureBox1.TabStop = false;
+            this.pictureBox1.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
+            this.pictureBox1.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
+            this.pictureBox1.MouseHover += new System.EventHandler(this.pictureBox1_MouseHover);
             // 
             // lstValue
             // 
@@ -73,9 +76,12 @@ namespace FaceExpressionHelper.UI
             this.lstValue.Name = "lstValue";
             this.lstValue.Size = new System.Drawing.Size(250, 70);
             this.lstValue.TabIndex = 7;
+            this.lstValue.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
+            this.lstValue.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
             // 
             // frmPicture
             // 
+            this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(250, 323);
@@ -86,6 +92,7 @@ namespace FaceExpressionHelper.UI
             this.Name = "frmPicture";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "frmPicture";
+            this.TopMost = true;
             this.VisibleChanged += new System.EventHandler(this.frmPicture_VisibleChanged);
             this.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
             this.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);

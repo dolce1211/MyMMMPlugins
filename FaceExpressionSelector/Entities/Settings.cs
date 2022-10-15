@@ -30,6 +30,53 @@ namespace FaceExpressionHelper
         /// 常に手前
         /// </summary>
         public bool TopMost { get; set; } = false;
+
+        /// <summary>
+        /// 対象外の目・リップ・まゆモーフ一覧
+        /// </summary>
+        public List<string> ExceptionMainMorphs { get; set; } = new List<string>();
+
+        /// <summary>
+        /// 対象のその他モーフ一覧
+        /// </summary>
+        public List<string> TargetOtherMorphs { get; set; } = new List<string>();
+
+        /// <summary>
+        /// モデルごとのモーフ置換情報
+        /// </summary>
+        public List<ReplacedMorphNameItem> ReplacedMorphs { get; set; } = new List<ReplacedMorphNameItem>();
+    }
+
+    /// <summary>
+    /// モデルごとのモーフ置換情報
+    /// </summary>
+    public class ReplacedMorphNameItem
+    {
+        /// <summary>
+        /// モデル名
+        /// </summary>
+        public string ModelName { get; set; }
+
+        /// <summary>
+        /// 置換モーフ情報
+        /// </summary>
+        public List<ReplacedItem> ReplacedMorphList { get; set; } = new List<ReplacedItem>();
+    }
+
+    /// <summary>
+    /// モーフ置換情報
+    /// </summary>
+    public class ReplacedItem
+    {
+        /// <summary>
+        /// 元モーフ名
+        /// </summary>
+        public string MorphName { get; set; }
+
+        /// <summary>
+        /// 置換後モーフ名
+        /// </summary>
+        public string RepalcedMorphName { get; set; }
     }
 
     /// <summary>
@@ -46,6 +93,29 @@ namespace FaceExpressionHelper
         /// モーフ一覧
         /// </summary>
         public List<MorphItem> MorphItems { get; set; } = new List<MorphItem>();
+
+        public void ChangeName(string newName)
+        {
+            //サムネをリネームする
+            if (this._thumbnail != null)
+                this._thumbnail.Dispose();
+            this._thumbnail = null;
+
+            var prevThumbnailPath = this.ThumbnailPath;
+            this.Name = newName;
+            var newThumbnailPath = this.ThumbnailPath;
+
+            if (System.IO.File.Exists(prevThumbnailPath) && !System.IO.File.Exists(newThumbnailPath))
+            {
+                try
+                {
+                    System.IO.File.Move(prevThumbnailPath, newThumbnailPath);
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
 
         /// <summary>
         /// サムネイルパス
@@ -78,7 +148,9 @@ namespace FaceExpressionHelper
                     {
                         try
                         {
-                            this._thumbnail = Image.FromFile(this.ThumbnailPath);
+                            var img = Image.FromFile(this.ThumbnailPath);
+                            this._thumbnail = img.Clone() as Image;
+                            img.Dispose();
                         }
                         catch (Exception)
                         {
@@ -121,6 +193,38 @@ namespace FaceExpressionHelper
         /// モーフ量
         /// </summary>
         public float Weight { get; set; }
+
+        /// <summary>
+        /// どのパネルのモーフ？
+        /// </summary>
+        public MMDUtil.MMDUtilility.MorphType MorphType { get; set; }
+
+        /// <summary>
+        /// モーフタイプ＋名称
+        /// </summary>
+        public string MortphNameWithType
+        {
+            get
+            {
+                switch (this.MorphType)
+                {
+                    case MMDUtil.MMDUtilility.MorphType.Eye:
+                        return $"目__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Lip:
+                        return $"口__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Brow:
+                        return $"眉__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Other:
+                        return $"他__{this.MorphName}";
+
+                    default:
+                        return $"？__{this.MorphName}";
+                }
+            }
+        }
     }
 
     public class LetterArgs
