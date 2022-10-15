@@ -30,12 +30,13 @@
         {
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.listBox2 = new System.Windows.Forms.ListBox();
-            this.lblActiveModel = new System.Windows.Forms.Label();
+            this.lblTarget = new System.Windows.Forms.Label();
             this.btnAdd = new System.Windows.Forms.Button();
             this.btnRemove = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblException = new System.Windows.Forms.Label();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.lblTitle = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // listBox1
@@ -46,10 +47,10 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.IntegralHeight = false;
             this.listBox1.ItemHeight = 16;
-            this.listBox1.Location = new System.Drawing.Point(5, 21);
+            this.listBox1.Location = new System.Drawing.Point(5, 70);
             this.listBox1.Name = "listBox1";
             this.listBox1.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
-            this.listBox1.Size = new System.Drawing.Size(158, 435);
+            this.listBox1.Size = new System.Drawing.Size(158, 386);
             this.listBox1.TabIndex = 2;
             // 
             // listBox2
@@ -60,24 +61,25 @@
             this.listBox2.FormattingEnabled = true;
             this.listBox2.IntegralHeight = false;
             this.listBox2.ItemHeight = 16;
-            this.listBox2.Location = new System.Drawing.Point(192, 21);
+            this.listBox2.Location = new System.Drawing.Point(190, 70);
             this.listBox2.Name = "listBox2";
             this.listBox2.SelectionMode = System.Windows.Forms.SelectionMode.MultiSimple;
-            this.listBox2.Size = new System.Drawing.Size(158, 435);
+            this.listBox2.Size = new System.Drawing.Size(158, 386);
             this.listBox2.TabIndex = 3;
             // 
-            // lblActiveModel
+            // lblTarget
             // 
-            this.lblActiveModel.AutoSize = true;
-            this.lblActiveModel.Location = new System.Drawing.Point(8, 6);
-            this.lblActiveModel.Name = "lblActiveModel";
-            this.lblActiveModel.Size = new System.Drawing.Size(90, 12);
-            this.lblActiveModel.TabIndex = 10;
-            this.lblActiveModel.Text = "処理対象のモーフ";
+            this.lblTarget.AutoSize = true;
+            this.lblTarget.Font = new System.Drawing.Font("MS UI Gothic", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblTarget.Location = new System.Drawing.Point(6, 55);
+            this.lblTarget.Name = "lblTarget";
+            this.lblTarget.Size = new System.Drawing.Size(100, 13);
+            this.lblTarget.TabIndex = 10;
+            this.lblTarget.Text = "処理対象のモーフ";
             // 
             // btnAdd
             // 
-            this.btnAdd.Location = new System.Drawing.Point(166, 60);
+            this.btnAdd.Location = new System.Drawing.Point(166, 101);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(22, 77);
             this.btnAdd.TabIndex = 11;
@@ -87,7 +89,7 @@
             // 
             // btnRemove
             // 
-            this.btnRemove.Location = new System.Drawing.Point(166, 166);
+            this.btnRemove.Location = new System.Drawing.Point(166, 207);
             this.btnRemove.Name = "btnRemove";
             this.btnRemove.Size = new System.Drawing.Size(22, 77);
             this.btnRemove.TabIndex = 12;
@@ -95,14 +97,16 @@
             this.btnRemove.UseVisualStyleBackColor = true;
             this.btnRemove.Click += new System.EventHandler(this.btnAdd_Click);
             // 
-            // label1
+            // lblException
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(190, 6);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(102, 12);
-            this.label1.TabIndex = 13;
-            this.label1.Text = "処理対象外のモーフ";
+            this.lblException.AutoSize = true;
+            this.lblException.Font = new System.Drawing.Font("MS UI Gothic", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblException.ForeColor = System.Drawing.Color.Red;
+            this.lblException.Location = new System.Drawing.Point(188, 55);
+            this.lblException.Name = "lblException";
+            this.lblException.Size = new System.Drawing.Size(122, 13);
+            this.lblException.TabIndex = 13;
+            this.lblException.Text = "処理対象外のモーフ";
             // 
             // btnOK
             // 
@@ -126,18 +130,32 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnOK_Click);
             // 
+            // lblTitle
+            // 
+            this.lblTitle.BackColor = System.Drawing.Color.Red;
+            this.lblTitle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblTitle.Dock = System.Windows.Forms.DockStyle.Top;
+            this.lblTitle.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblTitle.Location = new System.Drawing.Point(0, 0);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(360, 42);
+            this.lblTitle.TabIndex = 103;
+            this.lblTitle.Text = "処理対象外の\r\n目・まゆ・リップモーフ\r\n";
+            this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // frmBulkExceptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(360, 504);
             this.ControlBox = false;
+            this.Controls.Add(this.lblTitle);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.label1);
+            this.Controls.Add(this.lblException);
             this.Controls.Add(this.btnRemove);
             this.Controls.Add(this.btnAdd);
-            this.Controls.Add(this.lblActiveModel);
+            this.Controls.Add(this.lblTarget);
             this.Controls.Add(this.listBox2);
             this.Controls.Add(this.listBox1);
             this.Name = "frmBulkExceptions";
@@ -152,11 +170,12 @@
 
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.ListBox listBox2;
-        protected System.Windows.Forms.Label lblActiveModel;
+        protected System.Windows.Forms.Label lblTarget;
         private System.Windows.Forms.Button btnAdd;
         private System.Windows.Forms.Button btnRemove;
-        protected System.Windows.Forms.Label label1;
+        protected System.Windows.Forms.Label lblException;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Label lblTitle;
     }
 }

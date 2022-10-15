@@ -14,7 +14,7 @@ namespace FaceExpressionHelper.UI
     public partial class frmName : Form
     {
         private Args _args = null;
-
+        private string _activeModel = string.Empty;
         private ExpressionItem _currentItem = null;
 
         /// <summary>

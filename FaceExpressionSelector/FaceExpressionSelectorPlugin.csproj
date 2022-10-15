@@ -119,6 +119,12 @@
     <Compile Include="UI\frmScrShot.Designer.cs">
       <DependentUpon>frmScrShot.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\frmShowMissingMorphs.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmShowMissingMorphs.Designer.cs">
+      <DependentUpon>frmShowMissingMorphs.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\NakedForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -162,6 +168,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\frmScrShot.resx">
       <DependentUpon>frmScrShot.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmShowMissingMorphs.resx">
+      <DependentUpon>frmShowMissingMorphs.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\NakedForm.resx" />
     <EmbeddedResource Include="UI\UserControls\ReplaceMorphCtr.resx">

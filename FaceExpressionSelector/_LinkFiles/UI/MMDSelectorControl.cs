@@ -20,6 +20,11 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// 選択処理中はtrueを返します。
+        /// </summary>
+        public bool IsBusy { get; private set; } = false;
+
+        /// <summary>
         /// 選択中のMMDのプロセス
         /// </summary>
         public Process MMDProcess { get; private set; } = null;
@@ -37,8 +42,10 @@ namespace MMDUtil
         /// <returns></returns>
         public Process SelectMMD(bool showmsg = false, bool forceUpdate = false)
         {
+            this.IsBusy = true;
             var selector = new MMDUtil.MMDFinder(this.ParentForm, this.MMDProcess, this.lblMMD, this.lblMMPlus, new MMDSelector(this.ParentForm));
             this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate);
+            this.IsBusy = false;
             return this.MMDProcess;
         }
     }

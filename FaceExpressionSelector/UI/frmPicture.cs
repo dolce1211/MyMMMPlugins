@@ -17,6 +17,7 @@ namespace FaceExpressionHelper.UI
             InitializeComponent();
             this.lstValue.Format += listboxFormatHandler;
             this.lstValue.Disposed += (s, e) => this.lstValue.Format -= listboxFormatHandler;
+            this.TopMost = true;
         }
 
         /// <summary>
@@ -30,7 +31,7 @@ namespace FaceExpressionHelper.UI
         /// <param name="pt"></param>
         /// <param name="ownerForm">オーナーフォーム</param>
         /// <param name="item"></param>
-        public void Show(Point pt, Form ownerForm, ExpressionItem item)
+        public void Show(Point pt, Form ownerForm, string activeModel, Args args, ExpressionItem item)
         {
             if (!this.Visible)
                 this.Show();
@@ -46,7 +47,10 @@ namespace FaceExpressionHelper.UI
 
             this.lstValue.Items.Clear();
             if (item != null && item.MorphItems != null)
-                this.lstValue.Items.AddRange(item.MorphItems.ToArray());
+            {
+                var applyingMorphs = item.GetReplacedItem(args.ReplacedMorphs, activeModel);
+                this.lstValue.Items.AddRange(applyingMorphs.ToArray());
+            }
         }
 
         private void frmPicture_VisibleChanged(object sender, EventArgs e)

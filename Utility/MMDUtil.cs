@@ -211,6 +211,11 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// カメラモード時のキャプション
+        /// </summary>
+        public const string _MMD_CAMERAMODE_CAPTION = "ｶﾒﾗ･照明･ｱｸｾｻﾘ";
+
+        /// <summary>
         /// 「フレーム操作」テキストボックス
         /// </summary>
         private const int _FRAMESOUSA = 417;
@@ -462,10 +467,14 @@ namespace MMDUtil
         /// </summary>
         /// <param name="parentHandle"></param>
         /// <param name="morphtype">モーフ種類</param>
+        /// <param name="onActionModelChanged">この処理中にアクティブモデルが変わってしまった場合に実行するメソッド。帰り値でfalseが返ったら処理中断してnullを返す</param>
         /// <returns></returns>
-        public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle)
+        public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle, Func<string, bool> onActiveModelChanged = null)
         {
+        tryagain:
             var ret = new Dictionary<MorphType, List<string>>();
+            var activemodel = TryGetActiveModelName(parentHandle);
+            var retrycount = 0;
             foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
             {
                 if (morphtype == MorphType.none)
@@ -476,6 +485,23 @@ namespace MMDUtil
 
                 var lst = GetAllComboItems(morphwindow.ComboBox);
                 ret.Add(morphtype, lst);
+
+                var tmpactivemodel = TryGetActiveModelName(parentHandle);
+                if (activemodel != tmpactivemodel)
+                {
+                    //処理途中でアクティブモデルが切り替わったっぽい。
+                    //このまま進めると不正データになるのでもう一回最初からやりなおす
+                    activemodel = tmpactivemodel;
+                    retrycount++;
+                    if (onActiveModelChanged != null && retrycount <= 5)
+                    {
+                        if (!onActiveModelChanged.Invoke(tmpactivemodel))
+                            return null;
+
+                        //最初からやりなおす
+                        goto tryagain;
+                    }
+                }
             }
             return ret;
         }
@@ -1223,107 +1249,4 @@ namespace MMDUtil
     }
 
     #endregion "プロセス検索"
-
-    public class WindowFinder
-    {
-        private delegate bool EnumWindowsDelegate(IntPtr hWnd, IntPtr lparam);
-
-        [DllImport("user32.dll")]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool EnumWindows(EnumWindowsDelegate lpEnumFunc,
-            IntPtr lparam);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowText(IntPtr hWnd,
-            StringBuilder lpString, int nMaxCount);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowTextLength(IntPtr hWnd);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetClassName(IntPtr hWnd,
-            StringBuilder lpClassName, int nMaxCount);
-
-        private const int GW_HWNDNEXT = 2;
-
-        [DllImport("user32")]
-        private static extern int GetParent(int hwnd);
-
-        [DllImport("user32")]
-        private static extern int GetWindow(int hwnd, int wCmd);
-
-        [DllImport("user32")]
-        private static extern int FindWindow(
-            String lpClassName, String lpWindowName);
-
-        [DllImport("user32")]
-        private static extern int GetWindowThreadProcessId(
-            IntPtr hwnd, out int lpdwprocessid);
-
-        [DllImport("user32")]
-        private static extern int IsWindowVisible(int hwnd);
-
-        private static object _lockObj = new object();
-        private static Process _mmd = null;
-        private static string _windowName = null;
-
-        /// <summary>
-        /// エントリポイント
-        /// </summary>
-        public static string FindMMDTitle(Process mmd)
-        {
-            if (mmd.MainWindowTitle.Contains(" ["))
-            {
-                _windowName = mmd.MainWindowTitle;
-            }
-            else
-            {
-                lock (_lockObj)
-                {
-                    _windowName = null;
-                    _mmd = mmd;
-                    //ウィンドウを列挙する
-                    EnumWindows(new EnumWindowsDelegate(EnumWindowCallBack), IntPtr.Zero);
-
-                    Console.ReadLine();
-                }
-            }
-            if (_windowName != null && _windowName.Contains(" ["))
-                return _windowName.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
-            else
-                return "(無題のプロジェクト)";
-        }
-
-        private static bool EnumWindowCallBack(IntPtr hWnd, IntPtr lparam)
-        {
-            //ウィンドウのタイトルの長さを取得する
-            int textLen = GetWindowTextLength(hWnd);
-            if (0 < textLen)
-            {
-                //ウィンドウのタイトルを取得する
-                StringBuilder tsb = new StringBuilder(textLen + 1);
-                GetWindowText(hWnd, tsb, tsb.Capacity);
-
-                //ウィンドウのクラス名を取得する
-                StringBuilder csb = new StringBuilder(256);
-                GetClassName(hWnd, csb, csb.Capacity);
-                if (csb.ToString() == "Polygon Movie Maker")
-                {
-                    int pid;
-                    GetWindowThreadProcessId(hWnd, out pid);
-                    if (pid == _mmd.Id)
-                    {
-                        _windowName = tsb.ToString();
-                    }
-                }
-                ////結果を表示する
-                //Console.WriteLine("ハンドル:" + hWnd);
-                //Console.WriteLine("クラス名:" + csb.ToString());
-                //Console.WriteLine("タイトル:" + tsb.ToString());
-            }
-
-            //すべてのウィンドウを列挙する
-            return true;
-        }
-    }
 }

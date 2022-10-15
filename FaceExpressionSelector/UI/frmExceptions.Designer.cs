@@ -36,7 +36,7 @@
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnBulk = new System.Windows.Forms.Button();
             this.lblTitle = new System.Windows.Forms.Label();
             this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -110,15 +110,15 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnOK_Click);
             // 
-            // button1
+            // btnBulk
             // 
-            this.button1.Location = new System.Drawing.Point(31, 45);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(152, 23);
-            this.button1.TabIndex = 18;
-            this.button1.Text = "選択中モデルから一括追加";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnBulk.Location = new System.Drawing.Point(31, 45);
+            this.btnBulk.Name = "btnBulk";
+            this.btnBulk.Size = new System.Drawing.Size(152, 23);
+            this.btnBulk.TabIndex = 18;
+            this.btnBulk.Text = "選択中モデルから一括追加";
+            this.btnBulk.UseVisualStyleBackColor = true;
+            this.btnBulk.Click += new System.EventHandler(this.btnBulk_Click);
             // 
             // lblTitle
             // 
@@ -140,7 +140,7 @@
             this.ClientSize = new System.Drawing.Size(189, 450);
             this.ControlBox = false;
             this.Controls.Add(this.lblTitle);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnBulk);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.textBox1);
@@ -161,7 +161,7 @@
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnBulk;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem 削除ToolStripMenuItem;
         private System.Windows.Forms.Label lblTitle;

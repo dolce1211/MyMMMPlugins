@@ -49,8 +49,8 @@ namespace FaceExpressionHelper.UI
             InitializeComponent();
             System.Drawing.Color backcolor = System.Drawing.Color.OrangeRed;
             var title = $"処理対象外の\r\n「目・まゆ・リップ」モーフ";
-
-            if (mode == 1)
+            this._mode = mode;
+            if (this._mode == 1)
             {
                 backcolor = System.Drawing.Color.LightGreen;
                 title = $"処理対象の\r\n「その他」モーフ";
@@ -97,12 +97,12 @@ namespace FaceExpressionHelper.UI
 
         private frmBulkExceptions _frmBulkExceptions = null;
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnBulk_Click(object sender, EventArgs e)
         {
             if (_frmBulkExceptions != null)
                 return;
 
-            this._frmBulkExceptions = new frmBulkExceptions(this._modelName, this._allMorphs, this._allTargetMorphs);
+            this._frmBulkExceptions = new frmBulkExceptions(this._mode, this._modelName, this._allMorphs, this._allTargetMorphs);
             this._frmBulkExceptions.Show(this);
             this._frmBulkExceptions.FormClosed += (ss, ee) =>
             {

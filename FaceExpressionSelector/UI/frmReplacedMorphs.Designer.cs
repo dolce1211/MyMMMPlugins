@@ -30,9 +30,9 @@
         {
             this.lblTitle = new System.Windows.Forms.Label();
             this.pnlBody = new System.Windows.Forms.Panel();
+            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.pnlBody.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -44,7 +44,7 @@
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(144, 15);
             this.lblTitle.TabIndex = 10;
-            this.lblTitle.Text = "****のモーフ置換情報";
+            this.lblTitle.Text = "****のモーフ置換設定";
             // 
             // pnlBody
             // 
@@ -57,6 +57,15 @@
             this.pnlBody.Name = "pnlBody";
             this.pnlBody.Size = new System.Drawing.Size(414, 377);
             this.pnlBody.TabIndex = 11;
+            // 
+            // replaceMorphCtr1
+            // 
+            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
+            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
+            this.replaceMorphCtr1.Size = new System.Drawing.Size(414, 28);
+            this.replaceMorphCtr1.TabIndex = 0;
             // 
             // btnOK
             // 
@@ -79,15 +88,6 @@
             this.btnCancel.Text = "キャンセル";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnOK_Click);
-            // 
-            // replaceMorphCtr1
-            // 
-            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
-            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
-            this.replaceMorphCtr1.Size = new System.Drawing.Size(414, 28);
-            this.replaceMorphCtr1.TabIndex = 0;
             // 
             // frmReplacedMorphs
             // 

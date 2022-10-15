@@ -43,7 +43,7 @@ namespace FaceExpressionHelper.UI
             this.pictureBox1.InitialImage = null;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(250, 251);
+            this.pictureBox1.Size = new System.Drawing.Size(246, 227);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBox1.TabIndex = 3;
             this.pictureBox1.TabStop = false;
@@ -72,9 +72,9 @@ namespace FaceExpressionHelper.UI
             "いいい",
             "あああ",
             "いいい"});
-            this.lstValue.Location = new System.Drawing.Point(0, 252);
+            this.lstValue.Location = new System.Drawing.Point(0, 228);
             this.lstValue.Name = "lstValue";
-            this.lstValue.Size = new System.Drawing.Size(250, 70);
+            this.lstValue.Size = new System.Drawing.Size(246, 70);
             this.lstValue.TabIndex = 7;
             this.lstValue.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
             this.lstValue.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
@@ -84,7 +84,7 @@ namespace FaceExpressionHelper.UI
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(250, 323);
+            this.ClientSize = new System.Drawing.Size(246, 299);
             this.Controls.Add(this.lstValue);
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -92,7 +92,6 @@ namespace FaceExpressionHelper.UI
             this.Name = "frmPicture";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "frmPicture";
-            this.TopMost = true;
             this.VisibleChanged += new System.EventHandler(this.frmPicture_VisibleChanged);
             this.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
             this.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);

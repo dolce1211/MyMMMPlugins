@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
+using static MMDUtil.MMDUtilility;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace FaceExpressionHelper.UI
@@ -76,22 +77,19 @@ namespace FaceExpressionHelper.UI
             var ret = new List<MorphItem>();
             foreach (Morph morph in activeModel.Morphs)
             {
-                if (this._args.ExceptionMainMorphs.Contains(morph.Name))
+                var morphitem = new MorphItem()
+                {
+                    MorphName = morph.DisplayName,
+                    Weight = morph.CurrentWeight,
+                    MorphType = morph.PanelType.ToMyPanelType(),
+                };
+
+                if (!this._args.IsTargetMorph(morphitem))
                     //対象外モーフ
                     continue;
 
-                MMDUtil.MMDUtilility.MorphType morphtype = morph.PanelType.ToMyPanelType();
-
                 if (morph.CurrentWeight != 0)
-                {
-                    var morphitem = new MorphItem()
-                    {
-                        MorphName = morph.DisplayName,
-                        Weight = morph.CurrentWeight,
-                        MorphType = morphtype,
-                    };
                     ret.Add(morphitem);
-                }
             }
 
             return ret;
@@ -102,7 +100,7 @@ namespace FaceExpressionHelper.UI
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        protected override List<MorphItem> GetMissingMorphs(ExpressionItem item)
+        protected override List<MorphItem> GetMissingMorphs(List<MorphItem> morphItems)
         {
             var activeModel = this._scene.ActiveModel;
             if (activeModel == null)
@@ -110,8 +108,8 @@ namespace FaceExpressionHelper.UI
                 return null;
             }
             var ret = new List<MorphItem>();
-            var allMorphs = activeModel.Morphs.Where(n => !this._args.ExceptionMainMorphs.Contains(n.Name)).ToList();
-            foreach (MorphItem mi in item.MorphItems)
+            var allMorphs = activeModel.Morphs.ToList();
+            foreach (MorphItem mi in morphItems)
             {
                 if (!allMorphs.Any(n => n.Name == mi.MorphName))
                     ret.Add(mi);
@@ -134,18 +132,33 @@ namespace FaceExpressionHelper.UI
             var ret = new List<MorphItem>();
 
             //操作対象モーフ一覧(対象外モーフを除く)
-            var allMorphs = activeModel.Morphs.Where(n => !this._args.ExceptionMainMorphs.Contains(n.Name)).ToList();
+            var allMorphs = activeModel.Morphs.Where(n =>
+            {
+                var morphitem = new MorphItem()
+                {
+                    MorphName = n.DisplayName,
+                    Weight = n.CurrentWeight,
+                    MorphType = n.PanelType.ToMyPanelType(),
+                };
+                return this._args.IsTargetMorph(morphitem);
+            }).ToList();
+
+            //置換を考慮した一覧を作成する
+            var applyingMorphs = item.GetReplacedItem(this._args.ReplacedMorphs, this.ActiveModelName);
 
             //無いモーフチェック
-            var missingMorphs = this.GetMissingMorphs(item);
+            var missingMorphs = this.GetMissingMorphs(applyingMorphs.Cast<MorphItem>().ToList());
             if (missingMorphs.Count > 0)
             {
-                var msg = $@"{string.Join("\r\n", missingMorphs.Select(n => n.MorphName).ToArray())}
-
-{activeModel.Name}には以上のモーフがありません。
-続行しますか？";
-                if (MessageBox.Show(msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
-                    return false;
+                using (var frmMissing = new frmShowMissingMorphs(activeModel.Name, missingMorphs.Select(n => n.MorphName).ToList()))
+                {
+                    if (frmMissing.ShowDialog(this) != DialogResult.OK)
+                    {
+                        if (frmMissing.OpenReplace)
+                            this.btnReplace.PerformClick();
+                        return false;
+                    }
+                }
             }
 
             //描画を止める
@@ -158,7 +171,11 @@ namespace FaceExpressionHelper.UI
                 foreach (Morph morph in allMorphs)
                 {
                     var framelist = new List<MorphFrameData>();
-                    var applyingMI = item.MorphItems.Where(n => n.MorphName == morph.Name).FirstOrDefault();
+                    var applyingMI = applyingMorphs.Where(n => n.MorphName == morph.Name).FirstOrDefault();
+                    if (applyingMI != null && applyingMI.Ignore)
+                        //無視するモーフだ
+                        continue;
+
                     if (applyingMI != null)
                     {
                         //対象のモーフ

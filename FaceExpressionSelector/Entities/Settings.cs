@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MikuMikuPlugin;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -45,38 +46,27 @@ namespace FaceExpressionHelper
         /// モデルごとのモーフ置換情報
         /// </summary>
         public List<ReplacedMorphNameItem> ReplacedMorphs { get; set; } = new List<ReplacedMorphNameItem>();
-    }
-
-    /// <summary>
-    /// モデルごとのモーフ置換情報
-    /// </summary>
-    public class ReplacedMorphNameItem
-    {
-        /// <summary>
-        /// モデル名
-        /// </summary>
-        public string ModelName { get; set; }
 
         /// <summary>
-        /// 置換モーフ情報
+        /// 引数のモーフが処理対象ならtrue
         /// </summary>
-        public List<ReplacedItem> ReplacedMorphList { get; set; } = new List<ReplacedItem>();
-    }
-
-    /// <summary>
-    /// モーフ置換情報
-    /// </summary>
-    public class ReplacedItem
-    {
-        /// <summary>
-        /// 元モーフ名
-        /// </summary>
-        public string MorphName { get; set; }
-
-        /// <summary>
-        /// 置換後モーフ名
-        /// </summary>
-        public string RepalcedMorphName { get; set; }
+        /// <param name="morph"></param>
+        /// <returns></returns>
+        public bool IsTargetMorph(MorphItem morph)
+        {
+            if (morph == null)
+                return false;
+            if (morph.MorphType == MMDUtil.MMDUtilility.MorphType.Other || morph.MorphType == MMDUtil.MMDUtilility.MorphType.none)
+            {
+                //その他モーフ
+                return TargetOtherMorphs.Contains(morph.MorphName);
+            }
+            else
+            {
+                //目・リップ・まゆモーフ
+                return !ExceptionMainMorphs.Contains(morph.MorphName);
+            }
+        }
     }
 
     /// <summary>
@@ -180,6 +170,37 @@ namespace FaceExpressionHelper
                 }
             }
         }
+
+        /// <summary>
+        /// ReplacedMorphsを加味したモーフ一覧を返します。
+        /// </summary>
+        public List<DspMorphItem> GetReplacedItem(List<ReplacedMorphNameItem> replacedMorphs, string modelName)
+        {
+            var replace = replacedMorphs.Where(n => n.ModelName == modelName).FirstOrDefault();
+            if (replace == null)
+                //リプレイス対象なし
+                return this.MorphItems.Select(n=> new DspMorphItem(n.Clone())).ToList();
+
+            var hash = new Dictionary<string, ReplacedItem>();
+            foreach (var rp in replace.ReplacedMorphList)
+            {
+                if (!hash.ContainsKey(rp.MorphName))
+                    hash.Add(rp.MorphName, rp);
+            }
+
+            var ret = new List<DspMorphItem>();
+            foreach (var morph in this.MorphItems)
+            {
+                var clone = new DspMorphItem(morph.Clone());
+                if (hash.ContainsKey(clone.MorphName))
+                {
+                    var rp = hash[clone.MorphName];
+                    clone.ReplacedItem = rp;
+                }
+                ret.Add(clone);
+            }
+            return ret;
+        }
     }
 
     public class MorphItem
@@ -225,6 +246,98 @@ namespace FaceExpressionHelper
                 }
             }
         }
+
+        /// <summary>
+        /// クローンを返します。
+        /// </summary>
+        /// <returns></returns>
+        public MorphItem Clone()
+        {
+            //return this.MemberwiseClone() as MorphItem;
+            return new MorphItem()
+            {
+                MorphName = this.MorphName,
+                MorphType = this.MorphType,
+                Weight = this.Weight,
+            };
+        }
+    }
+    /// <summary>
+    /// 置換情報などを考慮したMorphItemです。
+    /// </summary>
+    public class DspMorphItem : MorphItem
+    {
+        /// <summary>
+        /// 置換などを考慮した表示名
+        /// </summary>
+        public string DspMorphName
+        {
+            get
+            {
+                if (this.ReplacedItem != null)
+                    return this.ReplacedItem.RepalcedMorphName;
+                else
+                    return this.MorphName;
+            }
+        }
+        /// <summary>
+        /// 無視するモーフならtrue
+        /// </summary>
+        public bool Ignore
+        {
+            get
+            {
+                if (this.ReplacedItem != null)
+                    return this.ReplacedItem.Ignore;
+                else
+                    return false;
+            }
+        }
+        public ReplacedItem ReplacedItem { get; set; }
+        public DspMorphItem(MorphItem morphitem)
+        {
+            this.MorphName = morphitem.MorphName;
+            this.MorphType = morphitem.MorphType;
+            this.Weight = morphitem.Weight;
+        }
+    }
+
+
+    /// <summary>
+    /// モデルごとのモーフ置換情報
+    /// </summary>
+    public class ReplacedMorphNameItem
+    {
+        /// <summary>
+        /// モデル名
+        /// </summary>
+        public string ModelName { get; set; }
+
+        /// <summary>
+        /// 置換モーフ情報
+        /// </summary>
+        public List<ReplacedItem> ReplacedMorphList { get; set; } = new List<ReplacedItem>();
+    }
+
+    /// <summary>
+    /// モーフ置換情報
+    /// </summary>
+    public class ReplacedItem
+    {
+        /// <summary>
+        /// 無視する
+        /// </summary>
+        public bool Ignore { get; set; }
+
+        /// <summary>
+        /// 元モーフ名
+        /// </summary>
+        public string MorphName { get; set; }
+
+        /// <summary>
+        /// 置換後モーフ名
+        /// </summary>
+        public string RepalcedMorphName { get; set; }
     }
 
     public class LetterArgs

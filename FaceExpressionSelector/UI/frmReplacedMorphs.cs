@@ -24,7 +24,15 @@ namespace FaceExpressionHelper.UI
         /// </summary>
         private Args _args = null;
 
+        /// <summary>
+        /// 置換情報
+        /// </summary>
         private ReplacedMorphNameItem _replacedItem = null;
+
+        /// <summary>
+        /// 帰り値
+        /// </summary>
+        public List<ReplacedItem> Result { get; private set; }
 
         /// <summary>
         /// constructor
@@ -39,12 +47,11 @@ namespace FaceExpressionHelper.UI
             this._allMorphs = allMorphs;
             this._replacedItem = replacedItem;
             this._args = args;
-            this.CreateControls();
         }
 
         private void CreateControls()
         {
-            this.Text = $"「{this._modelName}」のモーフ置換情報";
+            this.Text = $"「{this._modelName}」のモーフ置換設定";
             this.lblTitle.Text = this.Text;
             var validMorphs = this._args.Items.SelectMany(n => n.MorphItems)
                                     .GroupBy(n => n.MortphNameWithType)
@@ -55,7 +62,7 @@ namespace FaceExpressionHelper.UI
             {
                 this.pnlBody.Controls.Clear();
                 foreach (MorphItem morph in validMorphs.OrderByDescending(n => n.MorphType)
-                                                        .ThenBy(n => n.MorphName))
+                                                        .ThenByDescending(n => n.MorphName))
                 {
                     var isMissing = false;
                     if (!this._allMorphs.Any(n => n.MorphName == morph.MorphName))
@@ -63,21 +70,38 @@ namespace FaceExpressionHelper.UI
                     var replacedctr = new ReplaceMorphCtr();
                     replacedctr.Visible = false;
                     replacedctr.Dock = DockStyle.Top;
-                    replacedctr.Initialize(morph, isMissing, this._allMorphs);
+                    var rp = this._replacedItem.ReplacedMorphList.Where(n => n.MorphName == morph.MorphName).FirstOrDefault();
+                    replacedctr.Initialize(morph, rp, isMissing, this._allMorphs);
                     this.pnlBody.Controls.Add(replacedctr);
+                    this.pnlBody.BringToFront();
                     replacedctr.Visible = true;
                 }
             }
             finally
             {
                 this.pnlBody.Visible = true;
+                this.BeginInvoke((Action)(() =>
+                {
+                    //なんか2回やらんと移動してくれねー
+                    this.pnlBody.VerticalScroll.Value = 0;
+                    this.pnlBody.VerticalScroll.Value = 0;
+                }));
             }
         }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
+            this.Result = new List<ReplacedItem>();
             if (sender == this.btnOK)
             {
+                foreach (Control ctrl in this.pnlBody.Controls)
+                {
+                    if (ctrl is ReplaceMorphCtr replacedctr)
+                    {
+                        if (replacedctr.Result != null)
+                            this.Result.Add(replacedctr.Result);
+                    }
+                }
                 this.DialogResult = DialogResult.OK;
             }
             this.Close();
@@ -85,6 +109,7 @@ namespace FaceExpressionHelper.UI
 
         private void frmReplacedMorphs_Load(object sender, EventArgs e)
         {
+            this.CreateControls();
         }
     }
 }

@@ -19,9 +19,19 @@ namespace FaceExpressionHelper
 
         private ListControlConvertEventHandler _listboxformatHandler = new ListControlConvertEventHandler((s, e) =>
                 {
-                    var morph = e.Value as MorphItem;
-                    if (morph != null)
+                    if (e.Value is DspMorphItem dspmorph)
+                    {
+                        if (dspmorph.Ignore)
+                            e.Value = $"【無視する】 {dspmorph.MorphName}：  {Math.Round(dspmorph.Weight, 3)}";
+                        else if (dspmorph.ReplacedItem != null)
+                            e.Value = $"【置換】{dspmorph.MorphName} → {dspmorph.ReplacedItem.RepalcedMorphName}  {Math.Round(dspmorph.Weight, 3)}";
+                        else
+                            e.Value = $"　　　　 {dspmorph.MorphName}：  {Math.Round(dspmorph.Weight, 3)}";
+                    }
+                    if (e.Value is MorphItem morph)
+                    {
                         e.Value = $"{morph.MorphName}：  {Math.Round(morph.Weight, 3)}";
+                    }
                 });
 
         /// <summary>
@@ -48,6 +58,9 @@ namespace FaceExpressionHelper
                 ActiveModelChangedEventHandler -= this.OnActiveModelChanged;
                 this.lstMissingMorphs.Format -= this._listboxformatHandler;
             });
+
+            this.lblActiveModel.Text = String.Empty;
+            this.lblReplaced.Text = String.Empty;
         }
 
         /// <summary>
@@ -91,7 +104,7 @@ namespace FaceExpressionHelper
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        protected virtual List<MorphItem> GetMissingMorphs(ExpressionItem item)
+        protected virtual List<MorphItem> GetMissingMorphs(List<MorphItem> morphItems)
         {
             return null;
         }
@@ -103,18 +116,25 @@ namespace FaceExpressionHelper
         {
             var enabled = true;
             this.lblActiveModel.Text = String.Empty;
+            var replacedTxt = "";
             if (!string.IsNullOrWhiteSpace(e.CurrentActiveModelName))
             {
                 this.lblActiveModel.Text = e.CurrentActiveModelName;
+                replacedTxt = "置換設定なし";
+                var replaced = this._args.ReplacedMorphs.Where(n => n.ModelName == e.CurrentActiveModelName).FirstOrDefault();
+                if (replaced != null && replaced.ReplacedMorphList.Count > 0)
+                    replacedTxt = $"置換設定 {replaced.ReplacedMorphList.Count}件";
             }
             else
             {
+                this.lblActiveModel.Text = "モデルを選択してください";
                 enabled = false;
             }
-            this.listBox1.Enabled = enabled;
-            this.btnOK.Enabled = enabled;
-            this.btnAdd.Enabled = enabled;
+            //this.listBox1.Enabled = enabled;
+            this.pnlTop.Enabled = enabled;
+            this.pnlBottom.Enabled = enabled;
 
+            this.lblReplaced.Text = replacedTxt;
             this.listBox1_SelectedIndexChanged(null, null);
         }
 
@@ -124,26 +144,66 @@ namespace FaceExpressionHelper
         /// 表情情報の追加・編集
         /// </summary>
         /// <param name="currentItem">編集対象の場合、その編集対象</param>
-        /// <param name="makeScreenShot">スクショを取るか</param>
+        /// <param name="mode">0:新規追加 1:名前を変える 2:スクショを取り直す 3:現在の状態に変更する</param>
         /// <returns></returns>
-        private bool AddOrEditItem(ExpressionItem currentItem, bool makeScreenShot)
+        private bool AddOrEditItem(ExpressionItem currentItem, int mode)
         {
             var expName = String.Empty;
             var prevName = string.Empty;
             if (currentItem != null)
                 prevName = currentItem.Name;
 
-            var currentMorphItems = this.GetCurrentMorphState();
-            if (currentItem != null)
-                //編集
-                currentMorphItems = currentItem.MorphItems;
-            using (frmName frmname = new frmName(this._listboxformatHandler, this._args, currentItem, currentMorphItems, prevName))
+            List<MorphItem> currentMorphItems = null;
+            switch (mode)
             {
-                frmname.ShowDialog(this);
-                if (frmname.DialogResult != DialogResult.OK)
-                    return false;
+                case 0:
+                case 3:
+                    //新規作成、現在の状態に更新
+                    currentMorphItems = this.GetCurrentMorphState();
+                    break;
 
-                expName = frmname.Result.TrimSafe();
+                default:
+                    //名前変更、スクショ取り直し
+                    //編集
+                    currentMorphItems = currentItem.MorphItems;
+                    break;
+            }
+
+            if (currentMorphItems == null)
+                return false;
+
+            //スクショ取る？
+            var makeScreenShot = false;
+            //名前入力する？
+            var enterName = false;
+
+            switch (mode)
+            {
+                case 0:
+                case 2:
+                case 3:
+                    //新規追加、スクショを取り直す、現在の状態に変更する
+                    makeScreenShot = true;
+                    break;
+
+                default:
+                    break;
+            }
+            switch (mode)
+            {
+                case 0:
+                case 1:
+                    //新規追加、名前を変える
+                    enterName = true;
+                    break;
+
+                case 2:
+                case 3:
+                    expName = currentItem.Name;
+                    break;
+
+                default:
+                    break;
             }
 
             FormClosedEventHandler closedHandler = null;
@@ -169,7 +229,7 @@ namespace FaceExpressionHelper
                     {
                         ret = ScreenShotSaver.SaveScr(pos, shotdir, expName.TrimSafe(), this._args.LetterArgs, ref retPicturePath);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         MessageBox.Show("スクリーンショットの取得に失敗しました");
                     }
@@ -193,15 +253,28 @@ namespace FaceExpressionHelper
                         {
                             //名前変更
                             currentItem.Name = expName.TrimSafe();
+                            currentItem.MorphItems = currentMorphItems;
                         }
 
                         this.CreateListBox();
                         this.TrySaveSettings();
                     }
-
-                    this.Show();
                 }
+
+                this.Show();
             });
+
+            if (enterName)
+            {
+                using (frmName frmname = new frmName(this._listboxformatHandler, this._args, currentItem, currentMorphItems, prevName))
+                {
+                    frmname.ShowDialog(this);
+                    if (frmname.DialogResult != DialogResult.OK)
+                        return false;
+
+                    expName = frmname.Result.TrimSafe();
+                }
+            }
 
             if (makeScreenShot)
             {
@@ -226,7 +299,8 @@ namespace FaceExpressionHelper
         private Args TryLoadSettings()
         {
             var dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var xmlpath = System.IO.Path.Combine(dir, "FaceExpressionHelperSetting.xml");
+            var shotdir = System.IO.Path.Combine(dir, "faceExpressions");
+            var xmlpath = System.IO.Path.Combine(shotdir, "FaceExpressionHelperSetting.xml");
             var ret = MyUtility.Serializer.Deserialize<Args>(xmlpath);
             if (ret == null)
             {
@@ -245,7 +319,8 @@ namespace FaceExpressionHelper
         private bool TrySaveSettings()
         {
             var dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var xmlpath = System.IO.Path.Combine(dir, "FaceExpressionHelperSetting.xml");
+            var shotdir = System.IO.Path.Combine(dir, "faceExpressions");
+            var xmlpath = System.IO.Path.Combine(shotdir, "FaceExpressionHelperSetting.xml");
 
             return MyUtility.Serializer.Serialize(this._args, xmlpath);
         }
@@ -263,21 +338,34 @@ namespace FaceExpressionHelper
         private void btnAdd_Click(object sender, EventArgs e)
         {
             ExpressionItem currentItem = null;
-            var makeScreenShot = false;
+            int mode = 0;
             if (sender == this.編集ToolStripMenuItem)
             {
                 //編集
                 currentItem = this.listBox1.SelectedItem as ExpressionItem;
                 if (currentItem == null)
                     return;
-
-                if (MessageBox.Show("スクリーンショットを取り直しますか？", "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
-                    makeScreenShot = true;
+                mode = 1;
             }
-            else
+            else if (sender == this.スクショを取り直すToolStripMenuItem)
             {
-                //新規追加
-                makeScreenShot = true;
+                //スクショ取り直す
+                currentItem = this.listBox1.SelectedItem as ExpressionItem;
+                if (currentItem == null)
+                    return;
+                mode = 2;
+            }
+            else if (sender == this.現在の状態に更新するToolStripMenuItem)
+            {
+                //現在の状態に更新する
+                currentItem = this.listBox1.SelectedItem as ExpressionItem;
+                if (currentItem == null)
+                    return;
+                var msg = $"「{currentItem.Name}」\r\nの内容を現在の状態に更新します。\r\n\r\nよろしいですか？";
+                if (MessageBox.Show(msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.No)
+                    return;
+
+                mode = 3;
             }
 
             if (string.IsNullOrWhiteSpace(this.ActiveModelName))
@@ -287,7 +375,7 @@ namespace FaceExpressionHelper
                 return;
             }
 
-            AddOrEditItem(currentItem, makeScreenShot);
+            AddOrEditItem(currentItem, mode);
         }
 
         private void btnReplace_Click(object sender, EventArgs e)
@@ -303,21 +391,30 @@ namespace FaceExpressionHelper
             if (morphNames?.Count == 0)
                 return;
 
-            var rmn = this._args.ReplacedMorphs.Where(n => n.ModelName == this.lblActiveModel.Text).FirstOrDefault();
+            var rmn = this._args.ReplacedMorphs.Where(n => n.ModelName == this.ActiveModelName).FirstOrDefault();
             if (rmn == null)
                 rmn = new ReplacedMorphNameItem();
 
-            var exceptionlist = new List<string>();
-            exceptionlist.AddRange(this._args.ExceptionMainMorphs);
-
             this._frmReplacedMorphs = new frmReplacedMorphs(this.lblActiveModel.Text, morphNames, this._args, rmn);
+            this.Cursor = Cursors.WaitCursor;
             this._frmReplacedMorphs.Show(this);
+            this.Cursor = Cursors.Default;
+
             this._frmReplacedMorphs.FormClosed += (ss, ee) =>
             {
                 if (this._frmReplacedMorphs.DialogResult == DialogResult.OK)
                 {
-                    this._args.ExceptionMainMorphs.Clear();
-                    //this._args.ExceptionMorphs.AddRange(this._frmReplacedMorphs.Result);
+                    this._args.ReplacedMorphs.Remove(rmn);
+                    var rpList = this._frmReplacedMorphs.Result;
+                    if (rpList?.Count > 0)
+                    {
+                        var newRmn = new ReplacedMorphNameItem()
+                        {
+                            ModelName = this.ActiveModelName,
+                            ReplacedMorphList = this._frmReplacedMorphs.Result,
+                        };
+                        this._args.ReplacedMorphs.Add(newRmn);
+                    }
                     this.TrySaveSettings();
                 }
                 this._frmReplacedMorphs = null;
@@ -464,7 +561,7 @@ namespace FaceExpressionHelper
                 }
                 this._frmPic.Size = size;
 
-                this._frmPic.Show(point, this, item);
+                this._frmPic.Show(point, this, this.ActiveModelName, this._args, item);
             }
         }
 
@@ -476,12 +573,28 @@ namespace FaceExpressionHelper
 
             this.lblMissingMorphs.Visible = false;
             this.lstMissingMorphs.Items.Clear();
-            var missingMorphs = this.GetMissingMorphs(item);
-            if (missingMorphs?.Count > 0)
+
+            //置換を考慮した一覧を作成する
+            var applyingMorphs = item.GetReplacedItem(this._args.ReplacedMorphs, this.ActiveModelName);
+            var missingMorphs = this.GetMissingMorphs(applyingMorphs.Cast<MorphItem>().ToList());
+
+            if (missingMorphs != null)
             {
-                //足りないモーフあり
-                this.lblMissingMorphs.Visible = true;
-                this.lstMissingMorphs.Items.AddRange(missingMorphs.ToArray());
+                missingMorphs = missingMorphs.Where(n =>
+                {
+                    if (n is DspMorphItem dspm)
+                    {
+                        if (dspm.ReplacedItem != null)
+                            return false;
+                    }
+                    return true;
+                }).ToList();
+                if (missingMorphs.Count > 0)
+                {
+                    //足りないモーフあり
+                    this.lblMissingMorphs.Visible = true;
+                    this.lstMissingMorphs.Items.AddRange(missingMorphs.ToArray());
+                }
             }
         }
 
@@ -527,7 +640,14 @@ namespace FaceExpressionHelper
                 mode = 1;
             }
 
-            var morphNames = this.GetAllMorphsForActiveModel()?.Select(n => n.MorphName).Distinct().ToList();
+            var allMorphs = this.GetAllMorphsForActiveModel();
+            var morphNames = allMorphs.Where(n =>
+            {
+                var flg = (n.MorphType == MMDUtil.MMDUtilility.MorphType.Other || n.MorphType == MMDUtil.MMDUtilility.MorphType.none);
+                if (mode == 0)
+                    flg = !flg;
+                return flg;
+            }).Select(n => n.MorphName).Distinct().ToList();
 
             if (morphNames == null || morphNames.Count == 0)
                 return;

@@ -22,12 +22,17 @@ namespace FaceExpressionHelper.UI
         private List<string> _selected = new List<string>();
 
         /// <summary>
+        /// 0:対象外の目まゆリップモーフ 1:対象のその他モーフ
+        /// </summary>
+        private int _mode = 0;
+
+        /// <summary>
         /// constructor
         /// </summary>
         /// <param name="modelName">選択中モデル名</param>
         /// <param name="allMorphs">選択中モデルの全モーフ</param>
         /// <param name="allExceptionMorphs">対象外モーフ一覧</param>
-        public frmBulkExceptions(string modelName, List<string> allMorphs, List<string> allExceptionMorphs)
+        public frmBulkExceptions(int mode, string modelName, List<string> allMorphs, List<string> allExceptionMorphs)
         {
             InitializeComponent();
             this._modelName = modelName;
@@ -35,6 +40,22 @@ namespace FaceExpressionHelper.UI
             this._allExceptionMorphs = allExceptionMorphs;
 
             this._selected = this._allMorphs.Where(n => this._allExceptionMorphs.Contains(n)).ToList();
+
+            this._mode = mode;
+            System.Drawing.Color backcolor = System.Drawing.Color.OrangeRed;
+            var title = $"処理対象外の\r\n「目・まゆ・リップ」モーフ";
+
+            if (this._mode == 1)
+            {
+                var buf = lblTarget.Location;
+                this.lblTarget.Location = this.lblException.Location;
+                this.lblException.Location = buf;
+
+                backcolor = System.Drawing.Color.LightGreen;
+                title = $"処理対象の\r\n「その他」モーフ";
+            }
+            this.lblTitle.BackColor = backcolor;
+            this.lblTitle.Text = title;
 
             this.CreateListBox();
         }
