@@ -9,10 +9,13 @@ using System.Windows.Forms;
 
 namespace FaceExpressionHelper
 {
+    /// <summary>
+    /// //リサイズ可能かつ上部バーが無いフォームを実現するために利用します。
+    /// </summary>
     public class NakedForm : Form
     {
         private const int WS_BORDER = 0x00800000;
-        private const int CS_DROPSHADOW = 0x00020000;
+        //private const int CS_DROPSHADOW = 0x00020000;
 
         protected override CreateParams CreateParams
         {

@@ -32,7 +32,7 @@ namespace FaceExpressionHelper.UI
         /// <summary>
         /// 帰り値
         /// </summary>
-        public List<ReplacedItem> Result { get; private set; }
+        public List<ReplacedMorphSet> Result { get; private set; }
 
         /// <summary>
         /// constructor
@@ -58,6 +58,7 @@ namespace FaceExpressionHelper.UI
                                     .Select(n => n.FirstOrDefault()).ToList();
 
             this.pnlBody.Visible = false;
+            this.pnlBody.SuspendLayout();
             try
             {
                 this.pnlBody.Controls.Clear();
@@ -70,7 +71,7 @@ namespace FaceExpressionHelper.UI
                     var replacedctr = new ReplaceMorphCtr();
                     replacedctr.Visible = false;
                     replacedctr.Dock = DockStyle.Top;
-                    var rp = this._replacedItem.ReplacedMorphList.Where(n => n.MorphName == morph.MorphName).FirstOrDefault();
+                    var rp = this._replacedItem.ReplacedMorphSetList.Where(n => n.MorphName == morph.MorphName).FirstOrDefault();
                     replacedctr.Initialize(morph, rp, isMissing, this._allMorphs);
                     this.pnlBody.Controls.Add(replacedctr);
                     this.pnlBody.BringToFront();
@@ -80,18 +81,13 @@ namespace FaceExpressionHelper.UI
             finally
             {
                 this.pnlBody.Visible = true;
-                this.BeginInvoke((Action)(() =>
-                {
-                    //なんか2回やらんと移動してくれねー
-                    this.pnlBody.VerticalScroll.Value = 0;
-                    this.pnlBody.VerticalScroll.Value = 0;
-                }));
+                this.pnlBody.ResumeLayout();
             }
         }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            this.Result = new List<ReplacedItem>();
+            this.Result = new List<ReplacedMorphSet>();
             if (sender == this.btnOK)
             {
                 foreach (Control ctrl in this.pnlBody.Controls)

@@ -35,11 +35,12 @@
             this.適用ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.編集ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.スクショを取り直すToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.現在の状態に更新するToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.削除ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnUp = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.lstMissingMorphs = new System.Windows.Forms.ListBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.label1 = new System.Windows.Forms.Label();
@@ -58,9 +59,8 @@
             this.lblWait = new System.Windows.Forms.Label();
             this.pnlTop = new System.Windows.Forms.Panel();
             this.lblReplaced = new System.Windows.Forms.Label();
+            this.lstMissingMorphs = new FaceExpressionHelper.UI.UserControls.MorphListBox();
             this.mmdSelector = new MMDUtil.MMDSelectorControl();
-            this.現在の状態に更新するToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.スクショを取り直すToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.contextMenuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.menuStrip1.SuspendLayout();
@@ -90,7 +90,7 @@
             this.listBox1.ItemHeight = 16;
             this.listBox1.Location = new System.Drawing.Point(3, 128);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(281, 260);
+            this.listBox1.Size = new System.Drawing.Size(281, 258);
             this.listBox1.TabIndex = 1;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             this.listBox1.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.listBox1_Format);
@@ -110,7 +110,7 @@
             this.toolStripSeparator1,
             this.削除ToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(214, 158);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(214, 136);
             // 
             // 適用ToolStripMenuItem
             // 
@@ -132,6 +132,22 @@
             this.編集ToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
             this.編集ToolStripMenuItem.Text = "名前変更";
             this.編集ToolStripMenuItem.Click += new System.EventHandler(this.btnAdd_Click);
+            // 
+            // スクショを取り直すToolStripMenuItem
+            // 
+            this.スクショを取り直すToolStripMenuItem.Font = new System.Drawing.Font("Yu Gothic UI", 11.25F);
+            this.スクショを取り直すToolStripMenuItem.Name = "スクショを取り直すToolStripMenuItem";
+            this.スクショを取り直すToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
+            this.スクショを取り直すToolStripMenuItem.Text = "スクショを取り直す";
+            this.スクショを取り直すToolStripMenuItem.Click += new System.EventHandler(this.btnAdd_Click);
+            // 
+            // 現在の状態に更新するToolStripMenuItem
+            // 
+            this.現在の状態に更新するToolStripMenuItem.Font = new System.Drawing.Font("Yu Gothic UI", 11.25F);
+            this.現在の状態に更新するToolStripMenuItem.Name = "現在の状態に更新するToolStripMenuItem";
+            this.現在の状態に更新するToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
+            this.現在の状態に更新するToolStripMenuItem.Text = "現在の状態に更新する";
+            this.現在の状態に更新するToolStripMenuItem.Click += new System.EventHandler(this.btnAdd_Click);
             // 
             // toolStripSeparator1
             // 
@@ -167,25 +183,6 @@
             this.button2.Text = "↓";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.btnUp_Click);
-            // 
-            // lstMissingMorphs
-            // 
-            this.lstMissingMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lstMissingMorphs.BackColor = System.Drawing.SystemColors.Control;
-            this.lstMissingMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.lstMissingMorphs.ContextMenuStrip = this.contextMenuStrip1;
-            this.lstMissingMorphs.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lstMissingMorphs.ForeColor = System.Drawing.Color.Red;
-            this.lstMissingMorphs.FormattingEnabled = true;
-            this.lstMissingMorphs.IntegralHeight = false;
-            this.lstMissingMorphs.ItemHeight = 12;
-            this.lstMissingMorphs.Items.AddRange(new object[] {
-            "あああ",
-            "いいい"});
-            this.lstMissingMorphs.Location = new System.Drawing.Point(4, 409);
-            this.lstMissingMorphs.Name = "lstMissingMorphs";
-            this.lstMissingMorphs.Size = new System.Drawing.Size(128, 66);
-            this.lstMissingMorphs.TabIndex = 5;
             // 
             // btnOK
             // 
@@ -266,7 +263,7 @@
             this.lblMissingMorphs.AutoSize = true;
             this.lblMissingMorphs.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.lblMissingMorphs.ForeColor = System.Drawing.Color.Red;
-            this.lblMissingMorphs.Location = new System.Drawing.Point(1, 391);
+            this.lblMissingMorphs.Location = new System.Drawing.Point(1, 389);
             this.lblMissingMorphs.Name = "lblMissingMorphs";
             this.lblMissingMorphs.Size = new System.Drawing.Size(98, 15);
             this.lblMissingMorphs.TabIndex = 15;
@@ -334,7 +331,7 @@
             this.pnlBottom.Controls.Add(this.numericUpDown1);
             this.pnlBottom.Controls.Add(this.label1);
             this.pnlBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlBottom.Location = new System.Drawing.Point(0, 481);
+            this.pnlBottom.Location = new System.Drawing.Point(0, 479);
             this.pnlBottom.Name = "pnlBottom";
             this.pnlBottom.Size = new System.Drawing.Size(287, 36);
             this.pnlBottom.TabIndex = 17;
@@ -379,36 +376,34 @@
             this.lblReplaced.TabIndex = 16;
             this.lblReplaced.Text = "置換設定*件あり";
             // 
+            // lstMissingMorphs
+            // 
+            this.lstMissingMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lstMissingMorphs.BackColor = System.Drawing.SystemColors.Control;
+            this.lstMissingMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.lstMissingMorphs.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.lstMissingMorphs.FormattingEnabled = true;
+            this.lstMissingMorphs.IntegralHeight = false;
+            this.lstMissingMorphs.Location = new System.Drawing.Point(7, 407);
+            this.lstMissingMorphs.Name = "lstMissingMorphs";
+            this.lstMissingMorphs.Size = new System.Drawing.Size(186, 67);
+            this.lstMissingMorphs.TabIndex = 21;
+            // 
             // mmdSelector
             // 
             this.mmdSelector.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.mmdSelector.Location = new System.Drawing.Point(0, 517);
+            this.mmdSelector.Location = new System.Drawing.Point(0, 515);
             this.mmdSelector.Name = "mmdSelector";
             this.mmdSelector.Size = new System.Drawing.Size(287, 46);
             this.mmdSelector.TabIndex = 18;
             this.mmdSelector.Visible = false;
             // 
-            // 現在の状態に更新するToolStripMenuItem
-            // 
-            this.現在の状態に更新するToolStripMenuItem.Font = new System.Drawing.Font("Yu Gothic UI", 11.25F);
-            this.現在の状態に更新するToolStripMenuItem.Name = "現在の状態に更新するToolStripMenuItem";
-            this.現在の状態に更新するToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
-            this.現在の状態に更新するToolStripMenuItem.Text = "現在の状態に更新する";
-            this.現在の状態に更新するToolStripMenuItem.Click += new System.EventHandler(this.btnAdd_Click);
-            // 
-            // スクショを取り直すToolStripMenuItem
-            // 
-            this.スクショを取り直すToolStripMenuItem.Font = new System.Drawing.Font("Yu Gothic UI", 11.25F);
-            this.スクショを取り直すToolStripMenuItem.Name = "スクショを取り直すToolStripMenuItem";
-            this.スクショを取り直すToolStripMenuItem.Size = new System.Drawing.Size(213, 24);
-            this.スクショを取り直すToolStripMenuItem.Text = "スクショを取り直す";
-            this.スクショを取り直すToolStripMenuItem.Click += new System.EventHandler(this.btnAdd_Click);
-            // 
             // frmMainBase
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(287, 563);
+            this.ClientSize = new System.Drawing.Size(287, 561);
+            this.Controls.Add(this.lstMissingMorphs);
             this.Controls.Add(this.lblWait);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.pnlTop);
@@ -417,7 +412,6 @@
             this.Controls.Add(this.menuStrip1);
             this.Controls.Add(this.lblMissingMorphs);
             this.Controls.Add(this.chkTopMost);
-            this.Controls.Add(this.lstMissingMorphs);
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -451,7 +445,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Label label1;
-        protected System.Windows.Forms.ListBox lstMissingMorphs;
         private System.Windows.Forms.CheckBox chkTopMost;
         protected System.Windows.Forms.Label lblActiveModel;
         protected System.Windows.Forms.Label lblMissingMorphs;
@@ -472,5 +465,6 @@
         public System.Windows.Forms.Button btnReplace;
         private System.Windows.Forms.ToolStripMenuItem 現在の状態に更新するToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem スクショを取り直すToolStripMenuItem;
+        private UI.UserControls.MorphListBox lstMissingMorphs;
     }
 }

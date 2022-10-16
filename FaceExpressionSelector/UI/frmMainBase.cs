@@ -7,15 +7,17 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace FaceExpressionHelper
 {
     public partial class frmMainBase : Form
     {
-        public EventHandler<ActiveModelChangedEventArgs> ActiveModelChangedEventHandler;
         protected Args _args = null;
         protected frmPicture _frmPic = null;
         protected frmScrShot _frmshot = null;
+
+        public EventHandler<ActiveModelChangedEventArgs> ActiveModelChangedEventHandler;
 
         private ListControlConvertEventHandler _listboxformatHandler = new ListControlConvertEventHandler((s, e) =>
                 {
@@ -34,6 +36,40 @@ namespace FaceExpressionHelper
                     }
                 });
 
+        private void listBox_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            var lstbox = sender as ListBox;
+            if (lstbox == null)
+                return;
+            var dspMorphItem = lstbox.Items[e.Index] as DspMorphItem;
+            if (dspMorphItem == null)
+                return;
+
+            e.DrawBackground();
+
+            //背景を描画する
+            //項目が選択されている時は強調表示される
+
+            //ListBoxが空のときにListBoxが選択されるとe.Indexが-1になる
+            Brush b = null;
+            b = new SolidBrush(e.ForeColor);
+            if (e.Index > -1)
+            { //空でない場合
+                //文字を描画する色の選択
+
+                if (dspMorphItem.MorphType == MMDUtil.MMDUtilility.MorphType.Brow)
+                { //違反ありの場合
+                    b = new SolidBrush(Color.Green);
+                    //赤字にする
+                }
+            }
+            e.Graphics.DrawString(dspMorphItem.DspMorphName, e.Font, b, e.Bounds);
+
+            b.Dispose();
+
+            //e.DrawFocusRectangle();
+        }
+
         /// <summary>
         /// constructor
         /// </summary>
@@ -43,12 +79,12 @@ namespace FaceExpressionHelper
 
             this._args = this.TryLoadSettings();
 
-            this._frmPic = new frmPicture(this._listboxformatHandler);
+            this._frmPic = new frmPicture();
             this._frmPic.Hide();
 
             this.CreateListBox();
 
-            this.lstMissingMorphs.Format += this._listboxformatHandler;
+            //this.lstMissingMorphs.Format += this._listboxformatHandler;
 
             this.chkTopMost.Checked = this._args.TopMost;
             ActiveModelChangedEventHandler += this.OnActiveModelChanged;
@@ -56,7 +92,7 @@ namespace FaceExpressionHelper
             this.Disposed += ((s, e) =>
             {
                 ActiveModelChangedEventHandler -= this.OnActiveModelChanged;
-                this.lstMissingMorphs.Format -= this._listboxformatHandler;
+                //this.lstMissingMorphs.Format -= this._listboxformatHandler;
             });
 
             this.lblActiveModel.Text = String.Empty;
@@ -67,6 +103,38 @@ namespace FaceExpressionHelper
         /// 処理中フラグ
         /// </summary>
         public bool IsBusy { get; protected set; }
+
+        #region "protected"
+
+        /// <summary>
+        /// 置換などを考慮した一覧を返します。
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        protected List<DspMorphItem> GetApplyingMorphs(ExpressionItem item)
+        {
+            var allMorphs = this.GetAllMorphsForActiveModel();
+            if (allMorphs == null || item == null)
+                return new List<DspMorphItem>();
+
+            //置換などを考慮した一覧を作成する
+            return item.GetApplyingMorphs(this.ActiveModelName, this._args.ReplacedMorphs, allMorphs);
+        }
+
+        /// <summary>
+        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        protected List<DspMorphItem> GetMissingMorphs(ExpressionItem item)
+        {
+            //置換を考慮した一覧を作成する
+            var applyingMorphs = this.GetApplyingMorphs(item);
+
+            return applyingMorphs.Where(n => n.IsMissing).ToList();
+        }
+
+        #endregion "protected"
 
         #region "protected virtual"
 
@@ -100,16 +168,6 @@ namespace FaceExpressionHelper
         }
 
         /// <summary>
-        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        protected virtual List<MorphItem> GetMissingMorphs(List<MorphItem> morphItems)
-        {
-            return null;
-        }
-
-        /// <summary>
         /// アクティブモデルが変わった時に発火するイベントです。
         /// </summary>
         protected virtual void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
@@ -122,8 +180,8 @@ namespace FaceExpressionHelper
                 this.lblActiveModel.Text = e.CurrentActiveModelName;
                 replacedTxt = "置換設定なし";
                 var replaced = this._args.ReplacedMorphs.Where(n => n.ModelName == e.CurrentActiveModelName).FirstOrDefault();
-                if (replaced != null && replaced.ReplacedMorphList.Count > 0)
-                    replacedTxt = $"置換設定 {replaced.ReplacedMorphList.Count}件";
+                if (replaced != null && replaced.ReplacedMorphSetList.Count > 0)
+                    replacedTxt = $"置換設定 {replaced.ReplacedMorphSetList.Count}件";
             }
             else
             {
@@ -266,7 +324,7 @@ namespace FaceExpressionHelper
 
             if (enterName)
             {
-                using (frmName frmname = new frmName(this._listboxformatHandler, this._args, currentItem, currentMorphItems, prevName))
+                using (frmName frmname = new frmName(this._args, currentItem, currentMorphItems, prevName))
                 {
                     frmname.ShowDialog(this);
                     if (frmname.DialogResult != DialogResult.OK)
@@ -309,6 +367,24 @@ namespace FaceExpressionHelper
                     LetterArgs = LetterArgs.CreateInitialInstance(),
                 };
             }
+            else
+            {
+                xmlpath = System.IO.Path.Combine(shotdir, "モーフ置換設定.xml");
+                var replacedMorphs = MyUtility.Serializer.Deserialize<List<ReplacedMorphNameItem>>(xmlpath);
+                if (replacedMorphs == null) replacedMorphs = new List<ReplacedMorphNameItem>();
+
+                xmlpath = System.IO.Path.Combine(shotdir, "処理対象外の「目・まゆ・リップ」モーフ.xml");
+                var exceptionMainMorphs = MyUtility.Serializer.Deserialize<List<string>>(xmlpath);
+                if (exceptionMainMorphs == null) exceptionMainMorphs = new List<string>();
+
+                xmlpath = System.IO.Path.Combine(shotdir, "処理対象の「その他」モーフ.xml");
+                var targetOtherMorphs = MyUtility.Serializer.Deserialize<List<string>>(xmlpath);
+                if (targetOtherMorphs == null) targetOtherMorphs = new List<string>();
+
+                ret.ReplacedMorphs = replacedMorphs;
+                ret.ExceptionMainMorphs = exceptionMainMorphs;
+                ret.TargetOtherMorphs = targetOtherMorphs;
+            }
             return ret;
         }
 
@@ -322,7 +398,17 @@ namespace FaceExpressionHelper
             var shotdir = System.IO.Path.Combine(dir, "faceExpressions");
             var xmlpath = System.IO.Path.Combine(shotdir, "FaceExpressionHelperSetting.xml");
 
-            return MyUtility.Serializer.Serialize(this._args, xmlpath);
+            var ret = MyUtility.Serializer.Serialize(this._args, xmlpath);
+            if (ret)
+            {
+                xmlpath = System.IO.Path.Combine(shotdir, "モーフ置換設定.xml");
+                ret = MyUtility.Serializer.Serialize(this._args.ReplacedMorphs, xmlpath);
+                xmlpath = System.IO.Path.Combine(shotdir, "処理対象外の「目・まゆ・リップ」モーフ.xml");
+                ret = MyUtility.Serializer.Serialize(this._args.ExceptionMainMorphs, xmlpath);
+                xmlpath = System.IO.Path.Combine(shotdir, "処理対象の「その他」モーフ.xml");
+                ret = MyUtility.Serializer.Serialize(this._args.TargetOtherMorphs, xmlpath);
+            }
+            return ret;
         }
 
         #region "Events"
@@ -411,11 +497,12 @@ namespace FaceExpressionHelper
                         var newRmn = new ReplacedMorphNameItem()
                         {
                             ModelName = this.ActiveModelName,
-                            ReplacedMorphList = this._frmReplacedMorphs.Result,
+                            ReplacedMorphSetList = this._frmReplacedMorphs.Result,
                         };
                         this._args.ReplacedMorphs.Add(newRmn);
                     }
                     this.TrySaveSettings();
+                    listBox1_SelectedIndexChanged(this, new EventArgs());
                 }
                 this._frmReplacedMorphs = null;
             };
@@ -560,8 +647,9 @@ namespace FaceExpressionHelper
                         size = new Size(item.ThumbNail.Width * longerEdge / item.ThumbNail.Height, longerEdge + 70);
                 }
                 this._frmPic.Size = size;
-
-                this._frmPic.Show(point, this, this.ActiveModelName, this._args, item);
+                this._frmPic.TopMost = this.TopMost;
+                var allmorphs = this.GetAllMorphsForActiveModel();
+                this._frmPic.Show(point, this, this.ActiveModelName, this._args, item, allmorphs);
             }
         }
 
@@ -575,8 +663,7 @@ namespace FaceExpressionHelper
             this.lstMissingMorphs.Items.Clear();
 
             //置換を考慮した一覧を作成する
-            var applyingMorphs = item.GetReplacedItem(this._args.ReplacedMorphs, this.ActiveModelName);
-            var missingMorphs = this.GetMissingMorphs(applyingMorphs.Cast<MorphItem>().ToList());
+            var missingMorphs = this.GetMissingMorphs(item);
 
             if (missingMorphs != null)
             {
@@ -594,6 +681,7 @@ namespace FaceExpressionHelper
                     //足りないモーフあり
                     this.lblMissingMorphs.Visible = true;
                     this.lstMissingMorphs.Items.AddRange(missingMorphs.ToArray());
+                    this.lstMissingMorphs.Refresh();
                 }
             }
         }

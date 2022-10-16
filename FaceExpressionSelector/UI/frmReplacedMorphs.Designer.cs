@@ -30,9 +30,9 @@
         {
             this.lblTitle = new System.Windows.Forms.Label();
             this.pnlBody = new System.Windows.Forms.Panel();
-            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.pnlBody.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,24 +53,15 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBody.AutoScroll = true;
             this.pnlBody.Controls.Add(this.replaceMorphCtr1);
-            this.pnlBody.Location = new System.Drawing.Point(6, 30);
+            this.pnlBody.Location = new System.Drawing.Point(6, 26);
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Size = new System.Drawing.Size(414, 377);
+            this.pnlBody.Size = new System.Drawing.Size(590, 381);
             this.pnlBody.TabIndex = 11;
-            // 
-            // replaceMorphCtr1
-            // 
-            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
-            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
-            this.replaceMorphCtr1.Size = new System.Drawing.Size(414, 28);
-            this.replaceMorphCtr1.TabIndex = 0;
             // 
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(237, 412);
+            this.btnOK.Location = new System.Drawing.Point(413, 412);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(85, 30);
             this.btnOK.TabIndex = 12;
@@ -81,7 +72,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(328, 412);
+            this.btnCancel.Location = new System.Drawing.Point(504, 412);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(85, 30);
             this.btnCancel.TabIndex = 13;
@@ -89,11 +80,20 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnOK_Click);
             // 
+            // replaceMorphCtr1
+            // 
+            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
+            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
+            this.replaceMorphCtr1.Size = new System.Drawing.Size(590, 28);
+            this.replaceMorphCtr1.TabIndex = 0;
+            // 
             // frmReplacedMorphs
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(425, 449);
+            this.ClientSize = new System.Drawing.Size(601, 449);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.pnlBody);

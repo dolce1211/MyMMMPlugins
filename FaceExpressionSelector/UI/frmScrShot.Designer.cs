@@ -311,6 +311,7 @@
             // pnlBase
             // 
             this.pnlBase.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.pnlBase.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlBase.Controls.Add(this.btnSwap);
             this.pnlBase.Controls.Add(this.btnCancel);
             this.pnlBase.Controls.Add(this.btnOK);

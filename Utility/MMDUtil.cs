@@ -471,9 +471,9 @@ namespace MMDUtil
         /// <returns></returns>
         public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle, Func<string, bool> onActiveModelChanged = null)
         {
+            var activemodel = TryGetActiveModelName(parentHandle);
         tryagain:
             var ret = new Dictionary<MorphType, List<string>>();
-            var activemodel = TryGetActiveModelName(parentHandle);
             var retrycount = 0;
             foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
             {

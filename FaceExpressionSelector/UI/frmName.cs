@@ -24,19 +24,16 @@ namespace FaceExpressionHelper.UI
         /// <param name="currentItem">編集時の編集対象</param>
         /// <param name="currentMorphs">現在の表情</param>
         /// <param name="prevName"></param>
-        public frmName(ListControlConvertEventHandler listboxFormatHandler, Args args, ExpressionItem currentItem, List<MorphItem> currentMorphs, string prevName)
+        public frmName(Args args, ExpressionItem currentItem, List<MorphItem> currentMorphs, string prevName)
         {
             InitializeComponent();
             this._args = args;
             this._currentItem = currentItem;
             this.txtName.Text = prevName;
 
-            this.lstValue.Items.Clear();
+            this.lstMorphs.Items.Clear();
             if (currentMorphs != null)
-                this.lstValue.Items.AddRange(currentMorphs.ToArray());
-
-            this.lstValue.Format += listboxFormatHandler;
-            this.lstValue.Disposed += (s, e) => this.lstValue.Format -= listboxFormatHandler;
+                this.lstMorphs.Items.AddRange(currentMorphs.ToArray());
         }
 
         public string Result { get; private set; } = string.Empty;

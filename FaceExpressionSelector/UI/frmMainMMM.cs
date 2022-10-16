@@ -96,28 +96,6 @@ namespace FaceExpressionHelper.UI
         }
 
         /// <summary>
-        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        protected override List<MorphItem> GetMissingMorphs(List<MorphItem> morphItems)
-        {
-            var activeModel = this._scene.ActiveModel;
-            if (activeModel == null)
-            {
-                return null;
-            }
-            var ret = new List<MorphItem>();
-            var allMorphs = activeModel.Morphs.ToList();
-            foreach (MorphItem mi in morphItems)
-            {
-                if (!allMorphs.Any(n => n.Name == mi.MorphName))
-                    ret.Add(mi);
-            }
-            return ret;
-        }
-
-        /// <summary>
         /// モーフ一覧情報を返します。
         /// </summary>
         /// <returns></returns>
@@ -143,11 +121,10 @@ namespace FaceExpressionHelper.UI
                 return this._args.IsTargetMorph(morphitem);
             }).ToList();
 
-            //置換を考慮した一覧を作成する
-            var applyingMorphs = item.GetReplacedItem(this._args.ReplacedMorphs, this.ActiveModelName);
-
+            //処理対象のモーフ情報を取得
+            var applyingMorphs = this.GetApplyingMorphs(item);
             //無いモーフチェック
-            var missingMorphs = this.GetMissingMorphs(applyingMorphs.Cast<MorphItem>().ToList());
+            var missingMorphs = this.GetMissingMorphs(item);
             if (missingMorphs.Count > 0)
             {
                 using (var frmMissing = new frmShowMissingMorphs(activeModel.Name, missingMorphs.Select(n => n.MorphName).ToList()))

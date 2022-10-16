@@ -30,8 +30,10 @@ namespace FaceExpressionHelper.UI
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.lstValue = new System.Windows.Forms.ListBox();
+            this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.lstMorphs = new FaceExpressionHelper.UI.UserControls.MorphListBox();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -49,35 +51,26 @@ namespace FaceExpressionHelper.UI
             this.pictureBox1.TabStop = false;
             this.pictureBox1.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
             this.pictureBox1.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
-            this.pictureBox1.MouseHover += new System.EventHandler(this.pictureBox1_MouseHover);
             // 
-            // lstValue
+            // timer1
             // 
-            this.lstValue.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // lstMorphs
+            // 
+            this.lstMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.lstValue.BackColor = System.Drawing.SystemColors.Control;
-            this.lstValue.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.lstValue.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lstValue.FormattingEnabled = true;
-            this.lstValue.IntegralHeight = false;
-            this.lstValue.ItemHeight = 12;
-            this.lstValue.Items.AddRange(new object[] {
-            "あああ",
-            "いいい",
-            "あああ",
-            "いいい",
-            "あああ",
-            "いいい",
-            "あああ",
-            "いいい",
-            "あああ",
-            "いいい"});
-            this.lstValue.Location = new System.Drawing.Point(0, 228);
-            this.lstValue.Name = "lstValue";
-            this.lstValue.Size = new System.Drawing.Size(246, 70);
-            this.lstValue.TabIndex = 7;
-            this.lstValue.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
-            this.lstValue.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
+            this.lstMorphs.BackColor = System.Drawing.SystemColors.Control;
+            this.lstMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.lstMorphs.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.lstMorphs.FormattingEnabled = true;
+            this.lstMorphs.IntegralHeight = false;
+            this.lstMorphs.Location = new System.Drawing.Point(0, 229);
+            this.lstMorphs.Name = "lstMorphs";
+            this.lstMorphs.Size = new System.Drawing.Size(246, 67);
+            this.lstMorphs.TabIndex = 22;
+            this.lstMorphs.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
+            this.lstMorphs.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
             // 
             // frmPicture
             // 
@@ -85,7 +78,7 @@ namespace FaceExpressionHelper.UI
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(246, 299);
-            this.Controls.Add(this.lstValue);
+            this.Controls.Add(this.lstMorphs);
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.KeyPreview = true;
@@ -103,6 +96,7 @@ namespace FaceExpressionHelper.UI
         #endregion
 
         private PictureBox pictureBox1;
-        private ListBox lstValue;
+        private UserControls.MorphListBox lstMorphs;
+        private Timer timer1;
     }
 }

@@ -12,11 +12,9 @@ namespace FaceExpressionHelper.UI
 {
     public partial class frmPicture : Form
     {
-        public frmPicture(ListControlConvertEventHandler listboxFormatHandler)
+        public frmPicture()
         {
             InitializeComponent();
-            this.lstValue.Format += listboxFormatHandler;
-            this.lstValue.Disposed += (s, e) => this.lstValue.Format -= listboxFormatHandler;
             this.TopMost = true;
         }
 
@@ -31,7 +29,7 @@ namespace FaceExpressionHelper.UI
         /// <param name="pt"></param>
         /// <param name="ownerForm">オーナーフォーム</param>
         /// <param name="item"></param>
-        public void Show(Point pt, Form ownerForm, string activeModel, Args args, ExpressionItem item)
+        public void Show(Point pt, Form ownerForm, string activeModel, Args args, ExpressionItem item, List<MorphItem> allMorphs)
         {
             if (!this.Visible)
                 this.Show();
@@ -45,11 +43,11 @@ namespace FaceExpressionHelper.UI
 
             this.pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
 
-            this.lstValue.Items.Clear();
+            this.lstMorphs.Items.Clear();
             if (item != null && item.MorphItems != null)
             {
-                var applyingMorphs = item.GetReplacedItem(args.ReplacedMorphs, activeModel);
-                this.lstValue.Items.AddRange(applyingMorphs.ToArray());
+                var applyingMorphs = item.GetApplyingMorphs(activeModel, args.ReplacedMorphs, allMorphs);
+                this.lstMorphs.Items.AddRange(applyingMorphs.ToArray());
             }
         }
 
@@ -66,6 +64,7 @@ namespace FaceExpressionHelper.UI
 
             if (!this.Visible)
             {
+                this.timer1.Enabled = false;
                 this.pictureBox1.Image = null;
                 this.CurrentItem = null;
             }
@@ -78,23 +77,28 @@ namespace FaceExpressionHelper.UI
 
         private void frmPicture_MouseEnter(object sender, EventArgs e)
         {
+            this.timer1.Enabled = true;
             this.IsMouseOn = true;
         }
 
         private void frmPicture_MouseLeave(object sender, EventArgs e)
         {
-            this.IsMouseOn = false;
-            this.BeginInvoke(new Action(async () =>
-            {
-                await Task.Delay(100);
-                if (!this.IsMouseOn)
-                    this.Hide();
-            }));
+            //this.BeginInvoke(new Action(async () =>
+            //{
+            //    await Task.Delay(100);
+            //    if (!this.IsMouseOn)
+            //        this.Hide();
+            //}));
         }
 
-        private void pictureBox1_MouseHover(object sender, EventArgs e)
+        private void timer1_Tick(object sender, EventArgs e)
         {
-            this.IsMouseOn = true;
+            var rect = new Rectangle(new Point(this.Bounds.X - 10, this.Bounds.Y), this.Bounds.Size + new Size(20, 20));
+            if (!rect.Contains(Cursor.Position))
+            {
+                this.IsMouseOn = false;
+                this.Hide();
+            }
         }
     }
 }

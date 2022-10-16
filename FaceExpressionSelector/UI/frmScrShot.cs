@@ -11,7 +11,7 @@ using System.Windows.Forms;
 
 namespace FaceExpressionHelper.UI
 {
-    public partial class frmScrShot : NakedForm
+    public partial class frmScrShot : NakedForm //リサイズ可能かつ上部バーが無いフォームを実現するためにNakedFormを継承
     {
         private bool _isInitializing = false;
 

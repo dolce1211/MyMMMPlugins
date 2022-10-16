@@ -68,16 +68,28 @@ namespace FaceExpressionSelectorMMD
         private void InitializeComponent()
         {
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            this.pnlTop.SuspendLayout();
             this.pnlBottom.SuspendLayout();
             this.SuspendLayout();
+            //
+            // mmdSelector
+            //
+            this.mmdSelector.Location = new System.Drawing.Point(0, 578);
+            //
+            // pnlBottom
+            //
+            this.pnlBottom.Location = new System.Drawing.Point(0, 542);
             //
             // frmMainMMD
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.ClientSize = new System.Drawing.Size(287, 624);
             this.Name = "frmMainMMD";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMainMMD_FormClosing);
             this.Shown += new System.EventHandler(this.frmMainMMD_Shown);
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            this.pnlTop.ResumeLayout(false);
+            this.pnlTop.PerformLayout();
             this.pnlBottom.ResumeLayout(false);
             this.pnlBottom.PerformLayout();
             this.ResumeLayout(false);
@@ -167,6 +179,8 @@ namespace FaceExpressionSelectorMMD
                 Process mmd = null;
                 var activeModelName = string.Empty;
                 var isModelChanged = false;
+                if (this.IsDisposed)
+                    return null;
                 try
                 {
                     this.Invoke((Action)(() => mmd = this.mmdSelector.SelectMMD()));
@@ -199,6 +213,7 @@ namespace FaceExpressionSelectorMMD
                         }
                         else
                         {
+                            //モデルが変わった
                             this.Invoke((Action)(() =>
                             {
                                 if (!string.IsNullOrEmpty(activeModelName))
@@ -207,7 +222,6 @@ namespace FaceExpressionSelectorMMD
                                     this.lblActiveModel.Text = "モデルを選択してください";
                             }));
 
-                            //モデルが変わった
                             if (_modelCache.ContainsKey(activeModelName))
                             {
                                 _currentModel = _modelCache[activeModelName];
@@ -247,6 +261,7 @@ namespace FaceExpressionSelectorMMD
                                     return _currentModel;
                                 }
 
+                                //MorphItemWithIndexのコレクションを作成して_currentModelへ
                                 var allMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
                                 foreach (var kvp in allmorphsHash)
                                 {
@@ -264,10 +279,34 @@ namespace FaceExpressionSelectorMMD
                                     }
                                     allMorphs.Add(kvp.Key, morphtypeList);
                                 }
-                                _currentModel = new ActiveModelInfo(activeModelName, allMorphs);
+                                var tmpactivemodelName = MMDUtilility.TryGetActiveModelName(mmd.MainWindowHandle);
+                                if (_prevmmdID != mmd?.Id)
+                                {
+                                    //処理している間に監視してるMMDが切り替わった。モデルキャッシュを初期化する
+                                    _modelCache = new Dictionary<string, ActiveModelInfo>();
+                                    this._currentModel = new ActiveModelInfo();
+                                }
+                                else if (activeModelName != tmpactivemodelName)
+                                {
+                                    //なんかおかしい。もう一回やりなおす
+                                    this._currentModel = new ActiveModelInfo();
+                                }
+                                else
+                                {
+                                    _currentModel = new ActiveModelInfo(activeModelName, allMorphs);
 
-                                if (!_modelCache.ContainsKey(activeModelName))
-                                    _modelCache.Add(activeModelName, _currentModel);
+                                    if (!_modelCache.ContainsKey(activeModelName))
+                                    {
+                                        if (_currentModel.AllMorphs.Count == 0)
+                                            Debugger.Break();
+                                        if (activeModelName.IndexOf("沙花叉クロヱ") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "恐ろしい子！"))
+                                            Debugger.Break();
+                                        if (activeModelName.IndexOf("Tda式改変亞北ネル") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "白目"))
+                                            Debugger.Break();
+
+                                        _modelCache.Add(activeModelName, _currentModel);
+                                    }
+                                }
                             }
                         }
                     }
@@ -309,11 +348,10 @@ namespace FaceExpressionSelectorMMD
                 //アクティブモデル無し
                 return false;
 
-            //置換を考慮した一覧を作成する
-            var applyingMorphs = item.GetReplacedItem(this._args.ReplacedMorphs, this.ActiveModelName);
-
+            //処理対象のモーフ情報を取得
+            var applyingMorphs = this.GetApplyingMorphs(item);
             //無いモーフチェック
-            var missingMorphs = this.GetMissingMorphs(applyingMorphs.Cast<MorphItem>().ToList());
+            var missingMorphs = this.GetMissingMorphs(item);
             if (missingMorphs.Count > 0)
             {
                 using (var frmMissing = new frmShowMissingMorphs(this._currentModel.ModelName, missingMorphs.Select(n => n.MorphName).ToList()))
@@ -437,23 +475,6 @@ namespace FaceExpressionSelectorMMD
         }
 
         /// <summary>
-        /// 現在のアクティブモデルに欠けているモーフ一覧を取得します。
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        protected override List<MorphItem> GetMissingMorphs(List<MorphItem> morphItems)
-        {
-            var ret = new List<MorphItem>();
-            var allMorphs = this.GetAllMorphsForActiveModel();
-            foreach (MorphItem mi in morphItems)
-            {
-                if (!allMorphs.Any(n => n.MorphName == mi.MorphName))
-                    ret.Add(mi);
-            }
-            return ret;
-        }
-
-        /// <summary>
         /// アクティブモデルが変更された
         /// </summary>
         /// <param name="sender"></param>
@@ -469,6 +490,11 @@ namespace FaceExpressionSelectorMMD
         }
 
         #endregion "override"
+
+        private void frmMainMMD_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            this._timer.Change(int.MaxValue, int.MaxValue);
+        }
     }
 
     /// <summary>
