@@ -148,7 +148,7 @@ namespace FaceExpressionHelper.UI
                 foreach (Morph morph in allMorphs)
                 {
                     var framelist = new List<MorphFrameData>();
-                    var applyingMI = applyingMorphs.Where(n => n.MorphName == morph.Name).FirstOrDefault();
+                    var applyingMI = applyingMorphs.Where(n => n.DspMorphName == morph.Name).FirstOrDefault();
                     if (applyingMI != null && applyingMI.Ignore)
                         //無視するモーフだ
                         continue;

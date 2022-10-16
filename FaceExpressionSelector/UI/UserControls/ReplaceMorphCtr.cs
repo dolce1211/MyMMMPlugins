@@ -89,12 +89,13 @@ namespace FaceExpressionHelper.UI.UserControls
                     if (ctrtuple.Item1.SelectedIndex > 0)
                     {
                         var dsp = ctrtuple.Item1.SelectedItem as MorphItem;
-                        replacedMorph = dsp.MorphName;
+                        if (dsp != null)
+                            replacedMorph = dsp.MorphName;
                     }
                     if (ctrtuple.Item2.Enabled && (float)ctrtuple.Item2.Value != 1f)
                         correction = (float)Math.Round(ctrtuple.Item2.Value, 3);
 
-                    if (!string.IsNullOrEmpty(replacedMorph) || correction != 1f)
+                    if (ignore || !string.IsNullOrEmpty(replacedMorph) || correction != 1f)
                     {
                         if (string.IsNullOrEmpty(replacedMorph))
                             replacedMorph = this._morphItem.MorphName;
