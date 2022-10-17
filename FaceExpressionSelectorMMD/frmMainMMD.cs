@@ -51,9 +51,13 @@ namespace FaceExpressionSelectorMMD
         protected override void OnShown(EventArgs e)
         {
             _timer = new System.Threading.Timer(new System.Threading.TimerCallback(
-                (Action<object>)(x =>
+                (Action<object>)(async x =>
                 {
-                    _ = Task.Run(() => this.TryApplyActiveModel());
+                    _timer.Change(int.MaxValue, int.MaxValue);
+
+                    await this.TryApplyActiveModel();
+
+                    _timer.Change(1000, 0);
                 }))
                 , null, 10, 1000);
 

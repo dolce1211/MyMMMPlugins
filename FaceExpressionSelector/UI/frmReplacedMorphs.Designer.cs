@@ -32,6 +32,7 @@
             this.pnlBody = new System.Windows.Forms.Panel();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.btnQuote = new System.Windows.Forms.Button();
             this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.pnlBody.SuspendLayout();
             this.SuspendLayout();
@@ -53,9 +54,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlBody.AutoScroll = true;
             this.pnlBody.Controls.Add(this.replaceMorphCtr1);
-            this.pnlBody.Location = new System.Drawing.Point(6, 26);
+            this.pnlBody.Location = new System.Drawing.Point(6, 31);
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Size = new System.Drawing.Size(590, 381);
+            this.pnlBody.Size = new System.Drawing.Size(590, 371);
             this.pnlBody.TabIndex = 11;
             // 
             // btnOK
@@ -80,6 +81,15 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnOK_Click);
             // 
+            // btnQuote
+            // 
+            this.btnQuote.Location = new System.Drawing.Point(481, 6);
+            this.btnQuote.Name = "btnQuote";
+            this.btnQuote.Size = new System.Drawing.Size(115, 23);
+            this.btnQuote.TabIndex = 14;
+            this.btnQuote.Text = "他モデルより引用";
+            this.btnQuote.UseVisualStyleBackColor = true;
+            // 
             // replaceMorphCtr1
             // 
             this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -94,6 +104,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(601, 449);
+            this.ControlBox = false;
+            this.Controls.Add(this.btnQuote);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.pnlBody);
@@ -115,5 +127,6 @@
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
         private UserControls.ReplaceMorphCtr replaceMorphCtr1;
+        private System.Windows.Forms.Button btnQuote;
     }
 }

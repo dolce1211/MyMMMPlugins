@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Management;
 using System.Runtime.CompilerServices;
 using MyUtility;
+using System.Windows;
 
 namespace MMDUtil
 {
@@ -67,6 +68,10 @@ namespace MMDUtil
 
     public static class MMDUtilility
     {
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool EnableWindow(IntPtr hWnd, bool bEnable);
+
         [DllImport("user32.dll")]
         private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
@@ -188,7 +193,7 @@ namespace MMDUtil
         private const int CB_GETLBTEXT = 0x148;              //コンボボックスのリストボックスから文字列を取得する
         private const int CB_GETLBTEXTLEN = 0x149;           //コンボボックスのリストボックス文字列の長さを取得する
         private const int CB_SETCURSEL = 0x14e;               //コンボボックスに指定のインデックをセットする
-
+        private const int CB_SHOWDROPDOWN = 0x14f;          //コンボボックスのリストボックスの表示または非表示を切り替える
         private const int CBN_SELCHANGE = 0x0001;           //コンボボックスの選択が変わったよ状態を送る
 
         // EnumWindowsから呼び出されるコールバック関数WNDENUMPROCのデリゲート
@@ -271,29 +276,33 @@ namespace MMDUtil
             if (mmdhash == null || !mmdhash.ContainsKey(_Combo_Model))
                 return string.Empty;
             var modelCombo = mmdhash[_Combo_Model];
-
-            return modelCombo.Text;
-            int textLen = GetWindowTextLength(modelCombo.hWnd);
-            string windowText = null;
-            if (0 < textLen)
-            {
-                // ウィンドウのタイトルを取得する
-                StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
-                GetWindowText(modelCombo.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
-                windowText = windowTextBuffer.ToString();
-            }
-
-            return windowText;
-
             if (modelCombo == null)
                 return String.Empty;
-            var selectedIndex = SendMessage(modelCombo.hWnd, CB_GETCURSEL, 0, "");
 
-            var textlength = SendMessage(modelCombo.hWnd, CB_GETLBTEXTLEN, selectedIndex, "");
-            var sb = new StringBuilder(textlength);
-            SendMessage(modelCombo.hWnd, CB_GETLBTEXT, selectedIndex, sb);
+            return modelCombo.Text;
+            //var textLen = GetWindowTextLength(modelCombo.hWnd);
+            //string windowText = null;
+            //if (0 < textLen)
+            //{
+            //    // ウィンドウのタイトルを取得する
+            //    StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
+            //    GetWindowText(modelCombo.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
+            //    windowText = windowTextBuffer.ToString();
+            //}
 
-            return sb.ToString();
+            //var ret1 = string.Empty;
+
+            //var selectedIndex = SendMessage(modelCombo.hWnd, CB_GETCURSEL, 1, "");
+            ////Console.WriteLine($"CB_GETCURSEL:{selectedIndex} windowsText:{modelCombo.Text}");
+            //var textlength = SendMessage(modelCombo.hWnd, CB_GETLBTEXTLEN, selectedIndex, "");
+            //if (textlength > 0)
+            //{
+            //    var sb = new StringBuilder(textlength);
+            //    SendMessage(modelCombo.hWnd, CB_GETLBTEXT, selectedIndex, sb);
+            //    ret1 = sb.ToString();
+            //}
+
+            //return ret1;
         }
 
         /// <summary>
@@ -472,38 +481,61 @@ namespace MMDUtil
         public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle, Func<string, bool> onActiveModelChanged = null)
         {
             var activemodel = TryGetActiveModelName(parentHandle);
-        tryagain:
-            var ret = new Dictionary<MorphType, List<string>>();
-            var retrycount = 0;
-            foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
+
+            Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
+            if (mmdhash == null)
+                return null;
+
+            //モデル選択コンボ
+            var modelCombo = mmdhash[_Combo_Model];
+            //最後の手段。MMDのモデル選択コンボをいじれなくする**//
+            //EnableWindow(modelCombo.hWnd, false);
+            //最後の手段//
+
+            try
             {
-                if (morphtype == MorphType.none)
-                    continue;
-                var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
-                if (morphwindow == null || morphwindow.ComboBox == null)
-                    return ret;
-
-                var lst = GetAllComboItems(morphwindow.ComboBox);
-                ret.Add(morphtype, lst);
-
-                var tmpactivemodel = TryGetActiveModelName(parentHandle);
-                if (activemodel != tmpactivemodel)
+            tryagain:
+                var ret = new Dictionary<MorphType, List<string>>();
+                var retrycount = 0;
+                foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
                 {
-                    //処理途中でアクティブモデルが切り替わったっぽい。
-                    //このまま進めると不正データになるのでもう一回最初からやりなおす
-                    activemodel = tmpactivemodel;
-                    retrycount++;
-                    if (onActiveModelChanged != null && retrycount <= 5)
-                    {
-                        if (!onActiveModelChanged.Invoke(tmpactivemodel))
-                            return null;
+                    if (morphtype == MorphType.none)
+                        continue;
+                    var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+                    if (morphwindow == null || morphwindow.ComboBox == null)
+                        return ret;
 
-                        //最初からやりなおす
-                        goto tryagain;
+                    var lst = GetAllComboItems(morphwindow.ComboBox);
+                    ret.Add(morphtype, lst);
+
+                    var tmpactivemodel = TryGetActiveModelName(parentHandle);
+                    if (activemodel != tmpactivemodel)
+                    {
+                        //処理途中でアクティブモデルが切り替わったっぽい。
+                        //このまま進めると不正データになるのでもう一回最初からやりなおす
+                        activemodel = tmpactivemodel;
+                        retrycount++;
+                        if (onActiveModelChanged != null && retrycount <= 5)
+                        {
+                            if (!onActiveModelChanged.Invoke(tmpactivemodel))
+                                return null;
+
+                            //最初からやりなおす
+                            goto tryagain;
+                        }
                     }
                 }
+                return ret;
             }
-            return ret;
+            catch (Exception ex)
+            {
+                //何かエラーが出たら握りつぶす
+                return new Dictionary<MorphType, List<string>>();
+            }
+            finally
+            {
+                EnableWindow(modelCombo.hWnd, true);
+            }
         }
 
         /// <summary>
@@ -748,15 +780,6 @@ namespace MMDUtil
             if (win.ClassName == "ComboBox")
             {
                 var count = SendMessage(win.hWnd, CB_GETCOUNT, null, null);
-                int textLen = GetWindowTextLength(win.hWnd);
-                string windowText = null;
-                if (0 < textLen)
-                {
-                    // ウィンドウのタイトルを取得する
-                    StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
-                    GetWindowText(win.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
-                    windowText = windowTextBuffer.ToString();
-                }
                 //var selectedIndex = SendMessage(win.hWnd, CB_GETCURSEL, 0, "");
                 for (int i = 0; i < count; i++)
                 {
@@ -837,6 +860,7 @@ namespace MMDUtil
 
             if (_cache.ContainsKey(mmdhWnd))
                 return _cache[mmdhWnd];
+
             return null;
         }
 
