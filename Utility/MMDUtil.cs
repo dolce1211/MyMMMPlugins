@@ -10,6 +10,7 @@ using System.Management;
 using System.Runtime.CompilerServices;
 using MyUtility;
 using System.Windows;
+using System.ComponentModel;
 
 namespace MMDUtil
 {
@@ -489,7 +490,7 @@ namespace MMDUtil
             //モデル選択コンボ
             var modelCombo = mmdhash[_Combo_Model];
             //最後の手段。MMDのモデル選択コンボをいじれなくする**//
-            //EnableWindow(modelCombo.hWnd, false);
+            EnableWindow(modelCombo.hWnd, false);
             //最後の手段//
 
             try
@@ -1139,8 +1140,22 @@ namespace MMDUtil
             _isBusy = true;
             try
             {
-                var mmds = Process.GetProcessesByName("MikuMikuDance");
+                var mmdarray = Process.GetProcessesByName("MikuMikuDance");
 
+                var mmds = new List<Process>();
+                foreach (var tmpmmd in mmdarray)
+                {
+                    //32bit/64bitが不一致のプロセスを除外する
+                    try
+                    {
+                        var x = tmpmmd.MainModule;
+                        mmds.Add(tmpmmd);
+                    }
+                    catch (Win32Exception ex)
+                    {
+                        Console.WriteLine($"32bit/64bit{tmpmmd.MainWindowTitle}");
+                    }
+                }
                 if (this._currentmmd != null && this._currentmmd.HasExited)
                 {
                     this._currentmmd.Dispose();
@@ -1166,7 +1181,7 @@ namespace MMDUtil
                 {
                     if (this._mmdSelector != null)
                     {
-                        mmd = this._mmdSelector.TrySelectMMD(this._currentmmd, mmds);
+                        mmd = this._mmdSelector.TrySelectMMD(this._currentmmd, mmds.ToArray());
                         if (mmd != null)
                             return mmd;
                     }

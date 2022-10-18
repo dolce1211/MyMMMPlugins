@@ -1,9 +1,11 @@
 ﻿using FaceExpressionHelper;
 using FaceExpressionHelper.UI;
+using LibMMD.Pmx;
 using MMDUtil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +26,11 @@ namespace FaceExpressionSelectorMMD
         /// 取得済みのActiveModelInfoのキャッシュ。モデル名をキーにしてるので、同名かつモーフ状態が異なるモデルが同じプロジェクトに複数読み込まれるとおかしくなるかも
         /// </summary>
         private Dictionary<string, ActiveModelInfo> _modelCache = new Dictionary<string, ActiveModelInfo>();
+
+        /// <summary>
+        /// テストキャッシュ
+        /// </summary>
+        private Dictionary<string, ActiveModelInfo> _testCache = new Dictionary<string, ActiveModelInfo>();
 
         private int? _prevmmdID = -1;
 
@@ -193,6 +200,7 @@ namespace FaceExpressionSelectorMMD
                     {
                         //MMD紐づけ無し
                         _modelCache = new Dictionary<string, ActiveModelInfo>();
+                        _testCache = new Dictionary<string, ActiveModelInfo>();
                         _currentModel = new ActiveModelInfo();
                         return _currentModel;
                     }
@@ -202,8 +210,17 @@ namespace FaceExpressionSelectorMMD
                     {
                         //監視してるMMDが切り替わった。モデルキャッシュを初期化する
                         _modelCache = new Dictionary<string, ActiveModelInfo>();
+                        _testCache = new Dictionary<string, ActiveModelInfo>();
                         this._currentModel = new ActiveModelInfo();
                         isModelChanged = true;
+                    }
+
+                    if (_testCache == null || _testCache.Count == 0)
+                    {
+                        var sw = new Stopwatch();
+                        sw.Start();
+                        _testCache = LibMMDUtil.CreateActiveModelInfoHashFromProcess(mmd);
+                        Console.WriteLine("読み取り:" + sw.ElapsedMilliseconds);
                     }
 
                     activeModelName = MMDUtilility.TryGetActiveModelName(mmd.MainWindowHandle);
@@ -232,32 +249,11 @@ namespace FaceExpressionSelectorMMD
                             }
                             else
                             {
-                                var msg = $"「{activeModelName}」\r\nのモーフ情報を取得しています。\r\nしばらくお待ち下さい。";
+                                var msg = $"「{activeModelName}」\r\nのモーフ情報を取得しています。\r\n(初回選択時のみ)\r\n\r\nしばらくお待ち下さい。";
                                 this.ShowlblWait(msg);
 
                                 var isGetAllMorphCanceled = false;
-                                var allmorphsHash = MMDUtilility.TryGetAllMorphValue(mmd.MainWindowHandle
-                                    , new Func<string, bool>(x =>
-                                    {
-                                        //↑の処理中にモデルが切り替わった場合に備える
-                                        activeModelName = x;
-                                        if (activeModelName == _MMD_CAMERAMODE_CAPTION)
-                                        {
-                                            //カメラモードに切り替わった
-                                            _currentModel = new ActiveModelInfo();
-                                            isGetAllMorphCanceled = true;
-                                        }
-                                        else if (_modelCache.ContainsKey(activeModelName))
-                                        {
-                                            //すでにキャッシュ済みのモデルに切り替わった
-                                            _currentModel = _modelCache[activeModelName];
-                                            isGetAllMorphCanceled = true;
-                                        }
-
-                                        msg = $"「{activeModelName}」\r\nのモーフ情報を取得しています。\r\nしばらくお待ち下さい。";
-                                        this.ShowlblWait(msg);
-                                        return !isGetAllMorphCanceled;
-                                    }));
+                                var allmorphsHash = MMDUtilility.TryGetAllMorphValue(mmd.MainWindowHandle);
 
                                 if (isGetAllMorphCanceled || allmorphsHash == null)
                                 {
@@ -284,7 +280,7 @@ namespace FaceExpressionSelectorMMD
                                     allMorphs.Add(kvp.Key, morphtypeList);
                                 }
                                 var tmpactivemodelName = MMDUtilility.TryGetActiveModelName(mmd.MainWindowHandle);
-                                if (_prevmmdID != mmd?.Id)
+                                if (_prevmmdID >= 0 && _prevmmdID != mmd?.Id)
                                 {
                                     //処理している間に監視してるMMDが切り替わった。モデルキャッシュを初期化する
                                     _modelCache = new Dictionary<string, ActiveModelInfo>();
@@ -303,17 +299,29 @@ namespace FaceExpressionSelectorMMD
                                     {
                                         if (_currentModel.AllMorphs.Count == 0)
                                             Debugger.Break();
-                                        if (activeModelName.IndexOf("沙花叉クロヱ") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "恐ろしい子！"))
-                                            Debugger.Break();
-                                        if (activeModelName.IndexOf("Tda式改変亞北ネル") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "白目"))
-                                            Debugger.Break();
+                                        //if (activeModelName.IndexOf("沙花叉クロヱ") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "恐ろしい子！"))
+                                        //    Debugger.Break();
+                                        //if (activeModelName.IndexOf("Tda式改変亞北ネル") >= 0 && _currentModel.AllMorphs.Values.FirstOrDefault().Any(n => n.MorphName == "白目"))
+                                        //    Debugger.Break();
 
+                                        if (_testCache.ContainsKey(_currentModel.ModelName))
+                                        {
+                                            var testmodel = _testCache[_currentModel.ModelName];
+                                            if (!LibMMDUtil.CompareActiveModel(_currentModel, testmodel))
+                                                Debugger.Break();
+                                            Console.WriteLine($"CompareActiveModel合格:{_currentModel.ModelName}");
+                                        }
+                                        else
+                                        {
+                                            Debugger.Break();
+                                        }
                                         _modelCache.Add(activeModelName, _currentModel);
                                     }
                                 }
                             }
                         }
                     }
+
                     return this._currentModel;
                 }
                 finally
