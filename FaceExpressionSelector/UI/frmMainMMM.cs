@@ -24,6 +24,21 @@ namespace FaceExpressionHelper.UI
         {
             this._scene = scene;
             this._applicationForm = applicationForm;
+
+            //MMMで動いている
+            OperationgMode = OperatingMode.OnMMM;
+        }
+
+        /// <summary>
+        /// 現在のフレームを取得します。
+        /// </summary>
+        /// <returns></returns>
+        protected override long GetCurrentFrame()
+        {
+            if (this._scene != null)
+                return this._scene.MarkerPosition;
+
+            return 0;
         }
 
         /// <summary>

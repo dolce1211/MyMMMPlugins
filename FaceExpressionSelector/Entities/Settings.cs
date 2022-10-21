@@ -16,11 +16,6 @@ namespace FaceExpressionHelper
     public class Args
     {
         /// <summary>
-        /// 表情一覧
-        /// </summary>
-        public List<ExpressionItem> Items { get; set; } = new List<ExpressionItem>();
-
-        /// <summary>
         /// 文字情報
         /// </summary>
         public LetterArgs LetterArgs { get; set; } = null;
@@ -36,6 +31,12 @@ namespace FaceExpressionHelper
         public bool TopMost { get; set; } = false;
 
         /// <summary>
+        /// 表情セット一覧
+        /// </summary>
+        [XmlIgnore()]
+        public List<ExpressionSet> ExpressionSets { get; set; } = new List<ExpressionSet>();
+
+        /// <summary>
         /// 対象外の目・リップ・まゆモーフ一覧
         /// </summary>
         [XmlIgnore()]
@@ -46,12 +47,6 @@ namespace FaceExpressionHelper
         /// </summary>
         [XmlIgnore()]
         public List<string> TargetOtherMorphs { get; set; } = new List<string>();
-
-        /// <summary>
-        /// モデルごとのモーフ置換情報
-        /// </summary>
-        [XmlIgnore()]
-        public List<ReplacedMorphNameItem> ReplacedMorphs { get; set; } = new List<ReplacedMorphNameItem>();
 
         /// <summary>
         /// 引数のモーフが処理対象ならtrue
@@ -73,17 +68,52 @@ namespace FaceExpressionHelper
                 return !ExceptionMainMorphs.Contains(morph.MorphName);
             }
         }
+
+        /// <summary>
+        /// 選択されていた表情セット
+        /// </summary>
+        public string SelectedExpressionSet { get; set; }
     }
 
     /// <summary>
     /// 表情セット
     /// </summary>
+    [DebuggerDisplay("{Name}")]
+    public class ExpressionSet
+    {
+        /// <summary>
+        /// 表情名
+        /// </summary>
+        public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 表情一覧
+        /// </summary>
+        public List<ExpressionItem> Items { get; set; } = new List<ExpressionItem>();
+
+        /// <summary>
+        /// モデルごとのモーフ置換情報
+        /// </summary>
+        [XmlIgnore()]
+        public List<ReplacedMorphNameItem> ReplacedMorphs { get; set; } = new List<ReplacedMorphNameItem>();
+    }
+
+    /// <summary>
+    /// 表情
+    /// </summary>
+    [DebuggerDisplay("{Name}")]
     public class ExpressionItem
     {
         /// <summary>
         /// 表情名
         /// </summary>
         public string Name { get; set; } = string.Empty;
+
+        /// <summary>
+        /// フォルダ(表情セット名)
+        /// </summary>
+        [XmlIgnore()]
+        public string Folder { get; set; } = String.Empty;
 
         /// <summary>
         /// モーフ一覧
@@ -125,7 +155,10 @@ namespace FaceExpressionHelper
             get
             {
                 var dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+
                 dir = System.IO.Path.Combine(dir, "faceExpressions");
+                if (!string.IsNullOrEmpty(Folder))
+                    dir = System.IO.Path.Combine(dir, this.Folder);
                 return System.IO.Path.Combine(dir, $"{this.Name}.png");
             }
         }
@@ -148,9 +181,10 @@ namespace FaceExpressionHelper
                     {
                         try
                         {
-                            var img = Image.FromFile(this.ThumbnailPath);
-                            this._thumbnail = img.Clone() as Image;
-                            img.Dispose();
+                            using (var img = Image.FromFile(this.ThumbnailPath))
+                            {
+                                this._thumbnail = new Bitmap(img);
+                            }
                         }
                         catch (Exception)
                         {
@@ -247,6 +281,7 @@ namespace FaceExpressionHelper
         }
     }
 
+    [DebuggerDisplay("{MorphName}")]
     public class MorphItem
     {
         /// <summary>

@@ -27,6 +27,23 @@ namespace FaceExpressionSelectorMMD
             return ret;
         }
 
+        public static FileInfo GetPmmInfoFromProcess(Process mmd)
+        {
+            var ret = new List<PmxModel>();
+            if (mmd == null)
+                return null;
+
+            if (mmd.MainWindowTitle.Length > 16)
+            {
+                var pmmfilepath = mmd.MainWindowTitle.Substring(15, mmd.MainWindowTitle.Length - 16);
+                if (System.IO.File.Exists(pmmfilepath))
+                {
+                    return new FileInfo(pmmfilepath);
+                }
+            }
+            return null;
+        }
+
         /// <summary>
         /// MMDのプロセスで読み込まれているモデルの一覧を返します。
         /// </summary>
@@ -37,9 +54,11 @@ namespace FaceExpressionSelectorMMD
             var ret = new List<PmxModel>();
             if (mmd == null)
                 return ret;
+            var pmminfo = GetPmmInfoFromProcess(mmd);
+            if (pmminfo == null)
+                return ret;
 
             var mmdexedir = string.Empty;
-
             try
             {
                 //32bit/64bitが揃っていないMMDだとProcessからMainModule情報を取れない
@@ -47,44 +66,41 @@ namespace FaceExpressionSelectorMMD
             }
             catch (Win32Exception)
             {
-                return ret;
+                return null;
             }
-            if (mmd.MainWindowTitle.Length > 16)
+            if (System.IO.File.Exists(pmminfo.FullName))
             {
-                var pmxfilepath = mmd.MainWindowTitle.Substring(15, mmd.MainWindowTitle.Length - 16);
-                if (System.IO.File.Exists(pmxfilepath))
+                var pmxfiles = new List<string>();
+                //pmmからemmファイルを取得
+                var emmfilepath = pmminfo.FullName.ToLower().Replace(".pmm", ".emm");
+                if (System.IO.File.Exists(emmfilepath))
                 {
-                    var pmxfiles = new List<string>();
-                    var emmfilepath = pmxfilepath.ToLower().Replace(".pmm", ".emm");
-                    if (System.IO.File.Exists(emmfilepath))
+                    var emmlines = System.IO.File.ReadAllLines(emmfilepath, System.Text.Encoding.GetEncoding("shift_jis"));
+                    var start = false;
+
+                    foreach (var line in emmlines)
                     {
-                        var emmlines = System.IO.File.ReadAllLines(emmfilepath, System.Text.Encoding.GetEncoding("shift_jis"));
-                        var start = false;
-
-                        foreach (var line in emmlines)
+                        if (start)
                         {
-                            if (start)
+                            var array = line.Split('=');
+                            if (array[0].ToLower().Trim().IndexOf("pmd") == 0)
                             {
-                                var array = line.Split('=');
-                                if (array[0].ToLower().Trim().IndexOf("pmd") == 0)
-                                {
-                                    var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
-                                    if (System.IO.File.Exists(pmxpath))
-                                        pmxfiles.Add(pmxpath);
-                                }
+                                var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
+                                if (System.IO.File.Exists(pmxpath))
+                                    pmxfiles.Add(pmxpath);
                             }
-                            if (start && line.IndexOf("[") == 0)
-                                break;
-                            if (line.ToLower() == "[object]")
-                                start = true;
                         }
+                        if (start && line.IndexOf("[") == 0)
+                            break;
+                        if (line.ToLower() == "[object]")
+                            start = true;
+                    }
 
-                        foreach (var pmxpath in pmxfiles)
-                        {
-                            var pmxmodel = FilePath2PmxModel(pmxpath);
-                            if (pmxmodel != null)
-                                ret.Add(pmxmodel);
-                        }
+                    foreach (var pmxpath in pmxfiles)
+                    {
+                        var pmxmodel = FilePath2PmxModel(pmxpath);
+                        if (pmxmodel != null)
+                            ret.Add(pmxmodel);
                     }
                 }
             }

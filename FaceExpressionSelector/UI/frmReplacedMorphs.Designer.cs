@@ -29,11 +29,13 @@
         private void InitializeComponent()
         {
             this.lblTitle = new System.Windows.Forms.Label();
-            this.pnlBody = new System.Windows.Forms.Panel();
+            this.pnlBody = new MMDUtil.FixedPanel();
+            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnQuote = new System.Windows.Forms.Button();
-            this.replaceMorphCtr1 = new FaceExpressionHelper.UI.UserControls.ReplaceMorphCtr();
+            this.chkApplyMorph = new System.Windows.Forms.CheckBox();
+            this.btnClear = new System.Windows.Forms.Button();
             this.pnlBody.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -56,13 +58,22 @@
             this.pnlBody.Controls.Add(this.replaceMorphCtr1);
             this.pnlBody.Location = new System.Drawing.Point(6, 31);
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Size = new System.Drawing.Size(590, 371);
+            this.pnlBody.Size = new System.Drawing.Size(590, 366);
             this.pnlBody.TabIndex = 11;
+            // 
+            // replaceMorphCtr1
+            // 
+            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
+            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
+            this.replaceMorphCtr1.Size = new System.Drawing.Size(590, 28);
+            this.replaceMorphCtr1.TabIndex = 0;
             // 
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(413, 412);
+            this.btnOK.Location = new System.Drawing.Point(413, 407);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(85, 30);
             this.btnOK.TabIndex = 12;
@@ -73,7 +84,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(504, 412);
+            this.btnCancel.Location = new System.Drawing.Point(504, 407);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(85, 30);
             this.btnCancel.TabIndex = 13;
@@ -87,24 +98,38 @@
             this.btnQuote.Name = "btnQuote";
             this.btnQuote.Size = new System.Drawing.Size(115, 23);
             this.btnQuote.TabIndex = 14;
-            this.btnQuote.Text = "他モデルより引用";
+            this.btnQuote.Text = "実績より引用";
             this.btnQuote.UseVisualStyleBackColor = true;
             // 
-            // replaceMorphCtr1
+            // chkApplyMorph
             // 
-            this.replaceMorphCtr1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.replaceMorphCtr1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.replaceMorphCtr1.Location = new System.Drawing.Point(0, 0);
-            this.replaceMorphCtr1.Name = "replaceMorphCtr1";
-            this.replaceMorphCtr1.Size = new System.Drawing.Size(590, 28);
-            this.replaceMorphCtr1.TabIndex = 0;
+            this.chkApplyMorph.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.chkApplyMorph.AutoSize = true;
+            this.chkApplyMorph.Location = new System.Drawing.Point(6, 412);
+            this.chkApplyMorph.Name = "chkApplyMorph";
+            this.chkApplyMorph.Size = new System.Drawing.Size(184, 16);
+            this.chkApplyMorph.TabIndex = 15;
+            this.chkApplyMorph.Text = "選択したモーフの適用結果を反映";
+            this.chkApplyMorph.UseVisualStyleBackColor = true;
+            // 
+            // btnClear
+            // 
+            this.btnClear.Location = new System.Drawing.Point(413, 6);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(54, 23);
+            this.btnClear.TabIndex = 16;
+            this.btnClear.Text = "クリア";
+            this.btnClear.UseVisualStyleBackColor = true;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             // 
             // frmReplacedMorphs
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(601, 449);
+            this.ClientSize = new System.Drawing.Size(601, 444);
             this.ControlBox = false;
+            this.Controls.Add(this.btnClear);
+            this.Controls.Add(this.chkApplyMorph);
             this.Controls.Add(this.btnQuote);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
@@ -123,10 +148,12 @@
         #endregion
 
         protected System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.Panel pnlBody;
+        private MMDUtil.FixedPanel pnlBody;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
         private UserControls.ReplaceMorphCtr replaceMorphCtr1;
         private System.Windows.Forms.Button btnQuote;
+        private System.Windows.Forms.CheckBox chkApplyMorph;
+        private System.Windows.Forms.Button btnClear;
     }
 }

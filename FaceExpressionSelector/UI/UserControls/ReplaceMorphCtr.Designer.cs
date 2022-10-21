@@ -90,7 +90,7 @@
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(189, 20);
             this.comboBox1.TabIndex = 15;
-            this.comboBox1.DropDown += new System.EventHandler(this.comboBox1_DropDown);
+            this.comboBox1.DropDown += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             this.comboBox1.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.comboBox1_Format);
             this.comboBox1.SelectedValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 
@@ -101,7 +101,7 @@
             1,
             0,
             0,
-            131072});
+            65536});
             this.numericUpDown1.Location = new System.Drawing.Point(422, 5);
             this.numericUpDown1.Maximum = new decimal(new int[] {
             10,
@@ -121,6 +121,7 @@
             0,
             0,
             0});
+            this.numericUpDown1.ValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 
             // label2
             // 
@@ -149,7 +150,7 @@
             1,
             0,
             0,
-            131072});
+            65536});
             this.numericUpDown2.Location = new System.Drawing.Point(232, 5);
             this.numericUpDown2.Maximum = new decimal(new int[] {
             10,
@@ -169,6 +170,7 @@
             0,
             0,
             0});
+            this.numericUpDown2.ValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 
             // comboBox2
             // 
@@ -178,7 +180,7 @@
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(189, 20);
             this.comboBox2.TabIndex = 18;
-            this.comboBox2.DropDown += new System.EventHandler(this.comboBox1_DropDown);
+            this.comboBox2.DropDown += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             this.comboBox2.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.comboBox1_Format);
             this.comboBox2.SelectedValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 
@@ -199,7 +201,7 @@
             1,
             0,
             0,
-            131072});
+            65536});
             this.numericUpDown3.Location = new System.Drawing.Point(232, 5);
             this.numericUpDown3.Maximum = new decimal(new int[] {
             10,
@@ -219,6 +221,7 @@
             0,
             0,
             0});
+            this.numericUpDown3.ValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 
             // comboBox3
             // 
@@ -228,7 +231,7 @@
             this.comboBox3.Name = "comboBox3";
             this.comboBox3.Size = new System.Drawing.Size(189, 20);
             this.comboBox3.TabIndex = 21;
-            this.comboBox3.DropDown += new System.EventHandler(this.comboBox1_DropDown);
+            this.comboBox3.DropDown += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             this.comboBox3.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.comboBox1_Format);
             this.comboBox3.SelectedValueChanged += new System.EventHandler(this.comboBox1_SelectedValueChanged);
             // 

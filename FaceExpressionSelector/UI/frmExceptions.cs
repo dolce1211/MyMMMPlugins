@@ -27,6 +27,11 @@ namespace FaceExpressionHelper.UI
         private string _modelName = string.Empty;
 
         /// <summary>
+        /// モーフが選択された時に走るイベント
+        /// </summary>
+        private EventHandler<MorphSelectedEventArgs> _morphselectedHandler = null;
+
+        /// <summary>
         /// アクティブモデルが変わった
         /// </summary>
         /// <param name="modelName"></param>
@@ -44,7 +49,7 @@ namespace FaceExpressionHelper.UI
         /// <param name="modelName">選択中モデル名</param>
         /// <param name="allMorphs">選択中モデルの全モーフ</param>
         /// <param name="allExceptionMorphs">対象外モーフ一覧</param>
-        public frmExceptions(int mode, string modelName, List<string> allMorphs, List<string> allExceptionMorphs)
+        public frmExceptions(int mode, string modelName, List<string> allMorphs, List<string> allExceptionMorphs, EventHandler<MorphSelectedEventArgs> morphselectedHandler)
         {
             InitializeComponent();
             System.Drawing.Color backcolor = System.Drawing.Color.OrangeRed;
@@ -62,6 +67,8 @@ namespace FaceExpressionHelper.UI
             this._modelName = modelName;
             this._allMorphs = allMorphs;
             this._allTargetMorphs = allExceptionMorphs;
+
+            this._morphselectedHandler = morphselectedHandler;
 
             this.CreateListBox();
         }
@@ -161,6 +168,12 @@ namespace FaceExpressionHelper.UI
         {
             if (e.KeyCode == Keys.Return)
                 this.btnAdd.PerformClick();
+        }
+
+        private void listBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var morphname = this.listBox.SelectedItem.ToString();
+            this._morphselectedHandler?.Invoke(this, new MorphSelectedEventArgs(this._modelName, morphname));
         }
     }
 }

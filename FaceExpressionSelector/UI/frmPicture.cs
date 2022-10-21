@@ -12,10 +12,11 @@ namespace FaceExpressionHelper.UI
 {
     public partial class frmPicture : Form
     {
-        public frmPicture()
+        public frmPicture(EventHandler<MorphSelectedEventArgs> morphselectedHandler)
         {
             InitializeComponent();
             this.TopMost = true;
+            this._morphselectedHandler = morphselectedHandler;
         }
 
         /// <summary>
@@ -23,13 +24,19 @@ namespace FaceExpressionHelper.UI
         /// </summary>
         public ExpressionItem CurrentItem { get; private set; } = null;
 
+        private EventHandler<MorphSelectedEventArgs> _morphselectedHandler = null;
+        private string _activeModel = string.Empty;
+
         /// <summary>
         /// 表示
         /// </summary>
         /// <param name="pt"></param>
         /// <param name="ownerForm">オーナーフォーム</param>
+        /// <param name="activeModel">選択中のモデル</param>
+        /// <param name="exSet">表情セット</param>
         /// <param name="item"></param>
-        public void Show(Point pt, Form ownerForm, string activeModel, Args args, ExpressionItem item, List<MorphItem> allMorphs)
+        /// <param name="allMorphs">このモデルの全モーフ</param>
+        public void Show(Point pt, Form ownerForm, string activeModel, ExpressionSet exSet, ExpressionItem item, List<MorphItem> allMorphs)
         {
             if (!this.Visible)
                 this.Show();
@@ -46,9 +53,10 @@ namespace FaceExpressionHelper.UI
             this.lstMorphs.Items.Clear();
             if (item != null && item.MorphItems != null)
             {
-                var applyingMorphs = item.GetApplyingMorphs(activeModel, args.ReplacedMorphs, allMorphs);
+                var applyingMorphs = item.GetApplyingMorphs(activeModel, exSet.ReplacedMorphs, allMorphs);
                 this.lstMorphs.Items.AddRange(applyingMorphs.ToArray());
             }
+            this._activeModel = activeModel;
         }
 
         private void frmPicture_VisibleChanged(object sender, EventArgs e)
@@ -98,6 +106,15 @@ namespace FaceExpressionHelper.UI
             {
                 this.IsMouseOn = false;
                 this.Hide();
+            }
+        }
+
+        private void lstMorphs_SelectedValueChanged(object sender, EventArgs e)
+        {
+            var dspmorph = this.lstMorphs.SelectedItem as DspMorphItem;
+            if (dspmorph != null)
+            {
+                this._morphselectedHandler?.Invoke(this, new MorphSelectedEventArgs(this._activeModel, dspmorph.DspMorphName));
             }
         }
     }
