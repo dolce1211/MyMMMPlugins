@@ -9,6 +9,9 @@ using System.ComponentModel;
 using System.Drawing;
 using MikuMikuPlugin;
 using static MMDUtil.MMDUtilility;
+using System.Xml;
+using System.Runtime.Remoting.Contexts;
+using System.IO;
 
 namespace MyUtility
 
@@ -219,6 +222,29 @@ namespace MyUtility
         }
     }
 
+    public static class SerializerExtension
+    {
+        public static bool Serialize<T>(this T entity, string fileName)
+        {
+            return Serializer.Serialize<T>(entity, fileName);
+        }
+
+        public static string SerializeToString<T>(this T entity)
+        {
+            return Serializer.SerializeToString<T>(entity);
+        }
+
+        public static T Deserialize<T>(this string fileName)
+        {
+            return Serializer.Deserialize<T>(fileName);
+        }
+
+        public static T DeserializeFromString<T>(this string xml)
+        {
+            return Serializer.DeserializeFromString<T>(xml);
+        }
+    }
+
     /// <summary>
     /// XMLシリアライザです。
     /// </summary>
@@ -244,6 +270,22 @@ namespace MyUtility
             sw.Close();
 
             return true;
+        }
+
+        public static string SerializeToString<T>(T entity)
+        {
+            //XmlSerializerオブジェクトを作成
+            //オブジェクトの型を指定する
+            System.Xml.Serialization.XmlSerializer serializer =
+                new System.Xml.Serialization.XmlSerializer(typeof(T));
+            using (System.IO.StringWriter sww = new System.IO.StringWriter())
+            {
+                using (XmlWriter writer = XmlWriter.Create(sww))
+                {
+                    serializer.Serialize(writer, entity);
+                    return sww.ToString();
+                }
+            }
         }
 
         public static T Deserialize<T>(string fileName)
@@ -273,6 +315,28 @@ namespace MyUtility
             catch (Exception)
             {
                 return default(T);
+            }
+        }
+
+        public static T DeserializeFromString<T>(string xml)
+        {
+            try
+            {
+                //XmlSerializerオブジェクトを作成
+                System.Xml.Serialization.XmlSerializer serializer =
+                    new System.Xml.Serialization.XmlSerializer(typeof(T));
+                using (XmlReader reader = XmlReader.Create(new StringReader(xml)))
+                {
+                    //XMLファイルから読み込み、逆シリアル化する
+                    var result = (T)serializer.Deserialize(reader);
+                    //ファイルを閉じる
+                    reader.Close();
+                    return result;
+                }
+            }
+            catch (Exception)
+            {
+                return default;
             }
         }
     }

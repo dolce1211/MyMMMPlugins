@@ -13,7 +13,7 @@ namespace FaceExpressionHelper.UI
 {
     public partial class frmName : Form
     {
-        private Args _args = null;
+        private ExpressionSet _exSet = null;
         private string _activeModel = string.Empty;
         private ExpressionItem _currentItem = null;
 
@@ -24,10 +24,10 @@ namespace FaceExpressionHelper.UI
         /// <param name="currentItem">編集時の編集対象</param>
         /// <param name="currentMorphs">現在の表情</param>
         /// <param name="prevName"></param>
-        public frmName(Args args, ExpressionItem currentItem, List<MorphItem> currentMorphs, string prevName)
+        public frmName(ExpressionSet exSet, ExpressionItem currentItem, List<MorphItem> currentMorphs, string prevName)
         {
             InitializeComponent();
-            this._args = args;
+            this._exSet = exSet;
             this._currentItem = currentItem;
             this.txtName.Text = prevName;
 
@@ -51,7 +51,7 @@ namespace FaceExpressionHelper.UI
                     return;
                 }
 
-                if (this._args.Items.Where(n => n != this._currentItem).Any(n => n.Name.ToLower().TrimSafe() == this.txtName.Text.ToLower().TrimSafe()))
+                if (this._exSet.Items.Where(n => n != this._currentItem).Any(n => n.Name.ToLower().TrimSafe() == this.txtName.Text.ToLower().TrimSafe()))
                 {
                     MessageBox.Show("この表情名は存在します");
                     return;

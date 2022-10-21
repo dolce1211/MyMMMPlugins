@@ -1,4 +1,5 @@
-﻿using MyUtility;
+﻿using MikuMikuPlugin;
+using MyUtility;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -25,9 +26,26 @@ namespace FaceExpressionHelper.UI.UserControls
         /// </summary>
         private IEnumerable<MorphItem> _targetMorphs = null;
 
+        private Action<MorphSelectedEventArgs> _morphSelectedAction = null;
+        private string _activeModel = null;
+
         public ReplaceMorphCtr()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// 値をリセットします。
+        /// </summary>
+        public void Reset()
+        {
+            this.Count = 1;
+            for (int i = 1; i <= 3; i++)
+            {
+                var tuple = this.GetControlSet(i);
+                tuple.Item1.SelectedIndex = 0;
+                tuple.Item2.Value = 1;
+            }
         }
 
         /// <summary>
@@ -127,10 +145,11 @@ namespace FaceExpressionHelper.UI.UserControls
         /// <param name="morphItem">モーフ名</param>
         /// <param name="isMissing">不足モーフならtrue</param>
         /// <param name="allMorphs">全モーフ</param>
-        public void Initialize(MorphItem morphItem, ReplacedMorphSet rps, bool isMissing, List<MorphItem> allMorphs)
+        public void Initialize(string activeModel, MorphItem morphItem, ReplacedMorphSet rps, bool isMissing, List<MorphItem> allMorphs, Action<MorphSelectedEventArgs> morphSelectedAction)
         {
             this.lblActiveModel.Text = morphItem.MortphNameWithType;
-
+            this._morphSelectedAction = morphSelectedAction;
+            this._activeModel = activeModel;
             this._isMissing = isMissing;
             this._morphItem = morphItem;
             this._allMorphs.AddRange(allMorphs);
@@ -150,9 +169,6 @@ namespace FaceExpressionHelper.UI.UserControls
             this.Count = 1;
             if (rps != null)
             {
-                this.comboBox1.Items.AddRange(this._targetMorphs.ToArray());
-                this.comboBox2.Items.AddRange(this._targetMorphs.ToArray());
-                this.comboBox3.Items.AddRange(this._targetMorphs.ToArray());
                 if (rps.Ignore)
                     this.comboBox1.SelectedIndex = 1;
                 else
@@ -163,6 +179,8 @@ namespace FaceExpressionHelper.UI.UserControls
                         var targetmorph = this._targetMorphs.Where(n => n.MorphName == rp.RepalcedMorphName).FirstOrDefault();
                         if (targetmorph == null)
                             continue;
+
+                        ctrtuple.Item1.Items.AddRange(this._targetMorphs.ToArray());
                         ctrtuple.Item1.SelectedItem = targetmorph;
                         ctrtuple.Item2.Value = (decimal)rp.Correction;
 
@@ -187,7 +205,19 @@ namespace FaceExpressionHelper.UI.UserControls
 
         private void comboBox1_SelectedValueChanged(object sender, EventArgs e)
         {
-            var cmb = sender as ComboBox;
+            (ComboBox, NumericUpDown) ctrtuple = default;
+            for (int i = 1; i <= 3; i++)
+            {
+                var tmptuple = GetControlSet(i);
+                if (tmptuple.Item1 == sender || tmptuple.Item2 == sender)
+                {
+                    ctrtuple = tmptuple;
+                    break;
+                }
+            }
+            if (ctrtuple == default)
+                return;
+
             var ignore = false;
             if (this.comboBox1.SelectedItem.ToString() == "【無視する】")
                 ignore = true;
@@ -198,7 +228,7 @@ namespace FaceExpressionHelper.UI.UserControls
 
             if (this._isMissing)
             {
-                if (cmb.SelectedItem != null && !string.IsNullOrEmpty(cmb.Text))
+                if (ctrtuple.Item1.SelectedItem != null && !string.IsNullOrEmpty(ctrtuple.Item1.Text))
                 {
                     this.lblMissing.Text = "●";
                     this.lblMissing.ForeColor = Color.LightBlue;
@@ -210,6 +240,30 @@ namespace FaceExpressionHelper.UI.UserControls
                 }
             }
             this.lblMissing.Visible = this._isMissing;
+
+            if (!this.Visible)
+                return;
+
+            //最初に全部入れるとクッソ重いので初回開いた時に開く
+            var maxnum = 1;
+            if (ctrtuple.Item1 == this.comboBox1)
+                maxnum = 2;
+            if (ctrtuple.Item1.Items.Count <= maxnum)
+            {
+                //フォーム開くタイミングで全部入れると時間がかかるので初回展開時に入れる
+                ctrtuple.Item1.Items.AddRange(this._targetMorphs.ToArray());
+            }
+
+            bool resetFrame = true;
+            if (sender is NumericUpDown)
+                //numeriupdown変更時はフレームリセットはしない
+                resetFrame = false;
+
+            var morph = ctrtuple.Item1.SelectedItem as MorphItem;
+            if (morph != null)
+                this._morphSelectedAction?.Invoke(new MorphSelectedEventArgs(this._activeModel, morph.MorphName, (float)(ctrtuple.Item2.Value), resetFrame));
+            else
+                this._morphSelectedAction?.Invoke(new MorphSelectedEventArgs(this._activeModel, "", 0));
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -264,16 +318,6 @@ namespace FaceExpressionHelper.UI.UserControls
                     if (this.Parent != null)
                         this.Parent.BeginAndEndUpdate(true);
                 }
-            }
-        }
-
-        private void comboBox1_DropDown(object sender, EventArgs e)
-        {
-            var cmd = sender as ComboBox;
-            if (cmd.Items.Count <= 2)
-            {
-                //フォーム開くタイミングで全部入れると時間がかかるので初回展開時に入れる
-                cmd.Items.AddRange(this._targetMorphs.ToArray());
             }
         }
     }

@@ -79,6 +79,12 @@
     <Compile Include="UI\frmBulkExceptions.Designer.cs">
       <DependentUpon>frmBulkExceptions.cs</DependentUpon>
     </Compile>
+    <Compile Include="UI\frmEditSet.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmEditSet.Designer.cs">
+      <DependentUpon>frmEditSet.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\frmExceptions.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -137,6 +143,9 @@
     <Compile Include="UI\UserControls\ReplaceMorphCtr.Designer.cs">
       <DependentUpon>ReplaceMorphCtr.cs</DependentUpon>
     </Compile>
+    <Compile Include="_LinkFiles\UI\FixedPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="_LinkFiles\UI\MMDSelectorControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -150,6 +159,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="UI\frmBulkExceptions.resx">
       <DependentUpon>frmBulkExceptions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmEditSet.resx">
+      <DependentUpon>frmEditSet.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="UI\frmExceptions.resx">
       <DependentUpon>frmExceptions.cs</DependentUpon>

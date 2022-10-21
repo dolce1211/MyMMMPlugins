@@ -42,12 +42,10 @@
             this.btnUp = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.btnOK = new System.Windows.Forms.Button();
-            this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
-            this.label1 = new System.Windows.Forms.Label();
+            this.lblFrame = new System.Windows.Forms.Label();
             this.lblActiveModel = new System.Windows.Forms.Label();
             this.chkTopMost = new System.Windows.Forms.CheckBox();
             this.btnReplace = new System.Windows.Forms.Button();
-            this.lblMissingMorphs = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.ファイルFToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.閉じるXToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,15 +54,22 @@
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.対象のその他モーフToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pnlBottom = new System.Windows.Forms.Panel();
+            this.trackBar1 = new System.Windows.Forms.TrackBar();
+            this.label1 = new System.Windows.Forms.Label();
             this.lblWait = new System.Windows.Forms.Label();
             this.pnlTop = new System.Windows.Forms.Panel();
             this.lblReplaced = new System.Windows.Forms.Label();
-            this.lstMissingMorphs = new FaceExpressionHelper.UI.UserControls.MorphListBox();
+            this.cboSet = new System.Windows.Forms.ComboBox();
+            this.btnEditSet = new System.Windows.Forms.Button();
+            this.btnAddSet = new System.Windows.Forms.Button();
+            this.label2 = new System.Windows.Forms.Label();
+            this.btnReset = new System.Windows.Forms.Button();
+            this.lstMorphs = new FaceExpressionHelper.UI.UserControls.MorphListBox();
             this.mmdSelector = new MMDUtil.MMDSelectorControl();
             this.contextMenuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.pnlBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.pnlTop.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -74,7 +79,7 @@
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(85, 23);
             this.btnAdd.TabIndex = 0;
-            this.btnAdd.Text = "追加";
+            this.btnAdd.Text = "表情追加";
             this.btnAdd.UseVisualStyleBackColor = true;
             this.btnAdd.Click += new System.EventHandler(this.btnAdd_Click);
             // 
@@ -88,9 +93,9 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.IntegralHeight = false;
             this.listBox1.ItemHeight = 16;
-            this.listBox1.Location = new System.Drawing.Point(3, 128);
+            this.listBox1.Location = new System.Drawing.Point(3, 155);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(281, 258);
+            this.listBox1.Size = new System.Drawing.Size(281, 246);
             this.listBox1.TabIndex = 1;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             this.listBox1.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.listBox1_Format);
@@ -187,43 +192,23 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(192, 3);
+            this.btnOK.Location = new System.Drawing.Point(202, 13);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(90, 30);
+            this.btnOK.Size = new System.Drawing.Size(85, 30);
             this.btnOK.TabIndex = 6;
             this.btnOK.Text = "適用";
             this.btnOK.UseVisualStyleBackColor = true;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
             // 
-            // numericUpDown1
+            // lblFrame
             // 
-            this.numericUpDown1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.numericUpDown1.Location = new System.Drawing.Point(74, 8);
-            this.numericUpDown1.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numericUpDown1.Name = "numericUpDown1";
-            this.numericUpDown1.Size = new System.Drawing.Size(38, 19);
-            this.numericUpDown1.TabIndex = 7;
-            this.numericUpDown1.Value = new decimal(new int[] {
-            4,
-            0,
-            0,
-            0});
-            this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
-            // 
-            // label1
-            // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(120, 12);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(63, 12);
-            this.label1.TabIndex = 8;
-            this.label1.Text = "フレーム後に";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
+            this.lblFrame.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblFrame.Location = new System.Drawing.Point(142, 20);
+            this.lblFrame.Name = "lblFrame";
+            this.lblFrame.Size = new System.Drawing.Size(56, 12);
+            this.lblFrame.TabIndex = 8;
+            this.lblFrame.Text = "10fr前から";
+            this.lblFrame.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblActiveModel
             // 
@@ -237,8 +222,9 @@
             // 
             // chkTopMost
             // 
+            this.chkTopMost.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.chkTopMost.AutoSize = true;
-            this.chkTopMost.Location = new System.Drawing.Point(3, 27);
+            this.chkTopMost.Location = new System.Drawing.Point(7, 40);
             this.chkTopMost.Name = "chkTopMost";
             this.chkTopMost.Size = new System.Drawing.Size(69, 16);
             this.chkTopMost.TabIndex = 10;
@@ -256,19 +242,6 @@
             this.btnReplace.Text = "モーフ置換設定";
             this.btnReplace.UseVisualStyleBackColor = true;
             this.btnReplace.Click += new System.EventHandler(this.btnReplace_Click);
-            // 
-            // lblMissingMorphs
-            // 
-            this.lblMissingMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lblMissingMorphs.AutoSize = true;
-            this.lblMissingMorphs.Font = new System.Drawing.Font("MS UI Gothic", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lblMissingMorphs.ForeColor = System.Drawing.Color.Red;
-            this.lblMissingMorphs.Location = new System.Drawing.Point(1, 389);
-            this.lblMissingMorphs.Name = "lblMissingMorphs";
-            this.lblMissingMorphs.Size = new System.Drawing.Size(98, 15);
-            this.lblMissingMorphs.TabIndex = 15;
-            this.lblMissingMorphs.Text = "不足モーフあり";
-            this.lblMissingMorphs.Visible = false;
             // 
             // menuStrip1
             // 
@@ -327,21 +300,44 @@
             // 
             // pnlBottom
             // 
+            this.pnlBottom.Controls.Add(this.lblFrame);
+            this.pnlBottom.Controls.Add(this.chkTopMost);
+            this.pnlBottom.Controls.Add(this.trackBar1);
             this.pnlBottom.Controls.Add(this.btnOK);
-            this.pnlBottom.Controls.Add(this.numericUpDown1);
             this.pnlBottom.Controls.Add(this.label1);
             this.pnlBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlBottom.Location = new System.Drawing.Point(0, 479);
+            this.pnlBottom.Location = new System.Drawing.Point(0, 503);
             this.pnlBottom.Name = "pnlBottom";
-            this.pnlBottom.Size = new System.Drawing.Size(287, 36);
+            this.pnlBottom.Size = new System.Drawing.Size(287, 62);
             this.pnlBottom.TabIndex = 17;
+            // 
+            // trackBar1
+            // 
+            this.trackBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.trackBar1.Location = new System.Drawing.Point(-4, 14);
+            this.trackBar1.Minimum = -10;
+            this.trackBar1.Name = "trackBar1";
+            this.trackBar1.Size = new System.Drawing.Size(152, 45);
+            this.trackBar1.TabIndex = 11;
+            this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+            // 
+            // label1
+            // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(69, 7);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(8, 12);
+            this.label1.TabIndex = 12;
+            this.label1.Text = "|";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblWait
             // 
             this.lblWait.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.lblWait.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.lblWait.Location = new System.Drawing.Point(3, 178);
+            this.lblWait.Location = new System.Drawing.Point(3, 193);
             this.lblWait.Name = "lblWait";
             this.lblWait.Size = new System.Drawing.Size(280, 132);
             this.lblWait.TabIndex = 19;
@@ -359,7 +355,7 @@
             this.pnlTop.Controls.Add(this.btnUp);
             this.pnlTop.Controls.Add(this.button2);
             this.pnlTop.Controls.Add(this.lblActiveModel);
-            this.pnlTop.Location = new System.Drawing.Point(0, 49);
+            this.pnlTop.Location = new System.Drawing.Point(-1, 75);
             this.pnlTop.Name = "pnlTop";
             this.pnlTop.Size = new System.Drawing.Size(286, 78);
             this.pnlTop.TabIndex = 20;
@@ -376,23 +372,77 @@
             this.lblReplaced.TabIndex = 16;
             this.lblReplaced.Text = "置換設定*件あり";
             // 
-            // lstMissingMorphs
+            // cboSet
             // 
-            this.lstMissingMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.lstMissingMorphs.BackColor = System.Drawing.SystemColors.Control;
-            this.lstMissingMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.lstMissingMorphs.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.lstMissingMorphs.FormattingEnabled = true;
-            this.lstMissingMorphs.IntegralHeight = false;
-            this.lstMissingMorphs.Location = new System.Drawing.Point(7, 407);
-            this.lstMissingMorphs.Name = "lstMissingMorphs";
-            this.lstMissingMorphs.Size = new System.Drawing.Size(186, 67);
-            this.lstMissingMorphs.TabIndex = 21;
+            this.cboSet.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboSet.FormattingEnabled = true;
+            this.cboSet.Location = new System.Drawing.Point(53, 28);
+            this.cboSet.Name = "cboSet";
+            this.cboSet.Size = new System.Drawing.Size(181, 20);
+            this.cboSet.TabIndex = 22;
+            this.cboSet.SelectedIndexChanged += new System.EventHandler(this.cboSet_SelectedIndexChanged);
+            this.cboSet.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.cboSet_Format);
+            // 
+            // btnEditSet
+            // 
+            this.btnEditSet.Location = new System.Drawing.Point(237, 26);
+            this.btnEditSet.Name = "btnEditSet";
+            this.btnEditSet.Size = new System.Drawing.Size(50, 23);
+            this.btnEditSet.TabIndex = 25;
+            this.btnEditSet.Text = "編集";
+            this.btnEditSet.UseVisualStyleBackColor = true;
+            this.btnEditSet.Click += new System.EventHandler(this.btnAddSet_Click);
+            // 
+            // btnAddSet
+            // 
+            this.btnAddSet.Location = new System.Drawing.Point(237, 51);
+            this.btnAddSet.Name = "btnAddSet";
+            this.btnAddSet.Size = new System.Drawing.Size(50, 23);
+            this.btnAddSet.TabIndex = 26;
+            this.btnAddSet.Text = "追加";
+            this.btnAddSet.UseVisualStyleBackColor = true;
+            this.btnAddSet.Click += new System.EventHandler(this.btnAddSet_Click);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.label2.ForeColor = System.Drawing.Color.Black;
+            this.label2.Location = new System.Drawing.Point(-1, 29);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(48, 20);
+            this.label2.TabIndex = 27;
+            this.label2.Text = "セット";
+            // 
+            // btnReset
+            // 
+            this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnReset.Location = new System.Drawing.Point(202, 402);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(85, 23);
+            this.btnReset.TabIndex = 28;
+            this.btnReset.Text = "表情リセット";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnOK_Click);
+            // 
+            // lstMorphs
+            // 
+            this.lstMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lstMorphs.BackColor = System.Drawing.SystemColors.Control;
+            this.lstMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.lstMorphs.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.lstMorphs.FormattingEnabled = true;
+            this.lstMorphs.IntegralHeight = false;
+            this.lstMorphs.Location = new System.Drawing.Point(3, 404);
+            this.lstMorphs.Name = "lstMorphs";
+            this.lstMorphs.Size = new System.Drawing.Size(195, 90);
+            this.lstMorphs.TabIndex = 21;
+            this.lstMorphs.SelectedValueChanged += new System.EventHandler(this.lstMorphs_SelectedValueChanged);
             // 
             // mmdSelector
             // 
             this.mmdSelector.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.mmdSelector.Location = new System.Drawing.Point(0, 515);
+            this.mmdSelector.Location = new System.Drawing.Point(0, 565);
             this.mmdSelector.Name = "mmdSelector";
             this.mmdSelector.Size = new System.Drawing.Size(287, 46);
             this.mmdSelector.TabIndex = 18;
@@ -402,16 +452,19 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(287, 561);
-            this.Controls.Add(this.lstMissingMorphs);
+            this.ClientSize = new System.Drawing.Size(287, 611);
+            this.Controls.Add(this.btnReset);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.btnAddSet);
+            this.Controls.Add(this.btnEditSet);
+            this.Controls.Add(this.cboSet);
+            this.Controls.Add(this.lstMorphs);
             this.Controls.Add(this.lblWait);
             this.Controls.Add(this.listBox1);
             this.Controls.Add(this.pnlTop);
             this.Controls.Add(this.pnlBottom);
             this.Controls.Add(this.mmdSelector);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.lblMissingMorphs);
-            this.Controls.Add(this.chkTopMost);
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -420,11 +473,11 @@
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.frmMainBase_FormClosed);
             this.Load += new System.EventHandler(this.frmMainBase_Load);
             this.contextMenuStrip1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.pnlBottom.ResumeLayout(false);
             this.pnlBottom.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.pnlTop.ResumeLayout(false);
             this.pnlTop.PerformLayout();
             this.ResumeLayout(false);
@@ -444,10 +497,9 @@
         private System.Windows.Forms.ToolStripMenuItem 適用ToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblFrame;
         private System.Windows.Forms.CheckBox chkTopMost;
         protected System.Windows.Forms.Label lblActiveModel;
-        protected System.Windows.Forms.Label lblMissingMorphs;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem ファイルFToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem 閉じるXToolStripMenuItem;
@@ -455,7 +507,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem 対象のその他モーフToolStripMenuItem;
         public MMDUtil.MMDSelectorControl mmdSelector;
-        public System.Windows.Forms.NumericUpDown numericUpDown1;
         public System.Windows.Forms.Label lblWait;
         public System.Windows.Forms.Panel pnlTop;
         public System.Windows.Forms.Panel pnlBottom;
@@ -465,6 +516,13 @@
         public System.Windows.Forms.Button btnReplace;
         private System.Windows.Forms.ToolStripMenuItem 現在の状態に更新するToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem スクショを取り直すToolStripMenuItem;
-        private UI.UserControls.MorphListBox lstMissingMorphs;
+        private UI.UserControls.MorphListBox lstMorphs;
+        private System.Windows.Forms.ComboBox cboSet;
+        private System.Windows.Forms.Button btnEditSet;
+        private System.Windows.Forms.Button btnAddSet;
+        protected System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button btnReset;
+        public System.Windows.Forms.TrackBar trackBar1;
+        private System.Windows.Forms.Label label1;
     }
 }

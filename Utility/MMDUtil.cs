@@ -307,6 +307,40 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// フレーム数を1進めて2戻し、未確定変更をリセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="action">再描画する前に何か仕事をさせたいならここで定義します。</param>
+        /// <returns></returns>
+        public static bool TryResetFrameNumber(IntPtr parentHandle, Action action = null)
+        {
+            var currentFrame = MMDUtil.MMDUtilility.TryGetFrameNumber(parentHandle);
+            if (currentFrame < 0)
+                //現在のフレーム番号が取れなかった
+                return false;
+
+            BeginAndEndUpdate(parentHandle, false);
+            try
+            {
+                MMDUtil.MMDUtilility.TrySetFrameNumber(parentHandle, currentFrame + 1);
+                MMDUtil.MMDUtilility.TrySetFrameNumber(parentHandle, currentFrame);
+                if (action != null)
+                    action.Invoke();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{ex.Message}\r\n\r\n{ex.StackTrace}");
+            }
+            finally
+            {
+                MMDUtil.MMDUtilility.BeginAndEndUpdate(parentHandle, true);
+            }
+            return false;
+        }
+
+        /// <summary>
         /// フレーム数をセットします。
         /// </summary>
         /// <param name="parentHandle"></param>
@@ -648,7 +682,7 @@ namespace MMDUtil
         }
 
         /// <summary>
-        /// 指定した名称のモーフを指定した値にセットします。
+        /// 指定したindexのモーフを指定した値にセットします。
         /// </summary>
         /// <param name="parentHandle"></param>
         /// <param name="morphtype">モーフ種類</param>
@@ -669,15 +703,39 @@ namespace MMDUtil
             SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
 
             //値を入れる
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(30);
             TrySetText(morphwindow.Edit, value.ToString(), true);
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(30);
             if (determine)
             {
                 //確定までやるなら、登録ボタンを押す
                 PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
-                System.Threading.Thread.Sleep(10);
+                System.Threading.Thread.Sleep(30);
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 指定したモーフコンボを指定したindexにセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <param name="morphIndex">いくつめのモーフ？</param>
+        /// <param name="value">値</param>
+        /// <param name="determine">確定するならtrue</param>
+        /// <returns></returns>
+        public static bool TrySetMorphIndex(IntPtr parentHandle, MorphType morphtype, int morphIndex)
+        {
+            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+            if (morphwindow == null)
+                return false;
+
+            //コンボのインデックスをそれに合わせる
+            var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
+            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
 
             return true;
         }
@@ -1166,6 +1224,13 @@ namespace MMDUtil
                 {
                     if (!forceUpdate)
                     {
+                        var tmpmmd = mmds.Where(n => n.Id == this._currentmmd.Id).FirstOrDefault();
+                        if (tmpmmd != null && string.IsNullOrEmpty(this._currentmmd.MainWindowTitle))
+                        {
+                            //ロード中のpmmを拾うとタイトルが入ってないことがあるのでそれ対策
+                            this._currentmmd = tmpmmd;
+                            unchanged = false;
+                        }
                         mmd = this._currentmmd;
                         return mmd;
                     }
@@ -1215,11 +1280,9 @@ namespace MMDUtil
                 {
                     this._parentForm.Invoke((Action)(() =>
                     {
-                        if (this._lblMMD != null && this._lblMMPlus != null)
-                        {
-                            this._lblMMPlus.Visible = false;
+                        var mmplusInstalled = false;
+                        if (this._lblMMD != null)
                             this._lblMMD.Text = "MikuMikuDanceが起動していません";
-                        }
 
                         if (mmd != null)
                         {
@@ -1242,13 +1305,15 @@ namespace MMDUtil
                                 if (System.IO.File.Exists(mmPlusPath))
                                 {
                                     this._mmPlusPath = mmPlusPath;
-                                    if (this._lblMMPlus != null)
-                                        this._lblMMPlus.Visible = true;
+                                    mmplusInstalled = true;
                                 }
 
                                 if (System.IO.File.Exists(mmPlusIniPath))
                                     this._mmPlusIniPath = mmPlusIniPath;
                             }
+
+                            if (this._lblMMPlus != null)
+                                this._lblMMPlus.Visible = mmplusInstalled;
                         }
                     }));
                 }

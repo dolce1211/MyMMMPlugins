@@ -69,6 +69,7 @@ namespace FaceExpressionHelper.UI
             this.lstMorphs.Name = "lstMorphs";
             this.lstMorphs.Size = new System.Drawing.Size(246, 67);
             this.lstMorphs.TabIndex = 22;
+            this.lstMorphs.SelectedValueChanged += new System.EventHandler(this.lstMorphs_SelectedValueChanged);
             this.lstMorphs.MouseEnter += new System.EventHandler(this.frmPicture_MouseEnter);
             this.lstMorphs.MouseLeave += new System.EventHandler(this.frmPicture_MouseLeave);
             // 
