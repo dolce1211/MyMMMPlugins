@@ -291,7 +291,7 @@ namespace FaceExpressionSelectorMMD
 
                     if (_modelCache == null || _modelCache.Count == 0)
                     {
-                        var tmpcache = this.TryCachePmx(mmd);
+                        var tmpcache = await this.TryCachePmx(mmd);
                         if (tmpcache != null)
                             _modelCache = tmpcache;
                     }
@@ -304,9 +304,34 @@ namespace FaceExpressionSelectorMMD
                         {
                             //カメラモードになってる
                             _currentModel = new ActiveModelInfo();
+                            activeModelName = "";
                         }
                         else
                         {
+                            if (_modelCache.ContainsKey(activeModelName))
+                            {
+                                _currentModel = _modelCache[activeModelName];
+                                this.HidelblWait();
+                            }
+                            else
+                            {
+                                //前回キャッシュ時には居なかったモデルだ。再度キャッシュしてみる。
+                                var tmpcache = await this.TryCachePmx(mmd);
+                                if (tmpcache != null)
+                                    _modelCache = tmpcache;
+
+                                if (!_modelCache.ContainsKey(activeModelName))
+                                {
+                                    //おそらく後から追加されてまだ保存されていないモデルだ
+                                    var msg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
+
+                                    this.ShowlblWait(msg);
+                                    _currentModel = new ActiveModelInfo();
+                                    activeModelName = "";
+                                    isModelChanged = false;
+                                }
+                            }
+
                             //モデルが変わった
                             this.Invoke((Action)(() =>
                             {
@@ -315,25 +340,6 @@ namespace FaceExpressionSelectorMMD
                                 else
                                     this.lblActiveModel.Text = "モデルを選択してください";
                             }));
-
-                            if (_modelCache.ContainsKey(activeModelName))
-                            {
-                                _currentModel = _modelCache[activeModelName];
-                            }
-                            else
-                            {
-                                //前回キャッシュ時には居なかったモデルだ。再度キャッシュしてみる。
-                                var tmpcache = this.TryCachePmx(mmd);
-                                if (tmpcache != null)
-                                    _modelCache = tmpcache;
-
-                                if (!_modelCache.ContainsKey(activeModelName))
-                                {
-                                    //おそらく後から追加されてまだ保存されていないモデルだ
-                                    var msg = $"{activeModelName}の情報がpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
-                                    this.ShowlblWait(msg);
-                                }
-                            }
                         }
                     }
 
@@ -362,7 +368,7 @@ namespace FaceExpressionSelectorMMD
         /// <summary>
         /// mmdのプロセスからpmxファイルを引っ張って中身をキャッシュします。
         /// </summary>
-        private Dictionary<string, ActiveModelInfo> TryCachePmx(Process mmd)
+        private async Task<Dictionary<string, ActiveModelInfo>> TryCachePmx(Process mmd)
         {
             var ret = new Dictionary<string, ActiveModelInfo>();
             if (mmd == null || mmd.HasExited)
@@ -371,12 +377,13 @@ namespace FaceExpressionSelectorMMD
             var pmminfo = LibMMDUtil.GetPmmInfoFromProcess(mmd);
             if (pmminfo == null)
                 return null;
-            if (_prevpmmSavedTime == pmminfo.LastWriteTime)
+            if (pmminfo.LastWriteTime <= _prevpmmSavedTime)
             {
-                //まだ保存されていないので抜ける
+                //前回キャッシュ時からまだ保存されていないので抜ける
                 return this._modelCache;
             }
-
+            if (_prevpmmSavedTime != new DateTime())
+                await Task.Delay(2000);
             var msg = $"pmmファイルから\r\nモデル情報をキャッシュしています。\r\nしばらくお待ち下さい。";
             this.ShowlblWait(msg);
             try
@@ -569,7 +576,7 @@ namespace FaceExpressionSelectorMMD
         /// <param name="e"></param>
         protected override void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
         {
-            this.HidelblWait();
+            //this.HidelblWait();
             if (!string.IsNullOrEmpty(e.CurrentActiveModelName))
                 this.lblActiveModel.Text = e.CurrentActiveModelName;
             else

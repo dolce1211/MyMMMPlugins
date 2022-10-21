@@ -174,6 +174,8 @@ namespace FaceExpressionHelper
                 var replaced = this._currentExpressionSet.ReplacedMorphs.Where(n => n.ModelName == e.CurrentActiveModelName).FirstOrDefault();
                 if (replaced != null && replaced.ReplacedMorphSetList.Count > 0)
                     replacedTxt = $"置換設定 {replaced.ReplacedMorphSetList.Count}件";
+
+                enabled = !this.lblWait.Visible;
             }
             else
             {
