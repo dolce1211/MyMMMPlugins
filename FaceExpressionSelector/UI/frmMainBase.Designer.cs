@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMainBase));
             this.btnAdd = new System.Windows.Forms.Button();
             this.listBox1 = new System.Windows.Forms.ListBox();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -93,9 +94,9 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.IntegralHeight = false;
             this.listBox1.ItemHeight = 16;
-            this.listBox1.Location = new System.Drawing.Point(3, 155);
+            this.listBox1.Location = new System.Drawing.Point(3, 131);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(281, 246);
+            this.listBox1.Size = new System.Drawing.Size(291, 281);
             this.listBox1.TabIndex = 1;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             this.listBox1.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.listBox1_Format);
@@ -170,7 +171,7 @@
             // btnUp
             // 
             this.btnUp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnUp.Location = new System.Drawing.Point(210, 54);
+            this.btnUp.Location = new System.Drawing.Point(220, 54);
             this.btnUp.Name = "btnUp";
             this.btnUp.Size = new System.Drawing.Size(35, 23);
             this.btnUp.TabIndex = 3;
@@ -181,7 +182,7 @@
             // button2
             // 
             this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.button2.Location = new System.Drawing.Point(248, 54);
+            this.button2.Location = new System.Drawing.Point(258, 54);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(35, 23);
             this.button2.TabIndex = 4;
@@ -192,9 +193,9 @@
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(202, 13);
+            this.btnOK.Location = new System.Drawing.Point(218, 16);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(85, 30);
+            this.btnOK.Size = new System.Drawing.Size(78, 30);
             this.btnOK.TabIndex = 6;
             this.btnOK.Text = "適用";
             this.btnOK.UseVisualStyleBackColor = true;
@@ -202,10 +203,13 @@
             // 
             // lblFrame
             // 
-            this.lblFrame.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblFrame.Location = new System.Drawing.Point(142, 20);
+            this.lblFrame.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lblFrame.BackColor = System.Drawing.SystemColors.Control;
+            this.lblFrame.Font = new System.Drawing.Font("メイリオ", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblFrame.ForeColor = System.Drawing.Color.Violet;
+            this.lblFrame.Location = new System.Drawing.Point(147, 23);
             this.lblFrame.Name = "lblFrame";
-            this.lblFrame.Size = new System.Drawing.Size(56, 12);
+            this.lblFrame.Size = new System.Drawing.Size(64, 16);
             this.lblFrame.TabIndex = 8;
             this.lblFrame.Text = "10fr前から";
             this.lblFrame.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
@@ -224,7 +228,7 @@
             // 
             this.chkTopMost.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.chkTopMost.AutoSize = true;
-            this.chkTopMost.Location = new System.Drawing.Point(7, 40);
+            this.chkTopMost.Location = new System.Drawing.Point(7, 43);
             this.chkTopMost.Name = "chkTopMost";
             this.chkTopMost.Size = new System.Drawing.Size(69, 16);
             this.chkTopMost.TabIndex = 10;
@@ -235,7 +239,7 @@
             // btnReplace
             // 
             this.btnReplace.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnReplace.Location = new System.Drawing.Point(166, 21);
+            this.btnReplace.Location = new System.Drawing.Point(176, 21);
             this.btnReplace.Name = "btnReplace";
             this.btnReplace.Size = new System.Drawing.Size(116, 26);
             this.btnReplace.TabIndex = 14;
@@ -250,7 +254,7 @@
             this.対象制御ToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(287, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(297, 24);
             this.menuStrip1.TabIndex = 16;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -306,26 +310,26 @@
             this.pnlBottom.Controls.Add(this.btnOK);
             this.pnlBottom.Controls.Add(this.label1);
             this.pnlBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlBottom.Location = new System.Drawing.Point(0, 503);
+            this.pnlBottom.Location = new System.Drawing.Point(0, 500);
             this.pnlBottom.Name = "pnlBottom";
-            this.pnlBottom.Size = new System.Drawing.Size(287, 62);
+            this.pnlBottom.Size = new System.Drawing.Size(297, 65);
             this.pnlBottom.TabIndex = 17;
             // 
             // trackBar1
             // 
             this.trackBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.trackBar1.Location = new System.Drawing.Point(-4, 14);
+            this.trackBar1.Location = new System.Drawing.Point(-4, 17);
             this.trackBar1.Minimum = -10;
             this.trackBar1.Name = "trackBar1";
-            this.trackBar1.Size = new System.Drawing.Size(152, 45);
+            this.trackBar1.Size = new System.Drawing.Size(157, 45);
             this.trackBar1.TabIndex = 11;
             this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // label1
             // 
-            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(69, 7);
+            this.label1.Location = new System.Drawing.Point(71, 10);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(8, 12);
             this.label1.TabIndex = 12;
@@ -339,7 +343,7 @@
             this.lblWait.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.lblWait.Location = new System.Drawing.Point(3, 193);
             this.lblWait.Name = "lblWait";
-            this.lblWait.Size = new System.Drawing.Size(280, 132);
+            this.lblWait.Size = new System.Drawing.Size(290, 132);
             this.lblWait.TabIndex = 19;
             this.lblWait.Text = "「なんとかかんとか」\r\nのモーフ情報を取得中です。\r\nしばらくお待ち下さい。\r\n";
             this.lblWait.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -355,9 +359,9 @@
             this.pnlTop.Controls.Add(this.btnUp);
             this.pnlTop.Controls.Add(this.button2);
             this.pnlTop.Controls.Add(this.lblActiveModel);
-            this.pnlTop.Location = new System.Drawing.Point(-1, 75);
+            this.pnlTop.Location = new System.Drawing.Point(-1, 51);
             this.pnlTop.Name = "pnlTop";
-            this.pnlTop.Size = new System.Drawing.Size(286, 78);
+            this.pnlTop.Size = new System.Drawing.Size(296, 78);
             this.pnlTop.TabIndex = 20;
             // 
             // lblReplaced
@@ -376,18 +380,18 @@
             // 
             this.cboSet.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboSet.FormattingEnabled = true;
-            this.cboSet.Location = new System.Drawing.Point(53, 28);
+            this.cboSet.Location = new System.Drawing.Point(45, 28);
             this.cboSet.Name = "cboSet";
-            this.cboSet.Size = new System.Drawing.Size(181, 20);
+            this.cboSet.Size = new System.Drawing.Size(149, 20);
             this.cboSet.TabIndex = 22;
             this.cboSet.SelectedIndexChanged += new System.EventHandler(this.cboSet_SelectedIndexChanged);
             this.cboSet.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.cboSet_Format);
             // 
             // btnEditSet
             // 
-            this.btnEditSet.Location = new System.Drawing.Point(237, 26);
+            this.btnEditSet.Location = new System.Drawing.Point(196, 27);
             this.btnEditSet.Name = "btnEditSet";
-            this.btnEditSet.Size = new System.Drawing.Size(50, 23);
+            this.btnEditSet.Size = new System.Drawing.Size(45, 23);
             this.btnEditSet.TabIndex = 25;
             this.btnEditSet.Text = "編集";
             this.btnEditSet.UseVisualStyleBackColor = true;
@@ -395,9 +399,9 @@
             // 
             // btnAddSet
             // 
-            this.btnAddSet.Location = new System.Drawing.Point(237, 51);
+            this.btnAddSet.Location = new System.Drawing.Point(242, 27);
             this.btnAddSet.Name = "btnAddSet";
-            this.btnAddSet.Size = new System.Drawing.Size(50, 23);
+            this.btnAddSet.Size = new System.Drawing.Size(45, 23);
             this.btnAddSet.TabIndex = 26;
             this.btnAddSet.Text = "追加";
             this.btnAddSet.UseVisualStyleBackColor = true;
@@ -408,7 +412,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.label2.ForeColor = System.Drawing.Color.Black;
-            this.label2.Location = new System.Drawing.Point(-1, 29);
+            this.label2.Location = new System.Drawing.Point(-1, 28);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(48, 20);
             this.label2.TabIndex = 27;
@@ -417,9 +421,9 @@
             // btnReset
             // 
             this.btnReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnReset.Location = new System.Drawing.Point(202, 402);
+            this.btnReset.Location = new System.Drawing.Point(218, 415);
             this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(85, 23);
+            this.btnReset.Size = new System.Drawing.Size(78, 23);
             this.btnReset.TabIndex = 28;
             this.btnReset.Text = "表情リセット";
             this.btnReset.UseVisualStyleBackColor = true;
@@ -427,15 +431,16 @@
             // 
             // lstMorphs
             // 
-            this.lstMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.lstMorphs.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.lstMorphs.BackColor = System.Drawing.SystemColors.Control;
             this.lstMorphs.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.lstMorphs.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.lstMorphs.FormattingEnabled = true;
             this.lstMorphs.IntegralHeight = false;
-            this.lstMorphs.Location = new System.Drawing.Point(3, 404);
+            this.lstMorphs.Location = new System.Drawing.Point(6, 417);
             this.lstMorphs.Name = "lstMorphs";
-            this.lstMorphs.Size = new System.Drawing.Size(195, 90);
+            this.lstMorphs.Size = new System.Drawing.Size(205, 81);
             this.lstMorphs.TabIndex = 21;
             this.lstMorphs.SelectedValueChanged += new System.EventHandler(this.lstMorphs_SelectedValueChanged);
             // 
@@ -444,7 +449,7 @@
             this.mmdSelector.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.mmdSelector.Location = new System.Drawing.Point(0, 565);
             this.mmdSelector.Name = "mmdSelector";
-            this.mmdSelector.Size = new System.Drawing.Size(287, 46);
+            this.mmdSelector.Size = new System.Drawing.Size(297, 46);
             this.mmdSelector.TabIndex = 18;
             this.mmdSelector.Visible = false;
             // 
@@ -452,12 +457,12 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(287, 611);
+            this.ClientSize = new System.Drawing.Size(297, 611);
+            this.Controls.Add(this.cboSet);
             this.Controls.Add(this.btnReset);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.btnAddSet);
             this.Controls.Add(this.btnEditSet);
-            this.Controls.Add(this.cboSet);
             this.Controls.Add(this.lstMorphs);
             this.Controls.Add(this.lblWait);
             this.Controls.Add(this.listBox1);
@@ -465,6 +470,7 @@
             this.Controls.Add(this.pnlBottom);
             this.Controls.Add(this.mmdSelector);
             this.Controls.Add(this.menuStrip1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -521,8 +527,8 @@
         private System.Windows.Forms.Button btnEditSet;
         private System.Windows.Forms.Button btnAddSet;
         protected System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button btnReset;
         public System.Windows.Forms.TrackBar trackBar1;
         private System.Windows.Forms.Label label1;
+        public System.Windows.Forms.Button btnReset;
     }
 }

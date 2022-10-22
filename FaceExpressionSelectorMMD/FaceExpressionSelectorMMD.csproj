@@ -7,7 +7,7 @@
     <ProjectGuid>{39FBB6DF-2355-4E89-B4D1-54A01786BD93}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FaceExpressionSelectorMMD</RootNamespace>
-    <AssemblyName>FaceExpressionSelector</AssemblyName>
+    <AssemblyName>FaceExpressionSelector64</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -72,6 +72,9 @@
     <ErrorReport>prompt</ErrorReport>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>ico.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibMMD, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -107,6 +110,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -129,6 +133,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="assembly\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="32.ico" />
+    <Content Include="ico.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

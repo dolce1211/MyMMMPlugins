@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +21,8 @@ namespace FaceExpressionHelper.UI.UserControls
 
         private MorphItem _morphItem = null;
         private bool _isMissing = false;
+        private bool _isCorrected = false;
+        public bool IsMissing => _isMissing && !_isCorrected;
 
         /// <summary>
         /// アクティブモデルの対象モーフ一覧
@@ -49,9 +52,59 @@ namespace FaceExpressionHelper.UI.UserControls
         }
 
         /// <summary>
+        /// 引数の値を反映させます。
+        /// </summary>
+        /// <param name="replacedItems">置換情報</param>
+        /// <param name="isFromSameModel">同一モデルからの引用ならtrue。Correctionも反映させる</param>
+        /// <returns></returns>
+        public bool ApplyValue(ReplacedMorphSet replacedmorphSet, bool isFromSameModel)
+        {
+            if (replacedmorphSet.Ignore)
+            {
+                if (isFromSameModel)
+                {
+                    //【無視する】
+                    this.Count = 1;
+                    this.comboBox1.SelectedIndex = 1;
+                }
+                //自モデルから以外の「無視する」はスルーする
+                return true;
+            }
+
+            List<ReplacedItem> replacedItems = replacedmorphSet.ReplacedItems;
+            this.Count = Math.Min(replacedItems.Count, 3);
+            var index = 1;
+            var ret = false;
+            foreach (var rp in replacedItems)
+            {
+                var replacingMorph = _targetMorphs.Where(n => n.MorphName == rp.RepalcedMorphName).FirstOrDefault();
+                if (replacingMorph != null)
+                {
+                    var ctrtuple = this.GetControlSet(index);
+                    var maxnum = 1;
+                    if (ctrtuple.Item1 == this.comboBox1)
+                        maxnum = 2;
+                    if (ctrtuple.Item1.Items.Count <= maxnum)
+                        ctrtuple.Item1.Items.AddRange(this._targetMorphs.ToArray());
+
+                    if (ctrtuple.Item1.SelectedItem == null || string.IsNullOrEmpty(ctrtuple.Item1.SelectedItem.ToString()))
+                    {
+                        ctrtuple.Item1.SelectedItem = replacingMorph;
+                        if (isFromSameModel)
+                            ctrtuple.Item2.Value = (decimal)rp.Correction;
+                    }
+
+                    ret = true;
+                }
+                index++;
+            }
+            return ret;
+        }
+
+        /// <summary>
         /// 元のモーフ名
         /// </summary>
-        private string MorphName => this.lblActiveModel.Text;
+        public string MorphName { get; set; } = String.Empty;
 
         private (ComboBox, NumericUpDown) GetControlSet(int index)
         {
@@ -147,6 +200,7 @@ namespace FaceExpressionHelper.UI.UserControls
         /// <param name="allMorphs">全モーフ</param>
         public void Initialize(string activeModel, MorphItem morphItem, ReplacedMorphSet rps, bool isMissing, List<MorphItem> allMorphs, Action<MorphSelectedEventArgs> morphSelectedAction)
         {
+            this.MorphName = morphItem.MorphName;
             this.lblActiveModel.Text = morphItem.MortphNameWithType;
             this._morphSelectedAction = morphSelectedAction;
             this._activeModel = activeModel;
@@ -226,12 +280,14 @@ namespace FaceExpressionHelper.UI.UserControls
             this.panel3.Enabled = !ignore;
             this.btnAdd.Enabled = !ignore;
 
+            this._isCorrected = false;
             if (this._isMissing)
             {
                 if (ctrtuple.Item1.SelectedItem != null && !string.IsNullOrEmpty(ctrtuple.Item1.Text))
                 {
                     this.lblMissing.Text = "●";
                     this.lblMissing.ForeColor = Color.LightBlue;
+                    this._isCorrected = true;
                 }
                 else
                 {

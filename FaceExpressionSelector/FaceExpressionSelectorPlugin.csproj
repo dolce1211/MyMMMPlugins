@@ -30,6 +30,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DxMath">
       <HintPath>K:\MMD\MikuMikuMoving_1292\System\x64\DxMath.dll</HintPath>
@@ -73,6 +77,11 @@
     <Compile Include="BizLogics\ScreenShotSaver.cs" />
     <Compile Include="Entities\Settings.cs" />
     <Compile Include="FaceExpressionHelperPlugin.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="UI\frmBulkExceptions.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -157,6 +166,10 @@
     <EmbeddedResource Include="..\Utility\UI\frmMMDSelect.resx">
       <Link>_LinkFiles\UI\frmMMDSelect.resx</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\frmBulkExceptions.resx">
       <DependentUpon>frmBulkExceptions.cs</DependentUpon>
     </EmbeddedResource>
@@ -194,6 +207,18 @@
     <EmbeddedResource Include="_LinkFiles\UI\MMDSelectorControl.resx">
       <DependentUpon>MMDSelectorControl.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="22.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="32.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="22.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="32.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

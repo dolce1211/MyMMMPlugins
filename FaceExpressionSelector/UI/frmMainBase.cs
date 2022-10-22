@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Media;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace FaceExpressionHelper
@@ -47,6 +48,11 @@ namespace FaceExpressionHelper
             else
                 this.cboSet.SelectedIndex = 0;
 
+            if (this._args.SelectedTrackBarValue >= -10 && this._args.SelectedTrackBarValue <= 10)
+                this.trackBar1.Value = this._args.SelectedTrackBarValue;
+            else
+                this.trackBar1.Value = 4;
+
             this.CreateListBox();
 
             //this.lstMissingMorphs.Format += this._listboxformatHandler;
@@ -67,7 +73,6 @@ namespace FaceExpressionHelper
             this.lblActiveModel.Text = String.Empty;
             this.lblReplaced.Text = String.Empty;
 
-            this.trackBar1.Value = 4;
             this.trackBar1_Scroll(null, null);
         }
 
@@ -185,7 +190,7 @@ namespace FaceExpressionHelper
             //this.listBox1.Enabled = enabled;
             this.pnlTop.Enabled = enabled;
             this.pnlBottom.Enabled = enabled;
-
+            this.btnReset.Enabled = enabled;
             this.lblReplaced.Text = replacedTxt;
             this.listBox1_SelectedIndexChanged(null, null);
         }
@@ -416,9 +421,11 @@ namespace FaceExpressionHelper
         {
             var dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             var baseDir = System.IO.Path.Combine(dir, "faceExpressions");
+            if (!System.IO.Directory.Exists(baseDir))
+                System.IO.Directory.CreateDirectory(baseDir);
             var xmlpath = System.IO.Path.Combine(baseDir, "_基本設定.xml");
-
             this._args.SelectedExpressionSet = this.cboSet.Text;
+            this._args.SelectedTrackBarValue = this.trackBar1.Value;
             var ret = MyUtility.Serializer.Serialize(this._args, xmlpath);
             if (ret)
             {
@@ -496,7 +503,6 @@ namespace FaceExpressionHelper
 
         private void btnReplace_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("frmreplace");
             if (this._frmReplacedMorphs != null && this._frmReplacedMorphs.Visible)
                 return;
 
@@ -529,6 +535,7 @@ namespace FaceExpressionHelper
                 }
                 this.TrySaveSettings();
                 listBox1_SelectedIndexChanged(this, new EventArgs());
+                this.OnActiveModelChanged(this, new ActiveModelChangedEventArgs(this.lblActiveModel.Text));
             }));
 
             //this._frmReplacedMorphs.FormClosed += (ss, ee) =>
@@ -595,6 +602,8 @@ namespace FaceExpressionHelper
             }
         }
 
+        private bool _savedByBtnUpDown = false;
+
         private void btnUp_Click(object sender, EventArgs e)
         {
             var selectedItem = this.listBox1.SelectedItem as ExpressionItem;
@@ -617,9 +626,26 @@ namespace FaceExpressionHelper
                 itemList.Add(selectedItem);
 
             this._currentExpressionSet.Items = itemList;
-            this.TrySaveSettings();
+
             this.CreateListBox();
+
             this.listBox1.SelectedItem = selectedItem;
+
+            _savedByBtnUpDown = false;
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(2000);
+                if (!_savedByBtnUpDown)
+                {
+                    this.Invoke(new Action(() => this.TrySaveSettings()));
+                    Console.WriteLine("セーブした");
+                }
+                else
+                {
+                    Console.WriteLine("スルーした");
+                }
+                _savedByBtnUpDown = true;
+            });
         }
 
         private void chkTopMost_CheckedChanged(object sender, EventArgs e)
@@ -651,6 +677,7 @@ namespace FaceExpressionHelper
         private void frmMainBase_FormClosed(object sender, FormClosedEventArgs e)
         {
             MyUtility.ControlHelper.TrySaveMyPosition("FaceExpressionSelector", this);
+            this.TrySaveSettings();
         }
 
         private void frmMainBase_Load(object sender, EventArgs e)
@@ -863,6 +890,7 @@ namespace FaceExpressionHelper
             if (this._currentExpressionSet != null)
             {
                 this.CreateListBox();
+                this.OnActiveModelChanged(this, new ActiveModelChangedEventArgs(this.lblActiveModel.Text));
             }
         }
 
@@ -905,6 +933,7 @@ namespace FaceExpressionHelper
                         {
                             //編集
                             this._currentExpressionSet.Name = frm.Result;
+                            this._currentExpressionSet.Items.ForEach(n => n.Folder = frm.Result);
                             try
                             {
                                 System.IO.Directory.Move(setDir, newDir);
@@ -953,9 +982,15 @@ namespace FaceExpressionHelper
             var btnokEnabled = true;
             var value = Math.Abs(this.trackBar1.Value);
             if (this.trackBar1.Value > 0)
+            {
                 this.lblFrame.Text = $"{value}fr後に";
+                this.lblFrame.ForeColor = System.Drawing.Color.Black;
+            }
             else if (this.trackBar1.Value < 0)
+            {
                 this.lblFrame.Text = $"{value}fr前から";
+                this.lblFrame.ForeColor = System.Drawing.Color.Violet;
+            }
             else
             {
                 btnokEnabled = false;

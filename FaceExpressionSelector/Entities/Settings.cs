@@ -73,6 +73,11 @@ namespace FaceExpressionHelper
         /// 選択されていた表情セット
         /// </summary>
         public string SelectedExpressionSet { get; set; }
+
+        /// <summary>
+        /// 選択されていたトラックバーの値
+        /// </summary>
+        public int SelectedTrackBarValue { get; set; } = int.MinValue;
     }
 
     /// <summary>

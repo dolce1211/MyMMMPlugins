@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Forms;
 
 namespace FaceExpressionHelper.UI
@@ -32,12 +33,31 @@ namespace FaceExpressionHelper.UI
                 this.txtName.Text = String.Empty;
                 //新規のときは削除ボタン不要
                 this.btnDelete.Visible = false;
+                //新規のときはフォルダ開くボタン不要
+                this.btnOpenFolder.Visible = false;
             }
         }
 
         public string Result { get; private set; }
 
         public bool DeleteFlg { get; private set; }
+
+        private void txtName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return)
+                this.btnOK.PerformClick();
+        }
+
+        private void btnOpenFolder_Click(object sender, EventArgs e)
+        {
+            var dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var baseDir = System.IO.Path.Combine(dir, "faceExpressions");
+            var setdir = System.IO.Path.Combine(baseDir, this._exSet.Name);
+            if (System.IO.Directory.Exists(setdir))
+            {
+                System.Diagnostics.Process.Start(setdir);
+            }
+        }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
@@ -86,12 +106,6 @@ namespace FaceExpressionHelper.UI
             }
 
             this.Close();
-        }
-
-        private void txtName_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Return)
-                this.btnOK.PerformClick();
         }
     }
 }

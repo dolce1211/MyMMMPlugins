@@ -71,7 +71,10 @@ namespace FaceExpressionHelper.UI
         /// <param name="e"></param>
         private void OnMorphSelected(MorphSelectedEventArgs e)
         {
+            this.CheckMissing();
             if (!this.chkApplyMorph.Checked)
+                return;
+            if (!this.Enabled)
                 return;
             this._morphselectedHandler?.Invoke(this, e);
         }
@@ -104,12 +107,32 @@ namespace FaceExpressionHelper.UI
                     this.pnlBody.BringToFront();
                     replacedctr.Visible = true;
                 }
+                this.CheckMissing();
             }
             finally
             {
                 this.pnlBody.AutoScrollPosition = new Point(0, 0);
                 this.pnlBody.Visible = true;
                 this.pnlBody.ResumeLayout();
+            }
+        }
+
+        private void CheckMissing()
+        {
+            var count = 0;
+            foreach (Control ctrl in this.pnlBody.Controls)
+            {
+                if (ctrl is ReplaceMorphCtr replacedctr)
+                    if (replacedctr.IsMissing)
+                        count++;
+            }
+
+            if (count == 0)
+                this.lblRemaining.Visible = false;
+            else
+            {
+                this.lblRemaining.Visible = true;
+                this.lblRemaining.Text = $"未処理モーフ {count}件";
             }
         }
 
@@ -152,6 +175,84 @@ namespace FaceExpressionHelper.UI
                 }
             }
             this.BeginAndEndUpdate(true);
+        }
+
+        /// <summary>
+        /// 実績から引用
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnQuote_Click(object sender, EventArgs e)
+        {
+            this.Enabled = false;
+            this.Cursor = Cursors.WaitCursor;
+            try
+            {
+                //ReplaceMorphCtrのハッシュを作る
+                var ctrHash = new Dictionary<string, ReplaceMorphCtr>();
+                foreach (Control ctrl in this.pnlBody.Controls)
+                {
+                    if (ctrl is ReplaceMorphCtr replacedctr)
+                    {
+                        if (!ctrHash.ContainsKey(replacedctr.MorphName))
+                            ctrHash.Add(replacedctr.MorphName, replacedctr);
+                    }
+                }
+
+                //他のセットでの今のモデルの置換セット
+                var myModelsReplacedNameItemList = new List<ReplacedMorphNameItem>();
+                //全セットにわたっての他のモデルの置換セット
+                var otherModelsReplacedNameItemList = new List<ReplacedMorphNameItem>();
+                foreach (var otherset in this._args.ExpressionSets.Where(n => n.Name != this._exSet.Name))
+                {
+                    var myReplacedNameItem = otherset.ReplacedMorphs.Where(n => n.ModelName == this._modelName).FirstOrDefault();
+                    if (myReplacedNameItem != null)
+                        myModelsReplacedNameItemList.Add(myReplacedNameItem);
+                }
+                foreach (var set in this._args.ExpressionSets)
+                {
+                    var myReplacedNameItems = set.ReplacedMorphs.Where(n => n.ModelName != this._modelName).ToArray();
+                    if (myReplacedNameItems != null)
+                        otherModelsReplacedNameItemList.AddRange(myReplacedNameItems);
+                }
+
+                //自モデルの置換設定があるなら値ごと引用する
+                foreach (var replacedName in myModelsReplacedNameItemList)
+                {
+                    foreach (var replacedset in replacedName.ReplacedMorphSetList)
+                    {
+                        if (ctrHash.ContainsKey(replacedset.MorphName))
+                        {
+                            var replacedctrl = ctrHash[replacedset.MorphName];
+
+                            //要置換
+                            replacedctrl.ApplyValue(replacedset, true);
+                        }
+                    }
+                }
+
+                //他モデルのち缶設定があるなら値以外を引用する
+                foreach (var replacedName in otherModelsReplacedNameItemList)
+                {
+                    foreach (var replacedset in replacedName.ReplacedMorphSetList)
+                    {
+                        if (ctrHash.ContainsKey(replacedset.MorphName))
+                        {
+                            var replacedctrl = ctrHash[replacedset.MorphName];
+                            if (replacedctrl.IsMissing && replacedset.ReplacedItems.Count == 1)
+                            {
+                                //要置換
+                                replacedctrl.ApplyValue(replacedset, false);
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                this.Enabled = true;
+                this.Cursor = Cursors.Default;
+            }
         }
     }
 }

@@ -32,12 +32,13 @@
             this.txtName = new System.Windows.Forms.TextBox();
             this.btnCancel = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
+            this.btnOpenFolder = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(165, 41);
+            this.btnOK.Location = new System.Drawing.Point(94, 79);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(85, 30);
             this.btnOK.TabIndex = 4;
@@ -52,7 +53,7 @@
             this.txtName.ImeMode = System.Windows.Forms.ImeMode.On;
             this.txtName.Location = new System.Drawing.Point(12, 12);
             this.txtName.Name = "txtName";
-            this.txtName.Size = new System.Drawing.Size(329, 19);
+            this.txtName.Size = new System.Drawing.Size(258, 19);
             this.txtName.TabIndex = 3;
             this.txtName.Text = "あいうえお";
             this.txtName.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtName_KeyDown);
@@ -60,7 +61,7 @@
             // btnCancel
             // 
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnCancel.Location = new System.Drawing.Point(256, 41);
+            this.btnCancel.Location = new System.Drawing.Point(185, 79);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(85, 30);
             this.btnCancel.TabIndex = 5;
@@ -70,19 +71,31 @@
             // 
             // btnDelete
             // 
-            this.btnDelete.Location = new System.Drawing.Point(12, 41);
+            this.btnDelete.Location = new System.Drawing.Point(11, 37);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(85, 30);
+            this.btnDelete.Size = new System.Drawing.Size(63, 23);
             this.btnDelete.TabIndex = 6;
             this.btnDelete.Text = "削除";
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Click += new System.EventHandler(this.btnOK_Click);
             // 
+            // btnOpenFolder
+            // 
+            this.btnOpenFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOpenFolder.Location = new System.Drawing.Point(147, 37);
+            this.btnOpenFolder.Name = "btnOpenFolder";
+            this.btnOpenFolder.Size = new System.Drawing.Size(123, 23);
+            this.btnOpenFolder.TabIndex = 0;
+            this.btnOpenFolder.Text = "セットのフォルダを開く";
+            this.btnOpenFolder.UseVisualStyleBackColor = true;
+            this.btnOpenFolder.Click += new System.EventHandler(this.btnOpenFolder_Click);
+            // 
             // frmEditSet
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(353, 79);
+            this.ClientSize = new System.Drawing.Size(282, 117);
+            this.Controls.Add(this.btnOpenFolder);
             this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.txtName);
@@ -102,5 +115,6 @@
         private System.Windows.Forms.TextBox txtName;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnOpenFolder;
     }
 }

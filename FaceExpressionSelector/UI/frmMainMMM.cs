@@ -27,6 +27,8 @@ namespace FaceExpressionHelper.UI
 
             //MMMで動いている
             OperationgMode = OperatingMode.OnMMM;
+
+            OnActiveModelChanged(this, new ActiveModelChangedEventArgs(this.ActiveModelName));
         }
 
         /// <summary>
@@ -152,10 +154,22 @@ namespace FaceExpressionHelper.UI
                     }
                 }
             }
+            long currentframe;
+            long newframe;
+            if (bufferFrames >= 0)
+            {
+                currentframe = this._scene.MarkerPosition;
+                newframe = currentframe + Convert.ToInt64(bufferFrames);
+            }
+            else
+            {
+                newframe = this._scene.MarkerPosition;
+                currentframe = newframe + Convert.ToInt64(bufferFrames);
+            }
 
             //描画を止める
             MMMUtilility.BeginAndEndUpdate(false);
-
+            this._scene.MarkerPosition = currentframe;
             try
             {
                 //適用
@@ -171,8 +185,8 @@ namespace FaceExpressionHelper.UI
                     if (applyingMI != null)
                     {
                         //対象のモーフ
-                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition, morph.CurrentWeight));
-                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition + bufferFrames, applyingMI.Weight));
+                        framelist.Add(new MorphFrameData(currentframe, morph.CurrentWeight));
+                        framelist.Add(new MorphFrameData(newframe, applyingMI.Weight));
                     }
                     else
                     {
@@ -185,7 +199,7 @@ namespace FaceExpressionHelper.UI
                 }
 
                 //対象外のモーフの処理を行う
-                this._scene.MarkerPosition += bufferFrames;
+                this._scene.MarkerPosition = newframe;
                 foreach ((float, Morph) tuple in notTargetMorphs)
                 {
                     var prevWeight = tuple.Item1;
@@ -194,8 +208,8 @@ namespace FaceExpressionHelper.UI
                     var framelist = new List<MorphFrameData>();
                     if (morph.CurrentWeight != 0)
                     {
-                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition - bufferFrames, prevWeight));
-                        framelist.Add(new MorphFrameData(this._scene.MarkerPosition, 0));
+                        framelist.Add(new MorphFrameData(currentframe, prevWeight));
+                        framelist.Add(new MorphFrameData(newframe, 0));
                     }
                     if (framelist.Count > 0)
                         morph.Frames.AddKeyFrame(framelist);
@@ -219,6 +233,34 @@ namespace FaceExpressionHelper.UI
             if (frm != null)
                 frm.Refresh();
             return true;
+        }
+
+        protected override void OnMorphSelected(object sender, MorphSelectedEventArgs e)
+        {
+            if (this._scene.ActiveModel == null)
+                return;
+            if (this._scene.ActiveModel.Name != e.ActiveModelName)
+                return;
+            if (e.Value == float.MinValue)
+                return;
+
+            var morph = this._scene.ActiveModel.Morphs.Where(n => n.Name == e.MorphName).FirstOrDefault();
+            if (morph == null)
+                return;
+
+            MMMUtilility.BeginAndEndUpdate(false);
+            try
+            {
+                //未確定の変更をリセットする
+                this._scene.MarkerPosition++;
+                this._scene.MarkerPosition--;
+
+                morph.CurrentWeight = e.Value;
+            }
+            finally
+            {
+                MMMUtilility.BeginAndEndUpdate(true);
+            }
         }
 
         /// <summary>

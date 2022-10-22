@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 using System.Xml;
 using static MMDUtil.MMDUtilility;
 using static System.Net.Mime.MediaTypeNames;
@@ -151,32 +152,36 @@ namespace FaceExpressionSelectorMMD
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMainMMD));
             this.pnlTop.SuspendLayout();
             this.pnlBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
-            //
+            // 
             // mmdSelector
-            //
+            // 
             this.mmdSelector.Location = new System.Drawing.Point(0, 578);
-            //
+            // 
             // pnlBottom
-            //
-            this.pnlBottom.Location = new System.Drawing.Point(0, 542);
-            //
+            // 
+            this.pnlBottom.Location = new System.Drawing.Point(0, 513);
+            // 
             // frmMainMMD
-            //
+            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.ClientSize = new System.Drawing.Size(287, 624);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "frmMainMMD";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmMainMMD_FormClosing);
             this.Shown += new System.EventHandler(this.frmMainMMD_Shown);
-
             this.pnlTop.ResumeLayout(false);
             this.pnlTop.PerformLayout();
             this.pnlBottom.ResumeLayout(false);
             this.pnlBottom.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         /// <summary>
@@ -190,7 +195,7 @@ namespace FaceExpressionSelectorMMD
                 this.lblWait.Visible = false;
                 this.pnlTop.Enabled = true;
                 this.pnlBottom.Enabled = true;
-
+                this.btnReset.Enabled = true;
                 this.対象制御ToolStripMenuItem.Enabled = true;
             }));
         }
@@ -209,6 +214,8 @@ namespace FaceExpressionSelectorMMD
                 this.lblWait.Refresh();
                 this.pnlTop.Enabled = false;
                 this.pnlBottom.Enabled = false;
+                this.btnReset.Enabled = false;
+
                 this.対象制御ToolStripMenuItem.Enabled = false;
             }));
         }
@@ -238,7 +245,7 @@ namespace FaceExpressionSelectorMMD
                 foreach (MorphItem morph in kvp.Value)
                 {
                     morph.Weight = MMDUtilility.TryGetMorphValue(mmd.MainWindowHandle, kvp.Key, index);
-                    //MMDUtilility.TrySetMorphValueAsIs(mmd.MainWindowHandle, kvp.Key, index);
+
                     index++;
                 }
             }
@@ -279,7 +286,6 @@ namespace FaceExpressionSelectorMMD
                         return _currentModel;
                     }
 
-                    Console.WriteLine($"{_prevmmdID},{mmd?.Id}");
                     if (_prevmmdID != mmd.Id)
                     {
                         //監視してるMMDが切り替わった。キャッシュクリア
@@ -416,6 +422,9 @@ namespace FaceExpressionSelectorMMD
                 //アクティブモデル無し
                 return false;
 
+            var sw = new Stopwatch();
+            sw.Start();
+
             //処理対象のモーフ情報を取得
             var applyingMorphs = this.GetApplyingMorphs(item);
             //無いモーフチェック
@@ -437,11 +446,6 @@ namespace FaceExpressionSelectorMMD
             {
                 var msg = $"「{item.Name}」を適用中です。\r\nMMDに触らないでください。";
                 this.ShowlblWait(msg);
-                var model = this.TryApplyCurrentWeight();
-                if (model == null || string.IsNullOrEmpty(model.ModelName))
-                {
-                    return false;
-                }
 
                 long currentframe;
                 long newframe;
@@ -455,12 +459,20 @@ namespace FaceExpressionSelectorMMD
                     newframe = Convert.ToInt64(MMDUtilility.TryGetFrameNumber(mmd.MainWindowHandle));
                     currentframe = newframe + Convert.ToInt64(bufferFrames);
                 }
+                MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentframe);
+
+                var model = this.TryApplyCurrentWeight();
+                if (model == null || string.IsNullOrEmpty(model.ModelName))
+                {
+                    return false;
+                }
+                Console.WriteLine($"TryApplyCurrentWeight：{this.ActiveModelName}:{item.Name},{sw.ElapsedMilliseconds}");
 
                 var targetMorphs = new List<(float, MorphItemWithIndex)>();
                 var notTargetMorphs = new List<MorphItemWithIndex>();
 
                 //適用
-                MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentframe);
+                var failed = new List<string>();
                 foreach (MorphItemWithIndex morph in this._currentModel.AllMorphs.Values.SelectMany(n => n))
                 {
                     if (!base._args.IsTargetMorph(morph))
@@ -480,40 +492,56 @@ namespace FaceExpressionSelectorMMD
                     else
                     {
                         if (morph.Weight != 0)
+                        {
                             //対象外のモーフでウェイトが乗っている
-                            MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, morph.Weight, true);
+                            var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, morph.Weight, true, 3);
+                            if (!ret)
+                                failed.Add($"{morph.MorphName},{currentframe}fr");
+                        }
+
                         notTargetMorphs.Add(morph);
                     }
                 }
+
                 MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, newframe);
                 foreach ((float, MorphItemWithIndex) tuple in targetMorphs)
                 {
-                    for (int retrycount = 0; retrycount < 2; retrycount++) //いちおう3回リトライする
-                    {
-                        var weight = tuple.Item1;
-                        var morph = tuple.Item2;
-                        MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, weight, true);
-                        var afterValue = MMDUtilility.TryGetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex);
-                        if (Math.Round(afterValue, 3) == Math.Round(weight, 3))
-                            break;
-
-                        System.Threading.Thread.Sleep(50);
-                        Debugger.Break();
-                    }
+                    var weight = tuple.Item1;
+                    var morph = tuple.Item2;
+                    var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, weight, true, 3);
+                    if (!ret)
+                        failed.Add($"{morph.MorphName},{newframe}fr");
                 }
                 foreach (MorphItemWithIndex morph in notTargetMorphs)
                 {
                     var value = MMDUtilility.TryGetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex);
+
                     if (value != 0)
-                        MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, 0, true);
+                    {
+                        var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, 0, true, 3);
+                        if (!ret)
+                            failed.Add($"{morph.MorphName},{newframe}fr");
+                    }
                 }
 
+                if (failed.Count > 0)
+                {
+                    var errmsg = $"{string.Join("\r\n", failed)}\r\n\r\n以上のモーフの適用に失敗した可能性があります。\r\n確認してください。";
+                    MessageBox.Show(errmsg, "失敗?", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+
+                //モーフのスライダーの表示がバグることがあるのでMMD画面をリフレッシュする
+                MMDUtilility.BeginAndEndUpdate(mmd.MainWindowHandle, false);
+                MMDUtilility.BeginAndEndUpdate(mmd.MainWindowHandle, true);
+
+                //MMDにフォーカスを当てる
                 MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);
                 return true;
             }
             finally
             {
                 this.HidelblWait();
+                Console.WriteLine($"完了：{this.ActiveModelName}:{item.Name},{sw.ElapsedMilliseconds}");
             }
         }
 

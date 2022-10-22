@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace FaceExpressionSelectorMMD.Properties {
+namespace FaceExpressionHelper.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace FaceExpressionSelectorMMD.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("FaceExpressionSelectorMMD.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("FaceExpressionHelper.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -57,6 +57,26 @@ namespace FaceExpressionSelectorMMD.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap _22 {
+            get {
+                object obj = ResourceManager.GetObject("_22", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        internal static System.Drawing.Bitmap _32 {
+            get {
+                object obj = ResourceManager.GetObject("_32", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
     }

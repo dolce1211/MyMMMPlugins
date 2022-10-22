@@ -631,57 +631,6 @@ namespace MMDUtil
         }
 
         /// <summary>
-        /// 指定した名称のモーフを指定した値にセットします。
-        /// </summary>
-        /// <param name="parentHandle"></param>
-        /// <param name="morphtype">モーフ種類</param>
-        /// <param name="morphName">モーフ名</param>
-        /// <param name="value">値</param>
-        /// <param name="determine">確定するならtrue</param>
-        /// <returns></returns>
-        public static bool TrySetMorphValue(IntPtr parentHandle, MorphType morphtype, string morphName, float value, bool determine = true)
-        {
-            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
-            if (morphwindow == null)
-                return false;
-
-            //コンボの件数
-            var count = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCOUNT, null, null);
-
-            //var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCURSEL, 0, "");
-            //morphNameのバイト数を取得
-            int byteCount = Encoding.GetEncoding("Shift_JIS").GetByteCount(morphName);
-            for (int i = 0; i < count; i++)
-            {
-                var textlength = SendMessage(morphwindow.ComboBox.hWnd, CB_GETLBTEXTLEN, i, "");
-
-                if (textlength == byteCount)
-                {
-                    var sb = new StringBuilder(textlength);
-                    SendMessage(morphwindow.ComboBox.hWnd, CB_GETLBTEXT, i, sb);
-                    if (sb.ToString() == morphName)
-                    {
-                        //モーフ名が一致した。
-                        //コンボのインデックスをそれに合わせる
-                        var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, i, "");
-                        //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
-                        int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
-                        SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
-
-                        //値を入れる
-                        TrySetText(morphwindow.Edit, value.ToString(), true);
-                        if (determine)
-                            //確定までやるなら、登録ボタンを押す
-                            PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
-
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
         /// 指定したindexのモーフを指定した値にセットします。
         /// </summary>
         /// <param name="parentHandle"></param>
@@ -689,28 +638,60 @@ namespace MMDUtil
         /// <param name="morphIndex">いくつめのモーフ？</param>
         /// <param name="value">値</param>
         /// <param name="determine">確定するならtrue</param>
+        /// <param name="argretrycount">リトライ回数(determine=trueの場合のみ有効)</param>
         /// <returns></returns>
-        public static bool TrySetMorphValue(IntPtr parentHandle, MorphType morphtype, int morphIndex, float value, bool determine = true)
+        public static bool TrySetMorphValue(IntPtr parentHandle, MorphType morphtype, int morphIndex, float value, bool determine = true, int argretrycount = 1)
         {
             var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
             if (morphwindow == null)
                 return false;
 
-            //コンボのインデックスをそれに合わせる
-            var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
-            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
-            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
-            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+            var retrycount = argretrycount;
+            if (retrycount < 1)
+                retrycount = 1;
+            if (!determine)
+                retrycount = 1;
 
-            //値を入れる
-            System.Threading.Thread.Sleep(30);
-            TrySetText(morphwindow.Edit, value.ToString(), true);
-            System.Threading.Thread.Sleep(30);
-            if (determine)
+            for (int i = 0; i <= retrycount - 1; i++) //リトライ回数分回す
             {
-                //確定までやるなら、登録ボタンを押す
-                PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
+                //コンボのインデックスをそれに合わせる
+                var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
+                //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+                int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+                SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+                //値を入れる
                 System.Threading.Thread.Sleep(30);
+                TrySetText(morphwindow.Edit, value.ToString(), true);
+                System.Threading.Thread.Sleep(30);
+                if (determine)
+                {
+                    //確定までやるなら、登録ボタンを押す
+                    PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
+                    System.Threading.Thread.Sleep(30);
+
+                    var flg = false;
+                    for (int j = 0; j < 3; j++)
+                    {
+                        //ちゃんと値が入ったかチェックする
+                        MMDUtilility.TryResetFrameNumber(parentHandle);
+                        var afterValue = MMDUtilility.TryGetMorphValue(parentHandle, morphtype, morphIndex);
+                        if (Math.Round(afterValue, 3) == Math.Round(value, 3))
+                        {
+                            flg = true;
+                            break;
+                        }
+                        System.Threading.Thread.Sleep(30);
+                    }
+                    if (flg)
+                        break;
+
+                    Debugger.Break();
+                    if (i >= retrycount)
+                        return false;
+                }
+                else
+                    break;
             }
 
             return true;
@@ -761,7 +742,7 @@ namespace MMDUtil
 
             //登録ボタンを押す
             PostMessage(morphwindow.Button.hWnd, BM_CLICK, 0, 0);
-            System.Threading.Thread.Sleep(10);
+            System.Threading.Thread.Sleep(30);
 
             return true;
         }
@@ -785,6 +766,10 @@ namespace MMDUtil
             var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, morphIndex, "");
             //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
             int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+
+            if (morphIndex == 0)
+                //なんか先頭のコンボの値の取得に失敗することが多い
+                System.Threading.Thread.Sleep(10);
             SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
 
             return Convert.ToSingle(morphwindow.Edit.Text);

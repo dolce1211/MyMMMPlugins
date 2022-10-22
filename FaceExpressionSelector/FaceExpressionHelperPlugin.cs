@@ -31,9 +31,9 @@ namespace FaceExpressionHelper
 
         public string EnglishText => "FaceExpressionHelper";
 
-        public System.Drawing.Image Image => null;// Properties.Resources._32;
+        public System.Drawing.Image Image => Properties.Resources._32;
 
-        public System.Drawing.Image SmallImage => null;//Properties.Resources._22;
+        public System.Drawing.Image SmallImage => Properties.Resources._22;
 
         public Scene Scene { get; set; }
 
