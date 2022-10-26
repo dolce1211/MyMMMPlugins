@@ -335,7 +335,7 @@ namespace FaceExpressionHelper.UI.UserControls
                 this.Count--;
         }
 
-        private int _count = 1;
+        private int _count = -1;
 
         private int Count
         {
@@ -344,35 +344,37 @@ namespace FaceExpressionHelper.UI.UserControls
             {
                 if (value < 1 || value > 3)
                     return;
-
-                _count = value;
-                if (this.Parent != null)
-                    this.Parent.BeginAndEndUpdate(false);
-                try
+                if (_count != value)
                 {
-                    this.btnAdd.Enabled = true;
-                    this.btnRemove.Enabled = true;
-                    switch (_count)
-                    {
-                        case 1:
-                            this.Height = 30;
-                            this.btnRemove.Enabled = false;
-                            break;
-
-                        case 2:
-                            this.Height = 55;
-                            break;
-
-                        default:
-                            this.Height = 82;
-                            this.btnAdd.Enabled = false;
-                            break;
-                    }
-                }
-                finally
-                {
+                    _count = value;
                     if (this.Parent != null)
-                        this.Parent.BeginAndEndUpdate(true);
+                        this.Parent.BeginAndEndUpdate(false);
+                    try
+                    {
+                        this.btnAdd.Enabled = true;
+                        this.btnRemove.Enabled = true;
+                        switch (_count)
+                        {
+                            case 1:
+                                this.Height = 30;
+                                this.btnRemove.Enabled = false;
+                                break;
+
+                            case 2:
+                                this.Height = 55;
+                                break;
+
+                            default:
+                                this.Height = 82;
+                                this.btnAdd.Enabled = false;
+                                break;
+                        }
+                    }
+                    finally
+                    {
+                        if (this.Parent != null)
+                            this.Parent.BeginAndEndUpdate(true);
+                    }
                 }
             }
         }

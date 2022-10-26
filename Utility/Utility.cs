@@ -12,10 +12,31 @@ using static MMDUtil.MMDUtilility;
 using System.Xml;
 using System.Runtime.Remoting.Contexts;
 using System.IO;
+using System.Diagnostics;
+using System.IO.Pipes;
+using System.Security;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace MyUtility
 
 {
+    /// <summary>
+    /// MMD、MMMどっちで動いてる？
+    /// </summary>
+    public enum OperatingMode
+    {
+        /// <summary>
+        /// MMMで動いている
+        /// </summary>
+        OnMMM,
+
+        /// <summary>
+        /// MMDで動いている
+        /// </summary>
+        OnMMD
+    }
+
     public static class MathUtil
     {
         public static float lerp(float x, float y, float s)
@@ -803,5 +824,253 @@ namespace MyUtility
             Double rz = (Math.Atan2((2.0 * (q.W * q.Z + q.X * q.Y)), (1.0 - 2.0 * (q.X * q.X + q.Z * q.Z))) / Math.PI * 180.0);
             return new Vector3D(rx, ry, rz);
         }
+    }
+
+    public static class MmdDrop
+    {
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [SuppressUnmanagedCodeSecurity, DllImport("user32")]
+        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+        private const uint WM_DROPFILES = 0x233;
+
+        private struct DropFiles
+        {
+            public uint pFiles;
+            public int x;
+            public int y;
+
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fNC;
+
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fWide;
+        }
+
+        /// <summary>
+        /// 指定されたウィンドウにファイルをドロップします。
+        /// </summary>
+        /// <param name="hWnd">ドロップ先のウィンドウ ハンドル。</param>
+        /// <param name="file">ドロップするファイル。</param>
+        public static bool DropFile(IntPtr hWnd, MmdDropFile file)
+        {
+            return DropFile(hWnd, new[] { file });
+        }
+
+        private static bool DropFile(IntPtr hWnd, IList<MmdDropFile> files)
+        {
+            var names = Encoding.Unicode.GetBytes(string.Join("\0", files.Select(_ => _.FullName).ToArray()) + "\0\0");
+
+            var dropFilesSize = Marshal.SizeOf(typeof(DropFiles));
+            var hGlobal = Marshal.AllocHGlobal(dropFilesSize + names.Length);
+
+            var dropFiles = new DropFiles
+            {
+                pFiles = (uint)dropFilesSize,
+                x = 0,
+                y = 0,
+                fNC = false,
+                fWide = true,
+            };
+
+            Marshal.StructureToPtr(dropFiles, hGlobal, true);
+            Marshal.Copy(names, 0, new IntPtr(hGlobal.ToInt64() + dropFiles.pFiles), names.Length);
+            //IntPtr num = new IntPtr(dropFiles.pFiles);
+            //Marshal.Copy(names, 0, new IntPtr(hGlobal + dropFiles.pFiles), names.Length);
+
+            PostMessage(hWnd, WM_DROPFILES, hGlobal, IntPtr.Zero);
+
+            // NOTE: the drop target will automatically release it, so doing this would cause a Win32 exception.
+            // Marshal.FreeHGlobal(hGlobal);
+
+            var pipes = files.Where(_ => _.IsPipe).Select(_ => new
+            {
+                Pipe = new NamedPipeServerStream(_.FileName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous),
+                File = _,
+            }).ToArray();
+
+            bool isSuccessful = false;
+            string errMsg = string.Empty;
+            foreach (var i in pipes)
+            {
+                using (var handle = new ManualResetEvent(false))
+                {
+                    var success = false;
+
+                    i.Pipe.BeginWaitForConnection(ar =>
+                    {
+                        try
+                        {
+                            i.Pipe.EndWaitForConnection(ar);
+                            success = true;
+
+                            try
+                            {
+                                i.File.Stream.CopyTo(i.Pipe, (int)i.File.Stream.Length);
+                                i.Pipe.WaitForPipeDrain();
+                            }
+                            catch (IOException)
+                            {
+                            }
+
+                            i.Pipe.Dispose();
+                            i.File.Stream.Dispose();
+                            handle.Set();
+                            isSuccessful = true;
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                        }
+                    }, null);
+
+                    if (i.File.Timeout != -1)
+                        ThreadPool.QueueUserWorkItem(_ =>
+                        {
+                            Thread.Sleep(i.File.Timeout);
+
+                            if (!success && !i.Pipe.IsConnected)
+                            {
+                                i.Pipe.Dispose();
+                                i.File.Stream.Dispose();
+                                handle.Set();
+                            }
+                            if (!isSuccessful)
+                            {
+                                errMsg = "処理がタイムアウトしました";
+                            }
+                        });
+
+                    handle.WaitOne();
+                    if (!string.IsNullOrEmpty(errMsg))
+                        if (Debugger.IsAttached || true) //0.1.4 もう常時スローじゃなくてmsgboxで行こう。
+                        {
+                            MessageBox.Show(errMsg);
+                            return false;
+                        }
+                        else
+                            throw new Exception(errMsg);
+                }
+            }
+            return true;
+        }
+    }
+
+    internal class PipeEntity
+    {
+        public NamedPipeServerStream Pipe { get; set; }
+        public MmdDropFile File { get; set; }
+    }
+
+    /// <summary>
+    /// 対象のアプリケーションにドロップするファイルのデータを表します。
+    /// </summary>
+    public class MmdDropFile
+    {
+        /// <summary>
+        /// ファイル名を取得します。
+        /// </summary>
+        public string FileName
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// ファイル名を取得します。これはファイルのフルパスまたは名前付きパイプの名前です。
+        /// </summary>
+        public string FullName
+        {
+            get
+            {
+                return this.IsPipe ? @"\\.\pipe\" + this.FileName : this.FileName;
+            }
+        }
+
+        /// <summary>
+        /// 基になるストリームを取得します。
+        /// </summary>
+        public Stream Stream
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// このファイルが名前付きパイプを使用して転送されるかどうかを取得します。
+        /// </summary>
+        public bool IsPipe
+        {
+            get
+            {
+                return this.Stream != null;
+            }
+        }
+
+        /// <summary>
+        /// 転送のタイムアウトを取得または設定します。
+        /// </summary>
+        public int Timeout
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// ファイル名を指定して MmdDropFile の新しいインスタンスを初期化します。
+        /// </summary>
+        /// <param name="fileName">ドロップするファイル パス。</param>
+        public MmdDropFile(string fileName)
+            : this(fileName, null)
+        {
+        }
+
+        /// <summary>
+        /// ファイル名および基になるストリームを指定して MmdDropFile の新しいインスタンスを初期化します。
+        /// </summary>
+        /// <param name="fileName">ドロップするファイルの任意の名前。</param>
+        /// <param name="stream">ドロップするデータを提供するストリーム。</param>
+        public MmdDropFile(string fileName, Stream stream)
+        {
+            this.Timeout = -1;
+            this.FileName = stream == null ? fileName : Path.GetFileName(fileName);
+            this.Stream = stream;
+        }
+    }
+
+    /// <summary>
+    /// アクティブモデル変更時イベントの引数クラスです。
+    /// </summary>
+    public class ActiveModelChangedEventArgs : EventArgs
+    {
+        public ActiveModelChangedEventArgs(IMMDModel currentActiveModel)
+        {
+            this.CurrentActiveModel = currentActiveModel;
+        }
+
+        public ActiveModelChangedEventArgs(string currentActiveModelName)
+        {
+            this.CurrentActiveModel = new SimpleMMDModel() { ModelName = currentActiveModelName };
+        }
+
+        /// <summary>
+        /// 現在のアクティブなモデル名
+        /// </summary>
+        public IMMDModel CurrentActiveModel { get; }
+    }
+
+    public interface IMMDModel
+    {
+        string ModelName { get; }
+    }
+
+    public class SimpleMMDModel : IMMDModel
+    {
+        /// <summary>
+        /// モデル名
+        /// </summary>
+        public string ModelName { get; set; }
     }
 }

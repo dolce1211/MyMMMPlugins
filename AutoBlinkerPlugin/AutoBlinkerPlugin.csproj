@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{97AFB0E3-AAA0-4DDD-A5D7-8748D1E5145C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AutoBlinkerPlugin</RootNamespace>
+    <AssemblyName>AutoBlinkerPlugin</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DxMath">
+      <HintPath>K:\MMD\MikuMikuMoving_1292\System\x64\DxMath.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="MikuMikuPlugin">
+      <HintPath>K:\MMD\MikuMikuMoving_1292\Plugins\MikuMikuPlugin.dll</HintPath>
+    </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\Utility\MMDUtil.cs">
+      <Link>01_LinkFiles\MMDUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\MMMUtil.cs">
+      <Link>01_LinkFiles\MMMUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\UI\frmMMDSelect.cs">
+      <Link>01_LinkFiles\UI\frmMMDSelect.cs</Link>
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="..\Utility\UI\frmMMDSelect.Designer.cs">
+      <Link>01_LinkFiles\UI\frmMMDSelect.Designer.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\UI\MMDSelectorControl.cs">
+      <Link>01_LinkFiles\UI\MMDSelectorControl.cs</Link>
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="..\Utility\UI\MMDSelectorControl.Designer.cs">
+      <Link>01_LinkFiles\UI\MMDSelectorControl.Designer.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Utility.cs">
+      <Link>01_LinkFiles\Utility.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Utility_DxMath.cs">
+      <Link>01_LinkFiles\Utility_DxMath.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdBoneFrame.cs">
+      <Link>01_LinkFiles\Vmd\VmdBoneFrame.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdCameraFrame.cs">
+      <Link>01_LinkFiles\Vmd\VmdCameraFrame.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdDocument.cs">
+      <Link>01_LinkFiles\Vmd\VmdDocument.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdInterpolationPoint.cs">
+      <Link>01_LinkFiles\Vmd\VmdInterpolationPoint.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdLightFrame.cs">
+      <Link>01_LinkFiles\Vmd\VmdLightFrame.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdMorphFrame.cs">
+      <Link>01_LinkFiles\Vmd\VmdMorphFrame.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdSelfShadowFrame.cs">
+      <Link>01_LinkFiles\Vmd\VmdSelfShadowFrame.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdSelfShadowModel.cs">
+      <Link>01_LinkFiles\Vmd\VmdSelfShadowModel.cs</Link>
+    </Compile>
+    <Compile Include="..\Utility\Vmd\VmdVersion.cs">
+      <Link>01_LinkFiles\Vmd\VmdVersion.cs</Link>
+    </Compile>
+    <Compile Include="BizLogics\Entity.cs" />
+    <Compile Include="BizLogics\PresetCreator.cs" />
+    <Compile Include="UI\frmException.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmException.Designer.cs">
+      <DependentUpon>frmException.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\frmEye.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmEye.Designer.cs">
+      <DependentUpon>frmEye.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\frmFavName.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmFavName.Designer.cs">
+      <DependentUpon>frmFavName.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\frmMain.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\frmMain.Designer.cs">
+      <DependentUpon>frmMain.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AutoBlinkerPlugin.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\Utility\UI\frmMMDSelect.resx">
+      <Link>01_LinkFiles\UI\frmMMDSelect.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\Utility\UI\MMDSelectorControl.resx">
+      <Link>01_LinkFiles\UI\MMDSelectorControl.resx</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmException.resx">
+      <DependentUpon>frmException.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmEye.resx">
+      <DependentUpon>frmEye.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmFavName.resx">
+      <DependentUpon>frmFavName.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmMain.resx">
+      <DependentUpon>frmMain.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\22i.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\32i.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetPath) K:\MMD\MikuMikuMoving_1292\Plugins\$(TargetFileName)</PostBuildEvent>
+  </PropertyGroup>
+</Project>

@@ -79,7 +79,7 @@ namespace FaceExpressionHelper
         /// <summary>
         /// 処理中フラグ
         /// </summary>
-        public bool IsBusy { get; protected set; }
+        public virtual bool IsBusy { get; protected set; }
 
         #region "protected"
 
@@ -170,13 +170,13 @@ namespace FaceExpressionHelper
         protected virtual void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
         {
             var enabled = true;
-            this.lblActiveModel.Text = String.Empty;
+            //this.lblActiveModel.Text = String.Empty;
             var replacedTxt = "";
-            if (!string.IsNullOrWhiteSpace(e.CurrentActiveModelName))
+            if (e.CurrentActiveModel != null && !string.IsNullOrWhiteSpace(e.CurrentActiveModel.ModelName))
             {
-                this.lblActiveModel.Text = e.CurrentActiveModelName;
+                this.lblActiveModel.Text = e.CurrentActiveModel.ModelName;
                 replacedTxt = "置換設定なし";
-                var replaced = this._currentExpressionSet.ReplacedMorphs.Where(n => n.ModelName == e.CurrentActiveModelName).FirstOrDefault();
+                var replaced = this._currentExpressionSet.ReplacedMorphs.Where(n => n.ModelName == e.CurrentActiveModel.ModelName).FirstOrDefault();
                 if (replaced != null && replaced.ReplacedMorphSetList.Count > 0)
                     replacedTxt = $"置換設定 {replaced.ReplacedMorphSetList.Count}件";
 
@@ -426,6 +426,10 @@ namespace FaceExpressionHelper
             var xmlpath = System.IO.Path.Combine(baseDir, "_基本設定.xml");
             this._args.SelectedExpressionSet = this.cboSet.Text;
             this._args.SelectedTrackBarValue = this.trackBar1.Value;
+
+            if (this.オプションtoolStripMenuItem1.Visible)
+                this._args.HideModelsWhileProcessing = this.処理中にモデルを非表示にするToolStripMenuItem.Checked;
+
             var ret = MyUtility.Serializer.Serialize(this._args, xmlpath);
             if (ret)
             {
@@ -562,6 +566,11 @@ namespace FaceExpressionHelper
 
         private void btnOK_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(this.ActiveModelName))
+            {
+                MessageBox.Show(this, "モデルを選択してください");
+                return;
+            }
             if (!this.btnOK.Enabled)
                 return;
             var item = this.listBox1.SelectedItem as ExpressionItem;
@@ -576,11 +585,7 @@ namespace FaceExpressionHelper
 
             if (item == null)
                 return;
-            if (string.IsNullOrWhiteSpace(this.ActiveModelName))
-            {
-                MessageBox.Show(this, "モデルを選択してください");
-                return;
-            }
+
             if (this.trackBar1.Value < 0)
             {
                 if (this.GetCurrentFrame() < this.trackBar1.Value * -1)
@@ -1005,22 +1010,11 @@ namespace FaceExpressionHelper
             if (exset != null)
                 e.Value = exset.Name;
         }
-    }
 
-    /// <summary>
-    /// アクティブモデル変更時イベントの引数クラスです。
-    /// </summary>
-    public class ActiveModelChangedEventArgs : EventArgs
-    {
-        public ActiveModelChangedEventArgs(string currentActiveModelName)
+        private void 処理中にモデルを非表示にするToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.CurrentActiveModelName = currentActiveModelName;
+            this.処理中にモデルを非表示にするToolStripMenuItem.Checked = !this.処理中にモデルを非表示にするToolStripMenuItem.Checked;
         }
-
-        /// <summary>
-        /// 現在のアクティブなモデル名
-        /// </summary>
-        public string CurrentActiveModelName { get; }
     }
 
     public class MorphSelectedEventArgs : EventArgs
@@ -1052,21 +1046,5 @@ namespace FaceExpressionHelper
             this.Value = value;
             this.ResetFrame = resetFrame;
         }
-    }
-
-    /// <summary>
-    /// MMD、MMMどっちで動いてる？
-    /// </summary>
-    public enum OperatingMode
-    {
-        /// <summary>
-        /// MMMで動いている
-        /// </summary>
-        OnMMM,
-
-        /// <summary>
-        /// MMDで動いている
-        /// </summary>
-        OnMMD
     }
 }

@@ -31,6 +31,11 @@ namespace FaceExpressionHelper
         public bool TopMost { get; set; } = false;
 
         /// <summary>
+        /// 処理中はモデルを非表示にする
+        /// </summary>
+        public bool HideModelsWhileProcessing { get; set; } = false;
+
+        /// <summary>
         /// 表情セット一覧
         /// </summary>
         [XmlIgnore()]

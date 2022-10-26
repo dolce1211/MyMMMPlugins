@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,9 @@ namespace FaceExpressionHelper
 {
     public class FaceExpressionHelperPlugin : IResidentPlugin, ICanSavePlugin //
     {
+        [DllImport("kernel32.dll")]
+        private static extern bool AllocConsole();
+
         private Args _memo = null;
         private frmMainBase _frmMain = null;
 
@@ -43,6 +47,9 @@ namespace FaceExpressionHelper
 
         public void Initialize()
         {
+#if DEBUG
+            AllocConsole();
+#endif
         }
 
         public void Enabled()

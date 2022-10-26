@@ -11,6 +11,11 @@ using System.Runtime.CompilerServices;
 using MyUtility;
 using System.Windows;
 using System.ComponentModel;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Threading;
+using static System.Windows.Forms.AxHost;
+using System.Windows.Media.Animation;
 
 namespace MMDUtil
 {
@@ -55,6 +60,11 @@ namespace MMDUtil
         /// コンボボックス
         /// </summary>
         public Window ComboBox { get; set; }
+
+        /// <summary>
+        /// トラックバー
+        /// </summary>
+        public Window TrackBar { get; set; }
 
         /// <summary>
         /// 値用Edit
@@ -158,11 +168,39 @@ namespace MMDUtil
         [DllImport("user32.dll")]
         private static extern IntPtr GetMenuState(IntPtr hMenu, int uItem, int uFlags);
 
+        private const int MF_CHECKED = 0x08;
+
         [DllImport("USER32.DLL")]
         private static extern int GetMenuItemID(IntPtr hWnd, int nPos);
 
         [DllImport("USER32.DLL")]
         private static extern long GetMenuString(IntPtr hMenu, int wIDItem, StringBuilder lpString, int nMaxCount, int wFlag);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool GetMenuItemInfo(IntPtr hMenu, uint uItem, bool fByPosition, ref MENUITEMINFO lpmii);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MENUITEMINFO
+        {
+            public uint cbSize;
+            public uint fMask;
+            public uint fType;
+            public uint fState;
+            public uint wID;
+            public IntPtr hSubMenu;
+            public IntPtr hbmpChecked;
+            public IntPtr hbmpUnchecked;
+            public IntPtr dwItemData;
+            public String dwTypeData;
+            public uint cch;
+            public IntPtr hbmpItem;
+
+            // Return the size of the structure
+            public static uint sizeOf
+            {
+                get { return (uint)Marshal.SizeOf(typeof(MENUITEMINFO)); }
+            }
+        }
 
         private const int WM_COMMAND = 0x0111;
         private const int WM_SYSCOMMAND = 0x112;
@@ -236,6 +274,7 @@ namespace MMDUtil
         /// </summary>
         private const int _Combo_MORPH_EYE = 509;
 
+        private const int _TRACKBAR_MORPH_EYE = 510;
         private const int _EDIT_MORPH_EYE = 511;
         private const int _BUTTON_MORPH_EYE = 524;
 
@@ -244,8 +283,8 @@ namespace MMDUtil
         /// </summary>
         private const int _Combo_MORPH_BROW = 504;
 
+        private const int _TRACKBAR_MORPH_BROW = 505;
         private const int _EDIT_MORPH_BROW = 506;
-
         private const int _BUTTON_MORPH_BROW = 525;
 
         /// <summary>
@@ -253,6 +292,7 @@ namespace MMDUtil
         /// </summary>
         private const int _Combo_MORPH_LIP = 514;
 
+        private const int _TRACKBAR_MORPH_LIP = 515;
         private const int _EDIT_MORPH_LIP = 516;
         private const int _BUTTON_MORPH_LIP = 527;
 
@@ -261,6 +301,7 @@ namespace MMDUtil
         /// </summary>
         private const int _Combo_MORPH_OTHER = 519;
 
+        private const int _TRACKBAR_MORPH_OTHER = 520;
         private const int _EDIT_MORPH_OTHER = 521;
         private const int _BUTTON_MORPH_OTHER = 526;
 
@@ -397,6 +438,285 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// メニューのチェック状態を取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="mainMenuCaption">親メニューのキャプション</param>
+        /// <param name="subMenuCaption">子メニューのキャプション</param>
+        /// <returns></returns>
+        public static int TryGetMenuChecked(IntPtr parentHandle, string mainMenuCaption, string subMenuCaption)
+        {
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, mainMenuCaption);
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                for (int i = 0; i <= 100; i++)
+                {
+                    int intIDx = GetMenuItemID(subMenuhWnd, i);
+                    StringBuilder ssb = new StringBuilder(100);
+                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
+                    if (ssb.ToString().IndexOf(subMenuCaption) == 0)
+                    {
+                        var state = GetMenuState(subMenuhWnd, intIDx, 0);
+                        if ((int)state == MF_CHECKED)
+                            //チェックあり。現在エフェクト有効である
+                            return 1;
+                        else
+                            return 0;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// メニューのチェック状態をセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="mainMenuCaption">親メニューのキャプション</param>
+        /// <param name="subMenuCaption">子メニューのキャプション</param>
+        /// <param name="chk">セットするチェック状態</param>
+        /// <returns></returns>
+        public static bool TrySetMenuChecked(IntPtr parentHandle, string mainMenuCaption, string subMenuCaption, bool chk)
+        {
+            var currentstate = (TryGetMenuChecked(parentHandle, mainMenuCaption, subMenuCaption) == 1);
+            if (currentstate == chk)
+                return true;
+
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, mainMenuCaption);
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                for (int i = 0; i <= 100; i++)
+                {
+                    int intIDx = GetMenuItemID(subMenuhWnd, i);
+                    StringBuilder ssb = new StringBuilder(100);
+                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
+                    if (ssb.ToString().IndexOf(subMenuCaption) == 0)
+                    {
+                        //メニューをクリック
+                        var ret = SendMessage(parentHandle, WM_COMMAND, intIDx, "0");
+
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 現在の物理演算状態を取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns>
+        /// -1:取得失敗
+        /// 0:オン/オフモード
+        /// 1:常に演算
+        /// 2:トレースモード
+        /// 3:演算しない
+        /// </returns>
+        public static int TryGetPhysicsState(IntPtr parentHandle)
+        {
+            if (parentHandle == IntPtr.Zero)
+                return -1;
+
+            //物理演算メニューのハンドルをゲット
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "物理演算(&P)");
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                for (int i = 0; i <= 3; i++)
+                {
+                    int intIDx = GetMenuItemID(subMenuhWnd, i);
+                    var state = GetMenuState(subMenuhWnd, intIDx, 0);
+                    StringBuilder tsbb = new StringBuilder(100);
+                    var retx = GetMenuString(subMenuhWnd, i, tsbb, tsbb.Capacity, MF_BYPOSITION);
+                    if ((int)state == MF_CHECKED)
+                        //チェックあり
+                        return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// エフェクトのオンオフ状態を取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns></returns>
+        public static bool TryGetEffectState(IntPtr parentHandle)
+        {
+            if (parentHandle == IntPtr.Zero)
+                return false;
+
+            //MMEメニューのハンドルをゲット
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "MMEffect");
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                for (int i = 0; i <= 10; i++)
+                {
+                    int intIDx = GetMenuItemID(subMenuhWnd, i);
+                    StringBuilder ssb = new StringBuilder(100);
+                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
+                    if (ssb.ToString().IndexOf("エフェクト使用(&E)\tCtrl+Shift+E") == 0)
+                    {
+                        var state = GetMenuState(subMenuhWnd, intIDx, 0);
+                        if ((int)state == MF_CHECKED)
+                            //チェックあり。現在エフェクト有効である
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 物理演算状態をセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="state">
+        /// 0:オン/オフモード
+        /// 1:常に演算
+        /// 2:トレースモード
+        /// 3:演算しない
+        /// </param>
+        /// <returns></returns>
+        public static bool TrySetPhysicsState(IntPtr parentHandle, int state)
+        {
+            if (parentHandle == IntPtr.Zero)
+                return false;
+            if (state < 0 || state > 3)
+                return true;
+
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "物理演算(&P)");
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                int intIDx = GetMenuItemID(subMenuhWnd, state);
+
+                //メニューをクリック
+                var ret = SendMessage(parentHandle, WM_COMMAND, intIDx, "0");
+
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// エフェクトのオンオフ状態を取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns></returns>
+        public static bool TrySetEffectState(IntPtr parentHandle, bool state)
+        {
+            if (parentHandle == IntPtr.Zero)
+                return false;
+
+            var currentstate = TryGetEffectState(parentHandle);
+            if (currentstate == state)
+                return true;
+
+            //MMEメニューのハンドルをゲット
+            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "MMEffect");
+            if (subMenuhWnd != IntPtr.Zero)
+            {
+                //選択したメニュー項目のIDをゲットする。
+                for (int i = 0; i <= 10; i++)
+                {
+                    int intIDx = GetMenuItemID(subMenuhWnd, i);
+                    StringBuilder ssb = new StringBuilder(100);
+                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
+                    if (ssb.ToString().IndexOf("エフェクト使用(&E)\tCtrl+Shift+E") == 0)
+                    {
+                        //メニューをクリック
+                        var ret = SendMessage(parentHandle, WM_COMMAND, intIDx, "0");
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// メニューのハンドルを取得します。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns></returns>
+        private static IntPtr TryGetMenuHandleByCaption(IntPtr parentHandle, string caption)
+        {
+            if (parentHandle == IntPtr.Zero)
+                return IntPtr.Zero;
+
+            //メニューハンドルをゲット
+            IntPtr menuhWnd = GetMenu(parentHandle.ToInt32());
+            if (menuhWnd != IntPtr.Zero)
+            {
+                for (int i = 0; i < 20; i++)
+                {
+                    StringBuilder sb = new StringBuilder(100);
+                    var retxx = GetMenuString(menuhWnd, i, sb, sb.Capacity, MF_BYPOSITION);
+                    if (sb.Length == 0)
+                        break;
+                    if (sb.ToString().IndexOf(caption) == 0)
+                    {
+                        //サブメニューのハンドルをゲット　第2引数はインデックス番号
+                        return GetSubMenu(menuhWnd, i);
+                    }
+                }
+            }
+            return IntPtr.Zero;
+        }
+
+        /// <summary>
+        /// ダイアログがなくなるまで「はい」を押し続けます。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <returns></returns>
+        public static bool PressOKToDialog(IntPtr parentHandle, IEnumerable<string> captions)
+        {
+            foreach (var caption in captions)
+            {
+                var flg = true;
+                for (int i = 0; i < 5; i++)
+                {
+                    System.Threading.Thread.Sleep(50);
+                    IntPtr mmplushWnd = FindWindow("#32770", caption);
+                    if (mmplushWnd != IntPtr.Zero)
+                    {
+                        flg = false;
+                        int processId;
+                        GetWindowThreadProcessId(mmplushWnd, out processId);
+
+                        // プロセスIDからProcessクラスのインスタンスを取得
+                        var parentProcess = Process.GetProcessById(processId);
+                        if (parentProcess.MainWindowHandle == parentHandle)
+                        {
+                            var mmpluswindows = GetAllChildWindows(mmplushWnd, new List<Window>(), false);
+                            foreach (Window window in mmpluswindows)
+                            {
+                                if (window.Title == "はい(&Y)" || window.Title == "OK")
+                                {
+                                    //むりやり「はい」を押す
+                                    PostMessage(window.hWnd, BM_CLICK, 0, 0);
+                                    flg = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (flg)
+                            break;
+                    }
+                }
+                if (!flg)
+                    return false;
+            }
+            return true;
+        }
+
+        /// <summary>
         /// MMDを用いて静画の保存を試みます。
         /// </summary>
         /// <param name="parentHandle">MMD親ウィンドウのハンドル</param>
@@ -478,7 +798,7 @@ namespace MMDUtil
                     //// エンターキー(離す)を送る
                     //SendMessage(hWnd, WM_IME_KEYUP, VK_RETURN, "0");
 
-                    PostMessage(hWnd, 0x0100, 0x0D, 0);
+                    PostMessage(hWnd, WM_KEYDOWN, 0x0D, 0);
 
                     var recordingWindowFound = false;
                     for (int i = 0; i < 200; i++)
@@ -506,72 +826,72 @@ namespace MMDUtil
             return false;
         }
 
-        /// <summary>
-        /// アクティブモデルのモーフをすべて取得します。
-        /// </summary>
-        /// <param name="parentHandle"></param>
-        /// <param name="morphtype">モーフ種類</param>
-        /// <param name="onActionModelChanged">この処理中にアクティブモデルが変わってしまった場合に実行するメソッド。帰り値でfalseが返ったら処理中断してnullを返す</param>
-        /// <returns></returns>
-        public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle, Func<string, bool> onActiveModelChanged = null)
-        {
-            var activemodel = TryGetActiveModelName(parentHandle);
+        ///// <summary>
+        ///// アクティブモデルのモーフをすべて取得します。
+        ///// </summary>
+        ///// <param name="parentHandle"></param>
+        ///// <param name="morphtype">モーフ種類</param>
+        ///// <param name="onActionModelChanged">この処理中にアクティブモデルが変わってしまった場合に実行するメソッド。帰り値でfalseが返ったら処理中断してnullを返す</param>
+        ///// <returns></returns>
+        //public static Dictionary<MorphType, List<string>> TryGetAllMorphValue(IntPtr parentHandle, Func<string, bool> onActiveModelChanged = null)
+        //{
+        //    var activemodel = TryGetActiveModelName(parentHandle);
 
-            Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
-            if (mmdhash == null)
-                return null;
+        //    Dictionary<int, Window> mmdhash = GetAllMMDWindows(parentHandle);
+        //    if (mmdhash == null)
+        //        return null;
 
-            //モデル選択コンボ
-            var modelCombo = mmdhash[_Combo_Model];
-            //最後の手段。MMDのモデル選択コンボをいじれなくする**//
-            EnableWindow(modelCombo.hWnd, false);
-            //最後の手段//
+        //    //モデル選択コンボ
+        //    var modelCombo = mmdhash[_Combo_Model];
+        //    //最後の手段。MMDのモデル選択コンボをいじれなくする**//
+        //    EnableWindow(modelCombo.hWnd, false);
+        //    //最後の手段//
 
-            try
-            {
-            tryagain:
-                var ret = new Dictionary<MorphType, List<string>>();
-                var retrycount = 0;
-                foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
-                {
-                    if (morphtype == MorphType.none)
-                        continue;
-                    var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
-                    if (morphwindow == null || morphwindow.ComboBox == null)
-                        return ret;
+        //    try
+        //    {
+        //    tryagain:
+        //        var ret = new Dictionary<MorphType, List<string>>();
+        //        var retrycount = 0;
+        //        foreach (MorphType morphtype in Enum.GetValues(typeof(MorphType)))
+        //        {
+        //            if (morphtype == MorphType.none)
+        //                continue;
+        //            var morphwindow = TryGetMorphWindows(parentHandle, morphtype);
+        //            if (morphwindow == null || morphwindow.ComboBox == null)
+        //                return ret;
 
-                    var lst = GetAllComboItems(morphwindow.ComboBox);
-                    ret.Add(morphtype, lst);
+        //            var lst = GetAllComboItems(morphwindow.ComboBox);
+        //            ret.Add(morphtype, lst);
 
-                    var tmpactivemodel = TryGetActiveModelName(parentHandle);
-                    if (activemodel != tmpactivemodel)
-                    {
-                        //処理途中でアクティブモデルが切り替わったっぽい。
-                        //このまま進めると不正データになるのでもう一回最初からやりなおす
-                        activemodel = tmpactivemodel;
-                        retrycount++;
-                        if (onActiveModelChanged != null && retrycount <= 5)
-                        {
-                            if (!onActiveModelChanged.Invoke(tmpactivemodel))
-                                return null;
+        //            var tmpactivemodel = TryGetActiveModelName(parentHandle);
+        //            if (activemodel != tmpactivemodel)
+        //            {
+        //                //処理途中でアクティブモデルが切り替わったっぽい。
+        //                //このまま進めると不正データになるのでもう一回最初からやりなおす
+        //                activemodel = tmpactivemodel;
+        //                retrycount++;
+        //                if (onActiveModelChanged != null && retrycount <= 5)
+        //                {
+        //                    if (!onActiveModelChanged.Invoke(tmpactivemodel))
+        //                        return null;
 
-                            //最初からやりなおす
-                            goto tryagain;
-                        }
-                    }
-                }
-                return ret;
-            }
-            catch (Exception ex)
-            {
-                //何かエラーが出たら握りつぶす
-                return new Dictionary<MorphType, List<string>>();
-            }
-            finally
-            {
-                EnableWindow(modelCombo.hWnd, true);
-            }
-        }
+        //                    //最初からやりなおす
+        //                    goto tryagain;
+        //                }
+        //            }
+        //        }
+        //        return ret;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //何かエラーが出たら握りつぶす
+        //        return new Dictionary<MorphType, List<string>>();
+        //    }
+        //    finally
+        //    {
+        //        EnableWindow(modelCombo.hWnd, true);
+        //    }
+        //}
 
         /// <summary>
         /// 各モーフタイプ用の操作コントロール群を取得します。
@@ -594,6 +914,7 @@ namespace MMDUtil
                     case MorphType.Eye:
                         //目
                         ret.ComboBox = mmdhash[_Combo_MORPH_EYE];
+                        ret.TrackBar = mmdhash[_TRACKBAR_MORPH_EYE];
                         ret.Edit = mmdhash[_EDIT_MORPH_EYE];
                         ret.Button = mmdhash[_BUTTON_MORPH_EYE];
                         break;
@@ -601,6 +922,7 @@ namespace MMDUtil
                     case MorphType.Lip:
                         //リップ
                         ret.ComboBox = mmdhash[_Combo_MORPH_LIP];
+                        ret.TrackBar = mmdhash[_TRACKBAR_MORPH_LIP];
                         ret.Edit = mmdhash[_EDIT_MORPH_LIP];
                         ret.Button = mmdhash[_BUTTON_MORPH_LIP];
                         break;
@@ -608,6 +930,7 @@ namespace MMDUtil
                     case MorphType.Brow:
                         //まゆ
                         ret.ComboBox = mmdhash[_Combo_MORPH_BROW];
+                        ret.TrackBar = mmdhash[_TRACKBAR_MORPH_BROW];
                         ret.Edit = mmdhash[_EDIT_MORPH_BROW];
                         ret.Button = mmdhash[_BUTTON_MORPH_BROW];
                         break;
@@ -615,6 +938,7 @@ namespace MMDUtil
                     case MorphType.Other:
                         //その他
                         ret.ComboBox = mmdhash[_Combo_MORPH_OTHER];
+                        ret.TrackBar = mmdhash[_TRACKBAR_MORPH_OTHER];
                         ret.Edit = mmdhash[_EDIT_MORPH_OTHER];
                         ret.Button = mmdhash[_BUTTON_MORPH_OTHER];
                         break;
@@ -686,9 +1010,12 @@ namespace MMDUtil
                     if (flg)
                         break;
 
-                    Debugger.Break();
+                    System.Threading.Thread.Sleep(30);
                     if (i >= retrycount)
+                    {
+                        Debugger.Break();
                         return false;
+                    }
                 }
                 else
                     break;
@@ -754,7 +1081,6 @@ namespace MMDUtil
         /// <param name="morphtype">モーフ種類</param>
         /// <param name="morphIndex">いくつめのモーフ？</param>
         /// <param name="value">値</param>
-        /// <param name="determine">確定するならtrue</param>
         /// <returns></returns>
         public static float TryGetMorphValue(IntPtr parentHandle, MorphType morphtype, int morphIndex)
         {
@@ -773,6 +1099,59 @@ namespace MMDUtil
             SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
 
             return Convert.ToSingle(morphwindow.Edit.Text);
+        }
+
+        /// <summary>
+        /// 指定した名称のモーフを指定した値にセットします。
+        /// </summary>
+        /// <param name="parentHandle"></param>
+        /// <param name="morphtype">モーフ種類</param>
+        /// <param name="morphIndex">いくつめのモーフ？</param>
+        /// <param name="value">値</param>
+        /// <returns></returns>
+        public static Dictionary<(MorphType, int), float> TryGetAllMorphValue(IntPtr parentHandle)
+        {
+            var ret = new Dictionary<(MorphType, int), float>();
+            var morphWindows = new Dictionary<MorphType, MorphWindows>();
+            foreach (MorphType morphType in Enum.GetValues(typeof(MorphType)).Cast<MorphType>())
+            {
+                if (morphType == MorphType.none)
+                    continue;
+                var morphwindow = TryGetMorphWindows(parentHandle, morphType);
+                if (morphwindow != null)
+                    morphWindows.Add(morphType, morphwindow);
+            }
+            foreach (var kvp in morphWindows)
+            {
+                var morphType = kvp.Key;
+                var morphwindow = kvp.Value;
+                //BeginAndEndUpdate(morphwindow.Parent.hWnd, false);
+                BeginAndEndUpdate(morphwindow.TrackBar.hWnd, false);
+                BeginAndEndUpdate(morphwindow.Edit.hWnd, false);
+
+                var count = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCOUNT, null, null);
+                for (int i = 0; i < count; i++)
+                {
+                    //コンボのインデックスをそれに合わせる
+                    var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, i, "");
+                    //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+                    int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+
+                    if (i == 0)
+                        //なんか先頭のコンボの値の取得に失敗することが多い
+                        System.Threading.Thread.Sleep(10);
+                    SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+                    var value = Convert.ToSingle(morphwindow.Edit.Text);
+                    ret.Add((morphType, i), value);
+                }
+
+                //BeginAndEndUpdate(morphwindow.Parent.hWnd, true);
+                BeginAndEndUpdate(morphwindow.TrackBar.hWnd, true);
+                BeginAndEndUpdate(morphwindow.Edit.hWnd, true);
+            }
+
+            return ret;
         }
 
         /// <summary>
@@ -804,7 +1183,7 @@ namespace MMDUtil
                     //SendMessage(hWnd, WM_IME_KEYUP, VK_RETURN, "0");
                     //System.Threading.Thread.Sleep(50);
 
-                    PostMessage(hWnd, 0x0100, 0x0D, 0);
+                    PostMessage(hWnd, WM_KEYDOWN, 0x0D, 0);
                     return true;
                 }
             }
@@ -1064,6 +1443,36 @@ namespace MMDUtil
 
         #region "汎用操作"
 
+        /// <summary>
+        /// プロセスの実行プログラムのパスを取得します。
+        /// </summary>
+        /// <param name="mmd"></param>
+        /// <returns></returns>
+        public static string GetProgramPathFromProcess(Process mmd)
+        {
+            using (var mc = new ManagementClass("Win32_Process"))
+            using (var moc = mc.GetInstances())
+            {
+                foreach (ManagementObject mo in moc)
+                    using (mo)
+                    {
+                        if (mo["ProcessId"].ToString() == mmd.Id.ToString())
+                        {
+                            try
+                            {
+                                return mo["ExecutablePath"].ToString();
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e);
+                                throw;
+                            }
+                        }
+                    }
+            }
+            return null;
+        }
+
         public static void TrySendKey(IntPtr hWnd, Keys keys)
         {
             var wParam = -1;
@@ -1127,7 +1536,7 @@ namespace MMDUtil
             if (addEnter && ret > 0)
             {
                 //Enter操作を追加
-                PostMessage(win.hWnd, 0x0100, 0x0D, 0);
+                PostMessage(win.hWnd, WM_KEYDOWN, 0x0D, 0);
                 //await Task.Delay(sleepms);
             }
             return ret > 0;
@@ -1188,10 +1597,10 @@ namespace MMDUtil
                 var mmds = new List<Process>();
                 foreach (var tmpmmd in mmdarray)
                 {
-                    //32bit/64bitが不一致のプロセスを除外する
+                    //32bit/64bitが不一致のプロセスを除外する →やっぱやめ
                     try
                     {
-                        var x = tmpmmd.MainModule;
+                        //var x = tmpmmd.MainModule;
                         mmds.Add(tmpmmd);
                     }
                     catch (Win32Exception ex)
@@ -1281,7 +1690,7 @@ namespace MMDUtil
                                 this._lblMMD.Text = title;//WindowFinder.FindMMDTitle(mmd);
 
                             //mmPlusが入っているか確認
-                            var mmdPath = GetMMDPath(mmd);
+                            var mmdPath = MMDUtilility.GetProgramPathFromProcess(mmd);
                             var mmdDir = System.IO.Path.GetDirectoryName(mmdPath);
                             if (System.IO.Directory.Exists(mmdDir))
                             {
@@ -1304,36 +1713,6 @@ namespace MMDUtil
                 }
                 _isBusy = false;
             }
-        }
-
-        /// <summary>
-        /// MMDの実行ファイルのパスを取得します。
-        /// </summary>
-        /// <param name="mmd"></param>
-        /// <returns></returns>
-        private string GetMMDPath(Process mmd)
-        {
-            using (var mc = new ManagementClass("Win32_Process"))
-            using (var moc = mc.GetInstances())
-            {
-                foreach (ManagementObject mo in moc)
-                    using (mo)
-                    {
-                        if (mo["ProcessId"].ToString() == mmd.Id.ToString())
-                        {
-                            try
-                            {
-                                return mo["ExecutablePath"].ToString();
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e);
-                                throw;
-                            }
-                        }
-                    }
-            }
-            return null;
         }
     }
 

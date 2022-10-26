@@ -2,7 +2,9 @@
 using FaceExpressionHelper.UI;
 using LibMMD.Pmx;
 using LibMMD.Vmd;
+using Linearstar.Keystone.IO.MikuMikuDance;
 using MMDUtil;
+using MyUtility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -41,14 +43,30 @@ namespace FaceExpressionSelectorMMD
 
         private int _prevmmdID = -1;
 
-        private System.Threading.Timer _timer = null;
+        private ActiveMorphModelFinder _modelFinder = null;
+        //private System.Threading.Timer _timer = null;
 
         public frmMainMMD() : base()
         {
             mmdSelector.Visible = true;
 
+            this.オプションtoolStripMenuItem1.Visible = true;
+            this.処理中にモデルを非表示にするToolStripMenuItem.Checked = base._args.HideModelsWhileProcessing;
             //MMDで動いている
             OperationgMode = OperatingMode.OnMMD;
+        }
+
+        private bool _isBusy = false;
+
+        public override bool IsBusy
+        {
+            get => this._isBusy;
+            protected set
+            {
+                this._isBusy = value;
+                if (this._modelFinder != null)
+                    this._modelFinder.IsBusy = value;
+            }
         }
 
         /// <summary>
@@ -81,18 +99,18 @@ namespace FaceExpressionSelectorMMD
 
         protected override void OnShown(EventArgs e)
         {
-            _timer = new System.Threading.Timer(new System.Threading.TimerCallback(
-                (Action<object>)(async x =>
-                {
-                    _timer.Change(int.MaxValue, int.MaxValue);
-
-                    await this.TryApplyActiveModel();
-
-                    _timer.Change(1000, 0);
-                }))
-                , null, 10, 1000);
+            this._modelFinder = new ActiveMorphModelFinder(this, this.mmdSelector, this.ShowlblWait, this.HidelblWait);
+            this._modelFinder.ActiveModelChangedEventHandler += this.OnActiveModelChanged;
 
             base.OnShown(e);
+        }
+
+        protected override void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
+        {
+            var newactivemodel = e.CurrentActiveModel as ActiveModelInfo;
+            if (newactivemodel != null)
+                this._currentModel = newactivemodel;
+            base.OnActiveModelChanged(sender, e);
         }
 
         /// <summary>
@@ -147,7 +165,7 @@ namespace FaceExpressionSelectorMMD
 
         private void frmMainMMD_Shown(object sender, EventArgs e)
         {
-            //var mmd = this.mmdSelector.SelectMMD();
+            //var mmd = this._mmdSelector.SelectMMD();
         }
 
         private void InitializeComponent()
@@ -157,17 +175,17 @@ namespace FaceExpressionSelectorMMD
             this.pnlBottom.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
-            // 
+            //
             // mmdSelector
-            // 
+            //
             this.mmdSelector.Location = new System.Drawing.Point(0, 578);
-            // 
+            //
             // pnlBottom
-            // 
+            //
             this.pnlBottom.Location = new System.Drawing.Point(0, 513);
-            // 
+            //
             // frmMainMMD
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.ClientSize = new System.Drawing.Size(287, 624);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -181,7 +199,6 @@ namespace FaceExpressionSelectorMMD
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         /// <summary>
@@ -239,171 +256,26 @@ namespace FaceExpressionSelectorMMD
             }
             this.Invoke((Action)(() => this.Cursor = Cursors.WaitCursor));
 
-            foreach (var kvp in _currentModel.AllMorphs)
+            var retHash = MMDUtilility.TryGetAllMorphValue(mmd.MainWindowHandle);
+            foreach (var kvp in retHash)
             {
-                var index = 0;
-                foreach (MorphItem morph in kvp.Value)
+                var tuple = kvp.Key;
+                var weight = kvp.Value;
+                var lst = _currentModel.AllMorphs[tuple.Item1];
+                var morph = lst.Where(n => n.ComboBoxIndex == tuple.Item2).FirstOrDefault();
+                if (morph == null)
                 {
-                    morph.Weight = MMDUtilility.TryGetMorphValue(mmd.MainWindowHandle, kvp.Key, index);
-
-                    index++;
+                }
+                else
+                {
+                    morph.Weight = weight;
                 }
             }
             this.BeginInvoke((Action)(() => this.Cursor = Cursors.Default));
             return this._currentModel;
         }
 
-        /// <summary>
-        /// 現在のアクティブモデルの情報をキャッシュします。
-        /// </summary>
-        /// <returns></returns>
-        private Task<ActiveModelInfo> TryApplyActiveModel()
-        {
-            return Task<ActiveModelInfo>.Run(async () =>
-            {
-                if (base.IsBusy)
-                    return this._currentModel;
-                if (this.mmdSelector.IsBusy)
-                    return this._currentModel;
-                if (_isBusyGettingActiveModel)
-                    return this._currentModel;
-                _isBusyGettingActiveModel = true;
-                Process mmd = null;
-                var activeModelName = string.Empty;
-                var isModelChanged = false;
-                if (this.IsDisposed)
-                    return null;
-                try
-                {
-                    mmd = this.Invoke((Func<Process>)(() => this.mmdSelector.SelectMMD())) as Process;
-
-                    if (mmd == null)
-                    {
-                        //MMD紐づけ無し。キャッシュクリア
-                        _modelCache = new Dictionary<string, ActiveModelInfo>();
-                        _prevpmmSavedTime = new DateTime();
-                        _currentModel = new ActiveModelInfo();
-                        return _currentModel;
-                    }
-
-                    if (_prevmmdID != mmd.Id)
-                    {
-                        //監視してるMMDが切り替わった。キャッシュクリア
-                        _modelCache = new Dictionary<string, ActiveModelInfo>();
-                        _prevpmmSavedTime = new DateTime();
-                        this._currentModel = new ActiveModelInfo();
-                        isModelChanged = true;
-                    }
-
-                    if (_modelCache == null || _modelCache.Count == 0)
-                    {
-                        var tmpcache = await this.TryCachePmx(mmd);
-                        if (tmpcache != null)
-                            _modelCache = tmpcache;
-                    }
-
-                    activeModelName = MMDUtilility.TryGetActiveModelName(mmd.MainWindowHandle);
-                    if (activeModelName != _currentModel.ModelName)
-                    {
-                        isModelChanged = true;
-                        if (activeModelName == _MMD_CAMERAMODE_CAPTION)
-                        {
-                            //カメラモードになってる
-                            _currentModel = new ActiveModelInfo();
-                            activeModelName = "";
-                        }
-                        else
-                        {
-                            if (_modelCache.ContainsKey(activeModelName))
-                            {
-                                _currentModel = _modelCache[activeModelName];
-                                this.HidelblWait();
-                            }
-                            else
-                            {
-                                //前回キャッシュ時には居なかったモデルだ。再度キャッシュしてみる。
-                                var tmpcache = await this.TryCachePmx(mmd);
-                                if (tmpcache != null)
-                                    _modelCache = tmpcache;
-
-                                if (!_modelCache.ContainsKey(activeModelName))
-                                {
-                                    //おそらく後から追加されてまだ保存されていないモデルだ
-                                    var msg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
-
-                                    this.ShowlblWait(msg);
-                                    _currentModel = new ActiveModelInfo();
-                                    activeModelName = "";
-                                    isModelChanged = false;
-                                }
-                            }
-
-                            //モデルが変わった
-                            this.Invoke((Action)(() =>
-                            {
-                                if (!string.IsNullOrEmpty(activeModelName))
-                                    this.lblActiveModel.Text = activeModelName;
-                                else
-                                    this.lblActiveModel.Text = "モデルを選択してください";
-                            }));
-                        }
-                    }
-
-                    return this._currentModel;
-                }
-                finally
-                {
-                    _isBusyGettingActiveModel = false;
-                    if (mmd != null)
-                        this._prevmmdID = mmd.Id;
-
-                    if (isModelChanged)
-                    {
-                        this.BeginInvoke((Action)(() =>
-                        {
-                            //アクティブモデルが変わったイベントを起こす
-                            this.ActiveModelChangedEventHandler?.Invoke(this, new ActiveModelChangedEventArgs(activeModelName));
-                        }));
-                    }
-                }
-            });
-        }
-
         #region "override"
-
-        /// <summary>
-        /// mmdのプロセスからpmxファイルを引っ張って中身をキャッシュします。
-        /// </summary>
-        private async Task<Dictionary<string, ActiveModelInfo>> TryCachePmx(Process mmd)
-        {
-            var ret = new Dictionary<string, ActiveModelInfo>();
-            if (mmd == null || mmd.HasExited)
-                return null;
-
-            var pmminfo = LibMMDUtil.GetPmmInfoFromProcess(mmd);
-            if (pmminfo == null)
-                return null;
-            if (pmminfo.LastWriteTime <= _prevpmmSavedTime)
-            {
-                //前回キャッシュ時からまだ保存されていないので抜ける
-                return this._modelCache;
-            }
-            if (_prevpmmSavedTime != new DateTime())
-                await Task.Delay(2000);
-            var msg = $"pmmファイルから\r\nモデル情報をキャッシュしています。\r\nしばらくお待ち下さい。";
-            this.ShowlblWait(msg);
-            try
-            {
-                ret = LibMMDUtil.CreateActiveModelInfoHashFromProcess(mmd);
-                //直近のpmm保存日時を保持しておく
-                _prevpmmSavedTime = pmminfo.LastWriteTime;
-            }
-            finally
-            {
-                this.HidelblWait();
-            }
-            return ret;
-        }
 
         /// <summary>
         /// モーフ一覧情報を返します。
@@ -422,9 +294,6 @@ namespace FaceExpressionSelectorMMD
                 //アクティブモデル無し
                 return false;
 
-            var sw = new Stopwatch();
-            sw.Start();
-
             //処理対象のモーフ情報を取得
             var applyingMorphs = this.GetApplyingMorphs(item);
             //無いモーフチェック
@@ -441,26 +310,36 @@ namespace FaceExpressionSelectorMMD
                     }
                 }
             }
+            var vmd1 = new VmdDocument() { ModelName = this.ActiveModelName };
+
+            //現在の物理演算状態を取得する
+            //-1:取得失敗 0:オン/オフモード  1:常に演算 2:トレースモード 3:演算しない
+            var currentphysicsState = MMDUtilility.TryGetPhysicsState(mmd.MainWindowHandle);
+            //現在のエフェクトオンオフ
+            var currentEffectState = (MMDUtilility.TryGetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用") == 1);
+            //現在のモデル表示状態
+            var currentModelInvisibleState = (MMDUtilility.TryGetMenuChecked(mmd.MainWindowHandle, "表示(&V)", "モデル非表示(&A)") == 1);
+
+            var sw = new Stopwatch();
+            sw.Start();
+
+            var currentFrame = Convert.ToInt64(MMDUtilility.TryGetFrameNumber(mmd.MainWindowHandle));
 
             try
             {
                 var msg = $"「{item.Name}」を適用中です。\r\nMMDに触らないでください。";
                 this.ShowlblWait(msg);
 
-                long currentframe;
-                long newframe;
-                if (bufferFrames >= 0)
-                {
-                    currentframe = Convert.ToInt64(MMDUtilility.TryGetFrameNumber(mmd.MainWindowHandle));
-                    newframe = currentframe + Convert.ToInt64(bufferFrames);
-                }
-                else
-                {
-                    newframe = Convert.ToInt64(MMDUtilility.TryGetFrameNumber(mmd.MainWindowHandle));
-                    currentframe = newframe + Convert.ToInt64(bufferFrames);
-                }
-                MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentframe);
+                //物理演算をオフにする
+                MMDUtilility.TrySetPhysicsState(mmd.MainWindowHandle, 3);
+                //エフェクトをオフにする
+                MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用", false);
 
+                if (this.処理中にモデルを非表示にするToolStripMenuItem.Checked)
+                    //モデルを非表示にするc
+                    MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "表示(&V)", "モデル非表示(&A)", true);
+
+                //現在の適用状態を反映
                 var model = this.TryApplyCurrentWeight();
                 if (model == null || string.IsNullOrEmpty(model.ModelName))
                 {
@@ -486,61 +365,82 @@ namespace FaceExpressionSelectorMMD
                     if (applyingMI != null)
                     {
                         //対象のモーフ
-                        MMDUtilility.TrySetMorphValueAsIs(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex);
-                        targetMorphs.Add((applyingMI.Weight, morph));
+                        if (morph.Weight != applyingMI.Weight && true)
+                        {
+                            vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
+                            targetMorphs.Add((applyingMI.Weight, morph));
+                        }
                     }
                     else
                     {
                         if (morph.Weight != 0)
                         {
                             //対象外のモーフでウェイトが乗っている
-                            var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, morph.Weight, true, 3);
-                            if (!ret)
-                                failed.Add($"{morph.MorphName},{currentframe}fr");
+                            vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
                         }
 
                         notTargetMorphs.Add(morph);
                     }
                 }
 
-                MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, newframe);
                 foreach ((float, MorphItemWithIndex) tuple in targetMorphs)
                 {
                     var weight = tuple.Item1;
                     var morph = tuple.Item2;
-                    var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, weight, true, 3);
-                    if (!ret)
-                        failed.Add($"{morph.MorphName},{newframe}fr");
+                    vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = weight });
                 }
                 foreach (MorphItemWithIndex morph in notTargetMorphs)
                 {
-                    var value = MMDUtilility.TryGetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex);
-
-                    if (value != 0)
+                    if (morph.Weight != 0)
                     {
-                        var ret = MMDUtilility.TrySetMorphValue(mmd.MainWindowHandle, morph.MorphType, morph.ComboBoxIndex, 0, true, 3);
-                        if (!ret)
-                            failed.Add($"{morph.MorphName},{newframe}fr");
+                        vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = 0 });
                     }
                 }
 
-                if (failed.Count > 0)
+                if (bufferFrames < 0)
+                    MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentFrame + Convert.ToInt64(bufferFrames));
+
+                //vmdデータをMMDに投げる
+                using (var vmdStream = new MemoryStream())
                 {
-                    var errmsg = $"{string.Join("\r\n", failed)}\r\n\r\n以上のモーフの適用に失敗した可能性があります。\r\n確認してください。";
-                    MessageBox.Show(errmsg, "失敗?", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    vmd1.Write(vmdStream);
+                    vmdStream.Seek(0, SeekOrigin.Begin);
+
+                    var rtn = MmdDrop.DropFile(mmd.MainWindowHandle, new MmdDropFile("TempMotion" + mmd.Id + ".vmd", vmdStream)
+                    {
+                        Timeout = 500,
+                    });
+                    if (!rtn)
+                        return false;
                 }
 
-                //モーフのスライダーの表示がバグることがあるのでMMD画面をリフレッシュする
-                MMDUtilility.BeginAndEndUpdate(mmd.MainWindowHandle, false);
-                MMDUtilility.BeginAndEndUpdate(mmd.MainWindowHandle, true);
+                //ダイアログを潰す
+                MMDUtilility.PressOKToDialog(mmd.MainWindowHandle, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
 
                 //MMDにフォーカスを当てる
                 MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);
+
                 return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, $"{ex.Message}\r\n\r\n{ex.StackTrace}");
+                return false;
             }
             finally
             {
                 this.HidelblWait();
+                //物理演算を戻す
+                MMDUtilility.TrySetPhysicsState(mmd.MainWindowHandle, currentphysicsState);
+                //エフェクト状態を戻す
+                MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用", currentEffectState);
+                //モデル表示状態を戻す
+                MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "表示(&V)", "モデル非表示(&A)", currentModelInvisibleState);
+
+                if (bufferFrames >= 0)
+                    MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentFrame + Convert.ToInt64(bufferFrames));
+                else
+                    MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentFrame);
                 Console.WriteLine($"完了：{this.ActiveModelName}:{item.Name},{sw.ElapsedMilliseconds}");
             }
         }
@@ -597,33 +497,30 @@ namespace FaceExpressionSelectorMMD
             }
         }
 
-        /// <summary>
-        /// アクティブモデルが変更された
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        protected override void OnActiveModelChanged(object sender, ActiveModelChangedEventArgs e)
-        {
-            //this.HidelblWait();
-            if (!string.IsNullOrEmpty(e.CurrentActiveModelName))
-                this.lblActiveModel.Text = e.CurrentActiveModelName;
-            else
-                this.lblActiveModel.Text = "モデルを選択してください";
-            base.OnActiveModelChanged(sender, e);
-        }
-
         #endregion "override"
 
         private void frmMainMMD_FormClosing(object sender, FormClosingEventArgs e)
         {
-            this._timer.Change(int.MaxValue, int.MaxValue);
+            this._modelFinder?.Dispose();
         }
+    }
+
+    /// <summary>
+    /// コンボボックス内の何個目のモーフかの情報を保持できるMorphItemです。
+    /// </summary>
+    [DebuggerDisplay("{MorphName},{ComboBoxIndex}")]
+    public class MorphItemWithIndex : MorphItem
+    {
+        /// <summary>
+        /// コンボボックス内のindex
+        /// </summary>
+        public int ComboBoxIndex { get; set; } = -1;
     }
 
     /// <summary>
     /// モデル情報をキャッシュするエンティティ
     /// </summary>
-    public class ActiveModelInfo
+    public class ActiveModelInfo : IMMDModel
     {
         /// <summary>
         /// constructor
@@ -655,15 +552,50 @@ namespace FaceExpressionSelectorMMD
         public string ModelName { get; }
     }
 
-    /// <summary>
-    /// コンボボックス内の何個目のモーフかの情報を保持できるMorphItemです。
-    /// </summary>
-    [DebuggerDisplay("{MorphName},{ComboBoxIndex}")]
-    public class MorphItemWithIndex : MorphItem
+    public class ActiveMorphModelFinder : ModelFinder<ActiveModelInfo>
     {
         /// <summary>
-        /// コンボボックス内のindex
+        /// constructor
         /// </summary>
-        public int ComboBoxIndex { get; set; } = -1;
+        /// <param name="frm"></param>
+        /// <param name="mmdselector"></param>
+        public ActiveMorphModelFinder(Form frm, MMDSelectorControl mmdselector, Action<string> showWaitAction = null, Action hideWaitAction = null) : base(frm, mmdselector, showWaitAction, hideWaitAction)
+        {
+        }
+
+        protected override ActiveModelInfo CreateInstance() => new ActiveModelInfo();
+
+        /// <summary>
+        /// LibMMDUtilから取得したPmxModelをActiveModelInfoの形に変換して返します。
+        /// </summary>
+        /// <param name="pmx"></param>
+        /// <returns></returns>
+        protected override ActiveModelInfo PmxModel2ActiveModelInfo(PmxModel pmx)
+        {
+            var allMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
+            var hash = new Dictionary<MorphType, int>();
+            hash.Add(MorphType.Eye, 0);
+            hash.Add(MorphType.Lip, 0);
+            hash.Add(MorphType.Brow, 0);
+            hash.Add(MorphType.Other, 0);
+
+            foreach (var mrph in pmx.Morphs.OrderBy(n => n.Index))
+            {
+                MorphType morphtype = this.PmxPnlType2Morphtype(mrph.PanelType);
+                if (hash.ContainsKey(morphtype))
+                {
+                    var morphitem = new MorphItemWithIndex() { MorphName = mrph.NameLocal, MorphType = morphtype, ComboBoxIndex = hash[morphtype] };
+                    var morphlist = new List<MorphItemWithIndex>();
+                    if (!allMorphs.ContainsKey(morphtype))
+                        allMorphs.Add(morphtype, morphlist);
+                    else
+                        morphlist = allMorphs[morphtype];
+                    morphlist.Add(morphitem);
+                    hash[morphtype]++;
+                }
+            }
+
+            return new ActiveModelInfo(pmx.ModelNameLocal, allMorphs);
+        }
     }
 }

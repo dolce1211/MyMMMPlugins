@@ -54,6 +54,8 @@
             this.対象外の目まゆリップモーフToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.対象のその他モーフToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.オプションtoolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.処理中にモデルを非表示にするToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pnlBottom = new System.Windows.Forms.Panel();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.label1 = new System.Windows.Forms.Label();
@@ -228,7 +230,7 @@
             // 
             this.chkTopMost.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.chkTopMost.AutoSize = true;
-            this.chkTopMost.Location = new System.Drawing.Point(7, 43);
+            this.chkTopMost.Location = new System.Drawing.Point(7, 45);
             this.chkTopMost.Name = "chkTopMost";
             this.chkTopMost.Size = new System.Drawing.Size(69, 16);
             this.chkTopMost.TabIndex = 10;
@@ -251,7 +253,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.ファイルFToolStripMenuItem,
-            this.対象制御ToolStripMenuItem});
+            this.対象制御ToolStripMenuItem,
+            this.オプションtoolStripMenuItem1});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(297, 24);
@@ -301,6 +304,22 @@
             this.対象のその他モーフToolStripMenuItem.Size = new System.Drawing.Size(249, 22);
             this.対象のその他モーフToolStripMenuItem.Text = "処理対象の「その他」モーフ";
             this.対象のその他モーフToolStripMenuItem.Click += new System.EventHandler(this.対象外の目眉リップモーフToolStripMenuItem_Click);
+            // 
+            // オプションtoolStripMenuItem1
+            // 
+            this.オプションtoolStripMenuItem1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.処理中にモデルを非表示にするToolStripMenuItem});
+            this.オプションtoolStripMenuItem1.Name = "オプションtoolStripMenuItem1";
+            this.オプションtoolStripMenuItem1.Size = new System.Drawing.Size(80, 20);
+            this.オプションtoolStripMenuItem1.Text = "オプション(&O)";
+            this.オプションtoolStripMenuItem1.Visible = false;
+            // 
+            // 処理中にモデルを非表示にするToolStripMenuItem
+            // 
+            this.処理中にモデルを非表示にするToolStripMenuItem.Name = "処理中にモデルを非表示にするToolStripMenuItem";
+            this.処理中にモデルを非表示にするToolStripMenuItem.Size = new System.Drawing.Size(220, 22);
+            this.処理中にモデルを非表示にするToolStripMenuItem.Text = "処理中にモデルを非表示にする";
+            this.処理中にモデルを非表示にするToolStripMenuItem.Click += new System.EventHandler(this.処理中にモデルを非表示にするToolStripMenuItem_Click);
             // 
             // pnlBottom
             // 
@@ -530,5 +549,7 @@
         public System.Windows.Forms.TrackBar trackBar1;
         private System.Windows.Forms.Label label1;
         public System.Windows.Forms.Button btnReset;
+        public System.Windows.Forms.ToolStripMenuItem 処理中にモデルを非表示にするToolStripMenuItem;
+        public System.Windows.Forms.ToolStripMenuItem オプションtoolStripMenuItem1;
     }
 }
