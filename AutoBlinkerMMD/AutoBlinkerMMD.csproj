@@ -36,6 +36,7 @@
     <Reference Include="LibMMD">
       <HintPath>..\FaceExpressionSelectorMMD\assembly\LibMMD.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -52,6 +53,7 @@
     <Compile Include="..\Utility\MMD専用\ModelFinderBase.cs">
       <Link>_LinkFiles\ModelFinderBase.cs</Link>
     </Compile>
+    <Compile Include="BlinkModelFinder.cs" />
     <Compile Include="frmMainMMD.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -1,7 +1,7 @@
 ﻿
 namespace AutoBlinkerPlugin
 {
-    partial class frmMain
+    partial class frmMainBase
     {
         /// <summary>
         /// Required designer variable.
@@ -61,6 +61,7 @@ namespace AutoBlinkerPlugin
             this.label12 = new System.Windows.Forms.Label();
             this.chkEyeSync = new System.Windows.Forms.CheckBox();
             this.cboEyeBone = new System.Windows.Forms.ComboBox();
+            this.lblEyeBoneNotification = new System.Windows.Forms.Label();
             this.gbMain = new System.Windows.Forms.GroupBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.chkStartExtra = new System.Windows.Forms.CheckBox();
@@ -104,7 +105,10 @@ namespace AutoBlinkerPlugin
             this.label20 = new System.Windows.Forms.Label();
             this.label18 = new System.Windows.Forms.Label();
             this.pnlBottom = new System.Windows.Forms.Panel();
+            this.pnlCopyPaste = new System.Windows.Forms.Panel();
             this.mmdSelectorControl1 = new MMDUtil.MMDSelectorControl();
+            this.lblWait = new System.Windows.Forms.Label();
+            this.chkTopMost = new System.Windows.Forms.CheckBox();
             this.gbPreset.SuspendLayout();
             this.tlp.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -125,12 +129,13 @@ namespace AutoBlinkerPlugin
             this.panel2.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.pnlBottom.SuspendLayout();
+            this.pnlCopyPaste.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnOK
             // 
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnOK.Location = new System.Drawing.Point(320, 14);
+            this.btnOK.Location = new System.Drawing.Point(332, 14);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(95, 30);
             this.btnOK.TabIndex = 36;
@@ -156,7 +161,7 @@ namespace AutoBlinkerPlugin
             this.label10.BackColor = System.Drawing.Color.Transparent;
             this.label10.Font = new System.Drawing.Font("メイリオ", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
             this.label10.ForeColor = System.Drawing.Color.Blue;
-            this.label10.Location = new System.Drawing.Point(3, 6);
+            this.label10.Location = new System.Drawing.Point(3, 0);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(158, 17);
             this.label10.TabIndex = 48;
@@ -165,7 +170,7 @@ namespace AutoBlinkerPlugin
             // chkEyeMotionLayer
             // 
             this.chkEyeMotionLayer.AutoSize = true;
-            this.chkEyeMotionLayer.Location = new System.Drawing.Point(159, 48);
+            this.chkEyeMotionLayer.Location = new System.Drawing.Point(159, 46);
             this.chkEyeMotionLayer.Name = "chkEyeMotionLayer";
             this.chkEyeMotionLayer.Size = new System.Drawing.Size(121, 16);
             this.chkEyeMotionLayer.TabIndex = 59;
@@ -181,14 +186,14 @@ namespace AutoBlinkerPlugin
             this.gbPreset.Dock = System.Windows.Forms.DockStyle.Top;
             this.gbPreset.Location = new System.Drawing.Point(0, 0);
             this.gbPreset.Name = "gbPreset";
-            this.gbPreset.Size = new System.Drawing.Size(420, 41);
+            this.gbPreset.Size = new System.Drawing.Size(432, 41);
             this.gbPreset.TabIndex = 49;
             this.gbPreset.TabStop = false;
             // 
             // btnMinimize
             // 
             this.btnMinimize.ForeColor = System.Drawing.Color.Black;
-            this.btnMinimize.Location = new System.Drawing.Point(196, 13);
+            this.btnMinimize.Location = new System.Drawing.Point(198, 13);
             this.btnMinimize.Name = "btnMinimize";
             this.btnMinimize.Size = new System.Drawing.Size(60, 20);
             this.btnMinimize.TabIndex = 63;
@@ -210,7 +215,7 @@ namespace AutoBlinkerPlugin
             // 
             this.btnCopy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnCopy.ForeColor = System.Drawing.Color.Blue;
-            this.btnCopy.Location = new System.Drawing.Point(12, 25);
+            this.btnCopy.Location = new System.Drawing.Point(12, 19);
             this.btnCopy.Name = "btnCopy";
             this.btnCopy.Size = new System.Drawing.Size(48, 20);
             this.btnCopy.TabIndex = 51;
@@ -222,7 +227,7 @@ namespace AutoBlinkerPlugin
             // 
             this.btnPaste.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnPaste.ForeColor = System.Drawing.Color.Blue;
-            this.btnPaste.Location = new System.Drawing.Point(62, 25);
+            this.btnPaste.Location = new System.Drawing.Point(62, 19);
             this.btnPaste.Name = "btnPaste";
             this.btnPaste.Size = new System.Drawing.Size(48, 20);
             this.btnPaste.TabIndex = 52;
@@ -240,9 +245,10 @@ namespace AutoBlinkerPlugin
             this.tlp.Dock = System.Windows.Forms.DockStyle.Top;
             this.tlp.Location = new System.Drawing.Point(0, 41);
             this.tlp.Name = "tlp";
-            this.tlp.RowCount = 1;
+            this.tlp.RowCount = 2;
             this.tlp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlp.Size = new System.Drawing.Size(420, 522);
+            this.tlp.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 8F));
+            this.tlp.Size = new System.Drawing.Size(432, 526);
             this.tlp.TabIndex = 61;
             // 
             // panel1
@@ -253,7 +259,7 @@ namespace AutoBlinkerPlugin
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(3, 3);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(294, 516);
+            this.panel1.Size = new System.Drawing.Size(306, 512);
             this.panel1.TabIndex = 0;
             // 
             // gbMayu
@@ -272,7 +278,7 @@ namespace AutoBlinkerPlugin
             this.gbMayu.Dock = System.Windows.Forms.DockStyle.Top;
             this.gbMayu.Location = new System.Drawing.Point(0, 350);
             this.gbMayu.Name = "gbMayu";
-            this.gbMayu.Size = new System.Drawing.Size(294, 160);
+            this.gbMayu.Size = new System.Drawing.Size(306, 155);
             this.gbMayu.TabIndex = 52;
             this.gbMayu.TabStop = false;
             // 
@@ -405,10 +411,11 @@ namespace AutoBlinkerPlugin
             this.gbEyeSync.Controls.Add(this.label12);
             this.gbEyeSync.Controls.Add(this.chkEyeSync);
             this.gbEyeSync.Controls.Add(this.cboEyeBone);
+            this.gbEyeSync.Controls.Add(this.lblEyeBoneNotification);
             this.gbEyeSync.Dock = System.Windows.Forms.DockStyle.Top;
             this.gbEyeSync.Location = new System.Drawing.Point(0, 258);
             this.gbEyeSync.Name = "gbEyeSync";
-            this.gbEyeSync.Size = new System.Drawing.Size(294, 92);
+            this.gbEyeSync.Size = new System.Drawing.Size(306, 92);
             this.gbEyeSync.TabIndex = 51;
             this.gbEyeSync.TabStop = false;
             // 
@@ -479,6 +486,17 @@ namespace AutoBlinkerPlugin
             this.cboEyeBone.Size = new System.Drawing.Size(154, 20);
             this.cboEyeBone.TabIndex = 60;
             // 
+            // lblEyeBoneNotification
+            // 
+            this.lblEyeBoneNotification.AutoSize = true;
+            this.lblEyeBoneNotification.BackColor = System.Drawing.Color.Transparent;
+            this.lblEyeBoneNotification.Font = new System.Drawing.Font("メイリオ", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblEyeBoneNotification.Location = new System.Drawing.Point(-1, 47);
+            this.lblEyeBoneNotification.Name = "lblEyeBoneNotification";
+            this.lblEyeBoneNotification.Size = new System.Drawing.Size(305, 17);
+            this.lblEyeBoneNotification.TabIndex = 65;
+            this.lblEyeBoneNotification.Text = "*両目ﾎﾞｰﾝ自体でなく多段化したﾎﾞｰﾝを指定することを推奨";
+            // 
             // gbMain
             // 
             this.gbMain.Controls.Add(this.groupBox1);
@@ -501,7 +519,7 @@ namespace AutoBlinkerPlugin
             this.gbMain.Dock = System.Windows.Forms.DockStyle.Top;
             this.gbMain.Location = new System.Drawing.Point(0, 0);
             this.gbMain.Name = "gbMain";
-            this.gbMain.Size = new System.Drawing.Size(294, 258);
+            this.gbMain.Size = new System.Drawing.Size(306, 258);
             this.gbMain.TabIndex = 40;
             this.gbMain.TabStop = false;
             this.gbMain.Text = "まばたき";
@@ -830,15 +848,15 @@ namespace AutoBlinkerPlugin
             this.panel2.Controls.Add(this.label20);
             this.panel2.Controls.Add(this.label18);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(303, 3);
+            this.panel2.Location = new System.Drawing.Point(315, 3);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(114, 516);
+            this.panel2.Size = new System.Drawing.Size(114, 512);
             this.panel2.TabIndex = 1;
             // 
             // btnException
             // 
             this.btnException.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnException.Location = new System.Drawing.Point(22, 489);
+            this.btnException.Location = new System.Drawing.Point(22, 485);
             this.btnException.Name = "btnException";
             this.btnException.Size = new System.Drawing.Size(90, 24);
             this.btnException.TabIndex = 56;
@@ -897,7 +915,7 @@ namespace AutoBlinkerPlugin
             this.lstFav.ItemHeight = 12;
             this.lstFav.Location = new System.Drawing.Point(2, 83);
             this.lstFav.Name = "lstFav";
-            this.lstFav.Size = new System.Drawing.Size(110, 403);
+            this.lstFav.Size = new System.Drawing.Size(110, 399);
             this.lstFav.TabIndex = 47;
             this.lstFav.SelectedIndexChanged += new System.EventHandler(this.lstFav_SelectedIndexChanged);
             this.lstFav.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.lstFav_Format);
@@ -940,37 +958,70 @@ namespace AutoBlinkerPlugin
             // 
             // pnlBottom
             // 
-            this.pnlBottom.Controls.Add(this.label10);
-            this.pnlBottom.Controls.Add(this.btnCopy);
-            this.pnlBottom.Controls.Add(this.btnPaste);
+            this.pnlBottom.Controls.Add(this.chkTopMost);
+            this.pnlBottom.Controls.Add(this.pnlCopyPaste);
             this.pnlBottom.Controls.Add(this.btnOK);
             this.pnlBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlBottom.Location = new System.Drawing.Point(0, 562);
+            this.pnlBottom.Location = new System.Drawing.Point(0, 569);
             this.pnlBottom.Name = "pnlBottom";
-            this.pnlBottom.Size = new System.Drawing.Size(420, 50);
+            this.pnlBottom.Size = new System.Drawing.Size(432, 50);
             this.pnlBottom.TabIndex = 62;
+            // 
+            // pnlCopyPaste
+            // 
+            this.pnlCopyPaste.Controls.Add(this.label10);
+            this.pnlCopyPaste.Controls.Add(this.btnPaste);
+            this.pnlCopyPaste.Controls.Add(this.btnCopy);
+            this.pnlCopyPaste.Location = new System.Drawing.Point(111, 6);
+            this.pnlCopyPaste.Name = "pnlCopyPaste";
+            this.pnlCopyPaste.Size = new System.Drawing.Size(172, 41);
+            this.pnlCopyPaste.TabIndex = 53;
             // 
             // mmdSelectorControl1
             // 
             this.mmdSelectorControl1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.mmdSelectorControl1.Location = new System.Drawing.Point(0, 612);
+            this.mmdSelectorControl1.Location = new System.Drawing.Point(0, 619);
             this.mmdSelectorControl1.Name = "mmdSelectorControl1";
-            this.mmdSelectorControl1.Size = new System.Drawing.Size(420, 52);
+            this.mmdSelectorControl1.Size = new System.Drawing.Size(432, 52);
             this.mmdSelectorControl1.TabIndex = 63;
             // 
-            // frmMain
+            // lblWait
+            // 
+            this.lblWait.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.lblWait.Location = new System.Drawing.Point(7, 193);
+            this.lblWait.Name = "lblWait";
+            this.lblWait.Size = new System.Drawing.Size(11, 19);
+            this.lblWait.TabIndex = 20;
+            this.lblWait.Text = "「なんとかかんとか」\r\nのモーフ情報を取得中です。\r\nしばらくお待ち下さい。\r\n";
+            this.lblWait.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblWait.Visible = false;
+            // 
+            // chkTopMost
+            // 
+            this.chkTopMost.AutoSize = true;
+            this.chkTopMost.Font = new System.Drawing.Font("メイリオ", 9F);
+            this.chkTopMost.Location = new System.Drawing.Point(7, 6);
+            this.chkTopMost.Name = "chkTopMost";
+            this.chkTopMost.Size = new System.Drawing.Size(75, 22);
+            this.chkTopMost.TabIndex = 56;
+            this.chkTopMost.Text = "常に手前";
+            this.chkTopMost.UseVisualStyleBackColor = true;
+            this.chkTopMost.CheckedChanged += new System.EventHandler(this.chkTopMost_CheckedChanged);
+            // 
+            // frmMainBase
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(420, 664);
+            this.ClientSize = new System.Drawing.Size(432, 671);
             this.ControlBox = false;
+            this.Controls.Add(this.lblWait);
             this.Controls.Add(this.pnlBottom);
             this.Controls.Add(this.mmdSelectorControl1);
             this.Controls.Add(this.tlp);
             this.Controls.Add(this.gbPreset);
             this.Cursor = System.Windows.Forms.Cursors.Default;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Name = "frmMain";
+            this.Name = "frmMainBase";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "まばたき作成";
             this.Load += new System.EventHandler(this.frmMain_Load);
@@ -1002,6 +1053,8 @@ namespace AutoBlinkerPlugin
             this.contextMenuStrip1.ResumeLayout(false);
             this.pnlBottom.ResumeLayout(false);
             this.pnlBottom.PerformLayout();
+            this.pnlCopyPaste.ResumeLayout(false);
+            this.pnlCopyPaste.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -1032,7 +1085,6 @@ namespace AutoBlinkerPlugin
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label lblEyeSync;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.CheckBox chkEyeMotionLayer;
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.CheckBox chkEyeSync;
         private System.Windows.Forms.ComboBox cboEyeBone;
@@ -1082,5 +1134,10 @@ namespace AutoBlinkerPlugin
         public MMDUtil.MMDSelectorControl mmdSelectorControl1;
         public System.Windows.Forms.Label lblModel;
         public System.Windows.Forms.CheckBox chkHokan;
+        public System.Windows.Forms.CheckBox chkEyeMotionLayer;
+        public System.Windows.Forms.Label lblEyeBoneNotification;
+        private System.Windows.Forms.Panel pnlCopyPaste;
+        public System.Windows.Forms.Label lblWait;
+        private System.Windows.Forms.CheckBox chkTopMost;
     }
 }

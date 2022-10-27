@@ -1,5 +1,4 @@
-﻿using MikuMikuPlugin;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -11,57 +10,42 @@ using System.Windows.Forms;
 using MyUtility;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
+using System.Windows.Media.Media3D;
 
 namespace AutoBlinkerPlugin
 {
-    public partial class frmMain : Form
+    public partial class frmMainBase : Form
     {
+        /// <summary>
+        /// MMDかMMMか
+        /// </summary>
         public static OperatingMode OperationgMode { get; protected set; } = OperatingMode.OnMMM;
 
-        private Model _currentModel = null;
+        /// <summary>
+        /// 選択中のモデル
+        /// </summary>
+        protected ModelItem _currentModel = null;
+
         private string _path = string.Empty;
         private SavedState _savedState = null;
 
         /// <summary>
         /// コピーされた値
         /// </summary>
-        private ModelInfoEntity _clipboard = null;
+        private ModelSetting _clipboard = null;
 
-        public event EventHandler Executed;
+        public event EventHandler<ExecutedEventArgs> Executed;
 
-        public frmMain()
+        private bool _isInitialized = false;
+
+        public frmMainBase()
         {
             InitializeComponent();
-
-            this.lblModel.Text = string.Empty;
-
-            string basepath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            _path = System.IO.Path.Combine(basepath, "AutoBlinkerPluginPatterns.xml");
-
-            _savedState = MyUtility.Serializer.Deserialize<SavedState>(_path);
-            if (_savedState == null)
-                _savedState = new SavedState();
-
-            if (_savedState.Favorites == null)
-                _savedState.Favorites = new List<FavEntity>();
-            if (string.IsNullOrWhiteSpace(_savedState.Version))
-                _savedState.Version = string.Empty;
-
-            this.ApplyBasicInfo(_savedState);
-            this.ApplyFavourite();
-
-            System.Diagnostics.FileVersionInfo vi =
-                System.Diagnostics.FileVersionInfo.GetVersionInfo(
-                     System.IO.Path.Combine(basepath, "AutoBlinkerPlugin.dll"));
-            _savedState.Version = vi.FileVersion;
-
-            chkMayu_CheckedChanged(this, new EventArgs());
-            chkEyeSync_CheckedChanged(this, new EventArgs());
-            chuYuruyaka_CheckedChanged(this, new EventArgs());
         }
 
         /// <summary>
-        /// お気に入りを反映ささえます。
+        /// お気に入りを反映させます。
         /// </summary>
         private void ApplyFavourite(bool noselection = false)
         {
@@ -106,16 +90,12 @@ namespace AutoBlinkerPlugin
             this.numYuruyaka.Value = rawEntity.YuruyakaFrame;
         }
 
-        public void ModelChanged(Scene scene)
-        {
-            this.Text = $"まばたき作成";
-            if (scene?.ActiveModel != null && scene.ActiveModel != this._currentModel)
-            {
-                this.ApplyModel(scene.ActiveModel);
-            }
-        }
-
-        private bool ApplyModel(Model model)
+        /// <summary>
+        /// 選択中のモデルを反映させます。
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
+        protected bool ApplyModel(ModelItem model)
         {
             this.cboBlink.Items.Clear();
             this.cboBikkuri.Items.Clear();
@@ -129,26 +109,27 @@ namespace AutoBlinkerPlugin
 
             this._currentModel = model;
             this.btnOK.Enabled = false;
-            if (this._currentModel == null)
+
+            if (model == null)
                 return false;
 
             this.btnOK.Enabled = true;
 
-            this.Text = $"まばたき作成： {this._currentModel.Name}";
-            this.lblModel.Text = this._currentModel.Name;
+            this.Text = $"まばたき作成： {model.ModelName}";
+            this.lblModel.Text = model.ModelName;
 
-            var eyeMorphs = this._currentModel.Morphs.Where(n => n.PanelType == PanelType.Eyes).ToArray();
-            var mayuMorphs = this._currentModel.Morphs.Where(n => n.PanelType == PanelType.Brow).ToArray();
+            var eyeMorphs = model.EyeMorphItems.Select(n => n.MorphName).ToArray();
+            var mayuMorphs = model.BrowMorphItems.Select(n => n.MorphName).ToArray();
 
             if (eyeMorphs != null && eyeMorphs.Length > 0)
             {
-                this.cboBlink.Items.AddRange(eyeMorphs.Select(n => n.Name).ToArray());
-                this.cboBikkuri.Items.AddRange(eyeMorphs.Select(n => n.Name).ToArray());
+                this.cboBlink.Items.AddRange(eyeMorphs);
+                this.cboBikkuri.Items.AddRange(eyeMorphs);
             }
             if (mayuMorphs != null && mayuMorphs.Length > 0)
             {
-                this.cboMayuDown.Items.AddRange(mayuMorphs.Select(n => n.Name).ToArray());
-                this.cboMayuUp.Items.AddRange(mayuMorphs.Select(n => n.Name).ToArray());
+                this.cboMayuDown.Items.AddRange(mayuMorphs);
+                this.cboMayuUp.Items.AddRange(mayuMorphs);
             }
 
             //まばたきモーフ
@@ -197,7 +178,7 @@ namespace AutoBlinkerPlugin
             else
                 this.cboMayuUp.SelectedIndex = 0;
 
-            var modelInfo = _savedState.ModelInfos.Where(n => n.ModelName.TrimSafe() == this._currentModel.Name.TrimSafe()).FirstOrDefault();
+            var modelInfo = _savedState.ModelInfos.Where(n => n.ModelName.TrimSafe() == model.ModelName.TrimSafe()).FirstOrDefault();
             this.ApplyModelInfo(modelInfo);
 
             return true;
@@ -208,18 +189,15 @@ namespace AutoBlinkerPlugin
         /// </summary>
         /// <param name="modelInfo"></param>
         /// <returns></returns>
-        private bool ApplyModelInfo(ModelInfoEntity modelInfo)
+        private bool ApplyModelInfo(ModelSetting modelInfo)
         {
-            var eyeMorphs = this._currentModel.Morphs.Where(n => n.PanelType == PanelType.Eyes).ToArray();
-            var mayuMorphs = this._currentModel.Morphs.Where(n => n.PanelType == PanelType.Brow).ToArray();
+            var eyeMorphs = this._currentModel.EyeMorphItems.Select(n => n.MorphName).ToArray();
+            var mayuMorphs = this._currentModel.BrowMorphItems.Select(n => n.MorphName).ToArray();
 
             //両目ボーン
-            var bones = this._currentModel.Bones.OrderBy(n => n.BoneID)
-                                                .Select(n => n.Name)
-                                                .Distinct().ToArray();
             this.cboEyeBone.Items.Clear();
             this.cboEyeBone.Items.Add("");
-            this.cboEyeBone.Items.AddRange(bones);
+            this.cboEyeBone.Items.AddRange(this._currentModel.Bones.ToArray());
             this.ApplyBoneToComboBox(this.cboEyeBone, "両目");
 
             this.tbBikkuri.Value = 10;
@@ -265,7 +243,7 @@ namespace AutoBlinkerPlugin
             this.lblEyeSync.Text = $"{eyesyncvalue[0]}度, {eyesyncvalue[1]}度";
 
             this.chkEyeSync.Enabled = true;
-            if (!_currentModel.Bones.Any(n => n.Name == "両目"))
+            if (!_currentModel.Bones.Contains("両目"))
                 this.chkEyeSync.Enabled = false;
             chkMayu_CheckedChanged(this, new EventArgs());
             chkEyeSync_CheckedChanged(this, new EventArgs());
@@ -297,16 +275,16 @@ namespace AutoBlinkerPlugin
         /// <param name="cbo"></param>
         /// <param name="nameArray"></param>
         /// <returns></returns>
-        private bool ApplyMorphToComboBox(Morph[] morphs, ComboBox cbo, string[] nameArray)
+        private bool ApplyMorphToComboBox(string[] morphs, ComboBox cbo, string[] nameArray)
         {
             foreach (var name in nameArray.Where(n => n.TrimSafe() != ""))
             {
                 cbo.SelectedIndex = 0;
-                if (morphs.Any(n => n.Name == name))
+                if (morphs.Contains(name))
                 {
                     try
                     {
-                        cbo.SelectedItem = morphs.Where(n => n.Name == name).FirstOrDefault().Name;
+                        cbo.SelectedItem = name;
                     }
                     catch (Exception)
                     {
@@ -315,7 +293,6 @@ namespace AutoBlinkerPlugin
                         return true;
                 }
             }
-
             return false;
         }
 
@@ -323,15 +300,15 @@ namespace AutoBlinkerPlugin
         /// 画面の状態からEntityのインスタンスを生成します。
         /// </summary>
         /// <returns></returns>
-        private Entity CreateEntityInstance()
+        private Args CreateEntityInstance()
         {
             var eyesyncvalue = this.lblEyeSync.Tag as float[];
-            if (eyesyncvalue.Length < 2)
+            if (eyesyncvalue == null || eyesyncvalue.Length < 2)
                 eyesyncvalue = new float[] { 1f, 10f };
 
-            ModelInfoEntity modelInfo = new ModelInfoEntity()
+            ModelSetting modelInfo = new ModelSetting()
             {
-                ModelName = this._currentModel.Name,
+                ModelName = this._currentModel.ModelName,
                 BlinkingMorphName = cboBlink.SelectedItem.ToString(),
                 BikkuriMorphName = cboBikkuri.SelectedItem.ToString(),
                 BikkuriMorphValue = (float)this.tbBikkuri.Value / 10,
@@ -344,7 +321,7 @@ namespace AutoBlinkerPlugin
                 EyeSyncBoneName = this.cboEyeBone.Text,
             };
 
-            Entity entity = new Entity()
+            Args entity = new Args()
             {
                 ModelInfo = modelInfo,
                 EnterFrames = Convert.ToInt32(numEnter.Value),
@@ -382,9 +359,9 @@ namespace AutoBlinkerPlugin
             savedState.Favorites.AddRange(_savedState.Favorites.Where(n => n != null));
             savedState.IsFavOpen = _savedState.IsFavOpen;
             savedState.Version = _savedState.Version;
-
-            _savedState = savedState;
-            var oldvalue = _savedState.ModelInfos.Where(n => n.ModelName == this._currentModel.Name).FirstOrDefault();
+            savedState.TopMost = this.chkTopMost.Checked;
+            this._savedState = savedState;
+            var oldvalue = this._savedState.ModelInfos.Where(n => n.ModelName == this._currentModel.ModelName).FirstOrDefault();
             if (oldvalue != null)
                 _savedState.ModelInfos.Remove(oldvalue);
             _savedState.ModelInfos.Add(entity.ModelInfo);
@@ -417,26 +394,41 @@ namespace AutoBlinkerPlugin
             }
         }
 
-        public Entity RetEntiy { get; set; }
-
         protected virtual void frmMain_Load(object sender, EventArgs e)
         {
-            this.txtYuruyakaValue.LimitInputToNum(true, true);
+            this.lblModel.Text = string.Empty;
 
-            if (frmMain.OperationgMode == OperatingMode.OnMMD)
-            {
-                this.mmdSelectorControl1.Visible = true;
-            }
-            else
-            {
-                this.mmdSelectorControl1.Visible = false;
-                this.Height -= this.mmdSelectorControl1.Height;
-            }
+            string basepath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            _path = System.IO.Path.Combine(basepath, "AutoBlinkerPluginPatterns.xml");
+
+            _savedState = MyUtility.Serializer.Deserialize<SavedState>(_path);
+            if (_savedState == null)
+                _savedState = new SavedState();
+
+            if (_savedState.Favorites == null)
+                _savedState.Favorites = new List<FavEntity>();
+            if (string.IsNullOrWhiteSpace(_savedState.Version))
+                _savedState.Version = string.Empty;
+
+            this.chkTopMost.Checked = _savedState.TopMost;
+            this.ApplyBasicInfo(_savedState);
+            this.ApplyFavourite();
+
+            System.Diagnostics.FileVersionInfo vi =
+                System.Diagnostics.FileVersionInfo.GetVersionInfo(
+                     System.IO.Path.Combine(basepath, "AutoBlinkerPlugin.dll"));
+            _savedState.Version = vi.FileVersion;
+
+            chkMayu_CheckedChanged(this, new EventArgs());
+            chkEyeSync_CheckedChanged(this, new EventArgs());
+            chuYuruyaka_CheckedChanged(this, new EventArgs());
+
+            this.txtYuruyakaValue.LimitInputToNum(true, true);
+            this._isInitialized = true;
         }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            this.RetEntiy = null;
             //Entityを生成
             var entity = this.CreateEntityInstance();
 
@@ -456,8 +448,7 @@ namespace AutoBlinkerPlugin
                 if (string.IsNullOrWhiteSpace(entity.ModelInfo.EyeSyncBoneName))
                     entity.DoEyeSync = false;
 
-            this.RetEntiy = entity;
-            this.Executed?.Invoke(this, new EventArgs());
+            this.Executed?.Invoke(this, new ExecutedEventArgs(entity));
         }
 
         private void cboBikkuri_SelectedIndexChanged(object sender, EventArgs e)
@@ -697,19 +688,26 @@ namespace AutoBlinkerPlugin
                 if (this.btnMinimize.Text == "最小化")
                 {
                     this.btnMinimize.Text = "フル";
-                    this.pnlBottom.Visible = false;
+                    this.btnMinimize.Parent = this.pnlBottom;
+                    this.pnlCopyPaste.Visible = false;
                     this.lblModel.Visible = false;
+
                     _prevSize = this.Size;
                     this.Size = new Size(199, 81);
                     this.btnMinimize.Left = 7;
+                    if (frmMainBase.OperationgMode == OperatingMode.OnMMD)
+                        this.mmdSelectorControl1.Visible = false;
                 }
                 else
                 {
                     this.btnMinimize.Text = "最小化";
-                    this.pnlBottom.Visible = true;
+                    this.btnMinimize.Parent = this.gbPreset;
+                    this.pnlCopyPaste.Visible = true;
                     this.lblModel.Visible = true;
                     this.Size = _prevSize;
                     this.btnMinimize.Left = 198;
+                    if (frmMainBase.OperationgMode == OperatingMode.OnMMD)
+                        this.mmdSelectorControl1.Visible = true;
                 }
             }
             finally
@@ -759,7 +757,7 @@ namespace AutoBlinkerPlugin
         {
             using (var frm = new frmException(_savedState.Exceptions))
             {
-                frm.ShowDialog();
+                frm.ShowDialog(this);
                 if (frm.DialogResult == DialogResult.OK)
                 {
                     if (!string.IsNullOrWhiteSpace(frm.Result))
@@ -769,6 +767,23 @@ namespace AutoBlinkerPlugin
                     }
                 }
             }
+        }
+
+        private void chkTopMost_CheckedChanged(object sender, EventArgs e)
+        {
+            this.TopMost = this.chkTopMost.Checked;
+            if (this._isInitialized)
+                this.SaveCurrentState();
+        }
+    }
+
+    public class ExecutedEventArgs : EventArgs
+    {
+        public Args Args { get; }
+
+        public ExecutedEventArgs(Args args)
+        {
+            this.Args = args;
         }
     }
 }

@@ -20,7 +20,7 @@ namespace MyUtility
         /// </summary>
         public EventHandler<ActiveModelChangedEventArgs> ActiveModelChangedEventHandler { get; set; }
 
-        private MMDSelectorControl _mmdSelector = null;
+        protected MMDSelectorControl _mmdSelector = null;
 
         protected T _currentModel;
         protected Form _frm = null;
@@ -153,7 +153,7 @@ namespace MyUtility
                                     //おそらく後から追加されてまだ保存されていないモデルだ
                                     var msg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
 
-                                    this._showWaitAction.Invoke(msg);
+                                    this._showWaitAction?.Invoke(msg);
                                     _currentModel = this.CreateInstance();
                                     activeModelName = "";
                                     isModelChanged = false;

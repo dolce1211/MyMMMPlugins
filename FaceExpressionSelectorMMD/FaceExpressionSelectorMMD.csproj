@@ -96,6 +96,7 @@
     <Compile Include="..\Utility\MMD専用\ModelFinderBase.cs">
       <Link>_LinkFiles\ModelFinderBase.cs</Link>
     </Compile>
+    <Compile Include="ActiveMorphModelFinder.cs" />
     <Compile Include="frmMainMMD.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -812,6 +812,8 @@ namespace MyUtility
             return new Quaternion(x, y, z, w);
         }
 
+
+
         /// <summary>
         /// クォータニオンからオイラーに変換します。
         /// </summary>
@@ -823,6 +825,27 @@ namespace MyUtility
             Double rx = (Math.Asin((2.0 * (q.W * q.X - q.Z * q.Y))) / Math.PI * 180.0);
             Double rz = (Math.Atan2((2.0 * (q.W * q.Z + q.X * q.Y)), (1.0 - 2.0 * (q.X * q.X + q.Z * q.Z))) / Math.PI * 180.0);
             return new Vector3D(rx, ry, rz);
+        }
+
+        /// <summary>
+        /// クォータニオンからダブルの配列に変換します。
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
+        public static double[] ToDoubleArray(this Quaternion q)
+        {
+
+            return new double[] { q.X, q.Y, q.Z, q.W };
+        }
+        /// <summary>
+        /// クォータニオンからダブルの配列に変換します。
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
+        public static float[] ToFloatArray(this Quaternion q)
+        {
+
+            return new float[] {(float) q.X, (float)q.Y, (float)q.Z, (float)q.W };
         }
     }
 

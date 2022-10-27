@@ -682,7 +682,7 @@ namespace MMDUtil
                 var flg = true;
                 for (int i = 0; i < 5; i++)
                 {
-                    System.Threading.Thread.Sleep(50);
+                    System.Threading.Thread.Sleep(10);
                     IntPtr mmplushWnd = FindWindow("#32770", caption);
                     if (mmplushWnd != IntPtr.Zero)
                     {
@@ -700,7 +700,7 @@ namespace MMDUtil
                                 if (window.Title == "はい(&Y)" || window.Title == "OK")
                                 {
                                     //むりやり「はい」を押す
-                                    PostMessage(window.hWnd, BM_CLICK, 0, 0);
+                                    SendMessage(window.hWnd, BM_CLICK, 0, 0);
                                     flg = true;
                                     break;
                                 }
@@ -708,6 +708,8 @@ namespace MMDUtil
                         }
                         if (flg)
                             break;
+
+                        System.Threading.Thread.Sleep(50);
                     }
                 }
                 if (!flg)
@@ -1105,11 +1107,9 @@ namespace MMDUtil
         /// 指定した名称のモーフを指定した値にセットします。
         /// </summary>
         /// <param name="parentHandle"></param>
-        /// <param name="morphtype">モーフ種類</param>
-        /// <param name="morphIndex">いくつめのモーフ？</param>
-        /// <param name="value">値</param>
+        /// <param name="targetTypes">モーフ種類を限定するならここで</param>
         /// <returns></returns>
-        public static Dictionary<(MorphType, int), float> TryGetAllMorphValue(IntPtr parentHandle)
+        public static Dictionary<(MorphType, int), float> TryGetAllMorphValue(IntPtr parentHandle, IEnumerable<MorphType> targetTypes = null)
         {
             var ret = new Dictionary<(MorphType, int), float>();
             var morphWindows = new Dictionary<MorphType, MorphWindows>();
@@ -1123,32 +1123,35 @@ namespace MMDUtil
             }
             foreach (var kvp in morphWindows)
             {
-                var morphType = kvp.Key;
-                var morphwindow = kvp.Value;
-                //BeginAndEndUpdate(morphwindow.Parent.hWnd, false);
-                BeginAndEndUpdate(morphwindow.TrackBar.hWnd, false);
-                BeginAndEndUpdate(morphwindow.Edit.hWnd, false);
-
-                var count = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCOUNT, null, null);
-                for (int i = 0; i < count; i++)
+                if (targetTypes == null || targetTypes.Contains(kvp.Key))
                 {
-                    //コンボのインデックスをそれに合わせる
-                    var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, i, "");
-                    //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
-                    int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+                    var morphType = kvp.Key;
+                    var morphwindow = kvp.Value;
+                    //BeginAndEndUpdate(morphwindow.Parent.hWnd, false);
+                    BeginAndEndUpdate(morphwindow.TrackBar.hWnd, false);
+                    BeginAndEndUpdate(morphwindow.Edit.hWnd, false);
 
-                    if (i == 0)
-                        //なんか先頭のコンボの値の取得に失敗することが多い
-                        System.Threading.Thread.Sleep(10);
-                    SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+                    var count = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCOUNT, null, null);
+                    for (int i = 0; i < count; i++)
+                    {
+                        //コンボのインデックスをそれに合わせる
+                        var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, i, "");
+                        //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+                        int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
 
-                    var value = Convert.ToSingle(morphwindow.Edit.Text);
-                    ret.Add((morphType, i), value);
+                        if (i == 0)
+                            //なんか先頭のコンボの値の取得に失敗することが多い
+                            System.Threading.Thread.Sleep(10);
+                        SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+
+                        var value = Convert.ToSingle(morphwindow.Edit.Text);
+                        ret.Add((morphType, i), value);
+                    }
+
+                    //BeginAndEndUpdate(morphwindow.Parent.hWnd, true);
+                    BeginAndEndUpdate(morphwindow.TrackBar.hWnd, true);
+                    BeginAndEndUpdate(morphwindow.Edit.hWnd, true);
                 }
-
-                //BeginAndEndUpdate(morphwindow.Parent.hWnd, true);
-                BeginAndEndUpdate(morphwindow.TrackBar.hWnd, true);
-                BeginAndEndUpdate(morphwindow.Edit.hWnd, true);
             }
 
             return ret;

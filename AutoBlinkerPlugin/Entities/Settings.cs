@@ -6,13 +6,35 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using MyUtility;
+using System.Diagnostics;
 
 namespace AutoBlinkerPlugin
 {
     /// <summary>
+    /// 適用情報
+    /// </summary>
+    public class Args : RawEntity
+    {
+        public ModelSetting ModelInfo { get; set; } = new ModelSetting();
+
+        public SavedState CloneToSavedState()
+        {
+            var ret = new SavedState();
+            var clone = this.MemberwiseClone();
+            foreach (var pi in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var value = pi.GetValue(clone);
+                if (pi.Name != "ModelInfo")
+                    pi.SetValue(ret, value);
+            }
+            return ret;
+        }
+    }
+
+    /// <summary>
     /// モデル毎に管理する情報
     /// </summary>
-    public class ModelInfoEntity
+    public class ModelSetting
     {
         /// <summary>
         /// モデル名
@@ -69,26 +91,8 @@ namespace AutoBlinkerPlugin
         /// </summary>
         public float EyeSyncValueDown { get; set; }
 
-        public ModelInfoEntity()
+        public ModelSetting()
         {
-        }
-    }
-
-    public class Entity : RawEntity
-    {
-        public ModelInfoEntity ModelInfo { get; set; } = new ModelInfoEntity();
-
-        public SavedState CloneToSavedState()
-        {
-            var ret = new SavedState();
-            var clone = this.MemberwiseClone();
-            foreach (var pi in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                var value = pi.GetValue(clone);
-                if (pi.Name != "ModelInfo")
-                    pi.SetValue(ret, value);
-            }
-            return ret;
         }
     }
 
@@ -219,7 +223,7 @@ namespace AutoBlinkerPlugin
     }
 
     /// <summary>
-    /// 保存状態
+    /// 保存情報
     /// </summary>
     public class SavedState : RawEntity
     {
@@ -228,18 +232,116 @@ namespace AutoBlinkerPlugin
         /// </summary>
         public string Version { get; set; }
 
-        public List<ModelInfoEntity> ModelInfos { get; set; } = new List<ModelInfoEntity>();
+        public List<ModelSetting> ModelInfos { get; set; } = new List<ModelSetting>();
 
         /// <summary>
         /// お気に入り開いてる？
         /// </summary>
         public bool IsFavOpen { get; set; }
 
+        /// <summary>
+        /// 常に手前？？
+        /// </summary>
+        public bool TopMost { get; set; }
+
         public List<FavEntity> Favorites { get; set; } = null;
 
         public SavedState()
         {
             base.SetBaseValue();
+        }
+    }
+
+    /// <summary>
+    /// 選択中モデルの状態を表すエンティティ
+    /// </summary>
+    [DebuggerDisplay("{ModelName}")]
+    public class ModelItem : IMMDModel
+    {
+        public string ModelName { get; set; }
+
+        /// <summary>
+        /// 目モーフ
+        /// </summary>
+        public List<MorphItem> EyeMorphItems { get; set; } = new List<MorphItem>();
+
+        /// <summary>
+        /// まゆモーフ
+        /// </summary>
+        public List<MorphItem> BrowMorphItems { get; set; } = new List<MorphItem>();
+
+        /// <summary>
+        /// ボーン
+        /// </summary>
+        public List<string> Bones { get; set; } = new List<string>();
+    }
+
+    /// <summary>
+    /// 選択中モデルのモーフ状態を表すエンティティ
+    /// </summary>
+    [DebuggerDisplay("{MorphName}")]
+    public class MorphItem
+    {
+        /// <summary>
+        /// モーフ名
+        /// </summary>
+        public string MorphName { get; set; }
+
+        /// <summary>
+        /// モーフ量
+        /// </summary>
+        public float Weight { get; set; }
+
+        /// <summary>
+        /// コンボボックス内のindex(MMDで使用)
+        /// </summary>
+        public int ComboBoxIndex { get; set; } = -1;
+
+        /// <summary>
+        /// どのパネルのモーフ？
+        /// </summary>
+        public MMDUtil.MMDUtilility.MorphType MorphType { get; set; }
+
+        /// <summary>
+        /// モーフタイプ＋名称
+        /// </summary>
+        public string MortphNameWithType
+        {
+            get
+            {
+                switch (this.MorphType)
+                {
+                    case MMDUtil.MMDUtilility.MorphType.Eye:
+                        return $"目__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Lip:
+                        return $"口__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Brow:
+                        return $"眉__{this.MorphName}";
+
+                    case MMDUtil.MMDUtilility.MorphType.Other:
+                        return $"他__{this.MorphName}";
+
+                    default:
+                        return $"？__{this.MorphName}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// クローンを返します。
+        /// </summary>
+        /// <returns></returns>
+        public MorphItem Clone()
+        {
+            //return this.MemberwiseClone() as MorphItem;
+            return new MorphItem()
+            {
+                MorphName = this.MorphName,
+                MorphType = this.MorphType,
+                Weight = this.Weight,
+            };
         }
     }
 }

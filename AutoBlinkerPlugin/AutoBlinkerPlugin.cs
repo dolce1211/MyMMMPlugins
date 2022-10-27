@@ -1,4 +1,5 @@
-﻿using MikuMikuPlugin;
+﻿using AutoBlinkerPlugin.UI;
+using MikuMikuPlugin;
 using MyUtility;
 using System;
 using System.Collections.Generic;
@@ -82,7 +83,7 @@ namespace AutoBlinkerPlugin
         /// </summary>
         public Scene Scene { get; set; }
 
-        private frmMain _frm = null;
+        private frmMainMMM _frm = null;
 
         public void Disabled()
         {
@@ -111,7 +112,7 @@ namespace AutoBlinkerPlugin
             _selectedModel = null;
             _frm?.Dispose();
             _frm = null;
-            _frm = new frmMain();
+            _frm = new frmMainMMM(this.Scene);
             _frm.Executed += EventInvoked;
             _frm.Show(ApplicationForm);
         }
@@ -135,20 +136,20 @@ namespace AutoBlinkerPlugin
             }
         }
 
-        private void EventInvoked(object sender, EventArgs e)
+        private void EventInvoked(object sender, ExecutedEventArgs e)
         {
-            Entity entity = _frm.RetEntiy;
-            if (entity == null)
+            Args setting = e.Args;
+            if (setting == null)
                 return;
-            if (string.IsNullOrWhiteSpace(entity.ModelInfo.BlinkingMorphName))
+            if (string.IsNullOrWhiteSpace(setting.ModelInfo.BlinkingMorphName))
                 return;
             if (this.Scene.ActiveModel == null)
                 return;
 
             var blinkMorph = this.Scene.ActiveModel.Morphs
-                                    .Where(n => n.PanelType == PanelType.Eyes && n.Name == entity.ModelInfo.BlinkingMorphName).FirstOrDefault();
+                                    .Where(n => n.PanelType == PanelType.Eyes && n.Name == setting.ModelInfo.BlinkingMorphName).FirstOrDefault();
             var bikkuriMorph = this.Scene.ActiveModel.Morphs
-                                    .Where(n => n.PanelType == PanelType.Eyes && n.Name == entity.ModelInfo.BikkuriMorphName).FirstOrDefault();
+                                    .Where(n => n.PanelType == PanelType.Eyes && n.Name == setting.ModelInfo.BikkuriMorphName).FirstOrDefault();
 
             if (blinkMorph != null)
             {
@@ -159,44 +160,44 @@ namespace AutoBlinkerPlugin
                                                 n.PanelType == PanelType.Eyes && n.CurrentWeight > 0)
                                     )
                 {
-                    if (entity.Exceptions.IndexOf(morph.Name) < 0)
-                        this.AddInvertMorphKey(entity, morph);
+                    if (setting.Exceptions.IndexOf(morph.Name) < 0)
+                        this.AddInvertMorphKey(setting, morph);
                 }
 
                 //まばたきモーフを生成する
-                this.AddBlinkMorphKey(entity, blinkMorph, 1f);
+                this.AddBlinkMorphKey(setting, blinkMorph, 1f);
 
                 //反動を付ける
-                if (bikkuriMorph != null && entity.ModelInfo.BikkuriMorphValue > 0)
+                if (bikkuriMorph != null && setting.ModelInfo.BikkuriMorphValue > 0)
                 {
-                    this.AddHandouMorphKey(entity, bikkuriMorph, entity.ModelInfo.BikkuriMorphValue);
+                    this.AddHandouMorphKey(setting, bikkuriMorph, setting.ModelInfo.BikkuriMorphValue);
                 }
 
-                if (entity.DoEyebrowSync)
+                if (setting.DoEyebrowSync)
                 {
                     //まゆ連動
                     var mayuDownMorph = this.Scene.ActiveModel.Morphs
-                            .Where(n => n.PanelType == PanelType.Brow && n.Name == entity.ModelInfo.EyebrowDownMorphName).FirstOrDefault();
+                            .Where(n => n.PanelType == PanelType.Brow && n.Name == setting.ModelInfo.EyebrowDownMorphName).FirstOrDefault();
                     var mayuUpMorph = this.Scene.ActiveModel.Morphs
-                            .Where(n => n.PanelType == PanelType.Brow && n.Name == entity.ModelInfo.EyebrowUpMorphName).FirstOrDefault();
+                            .Where(n => n.PanelType == PanelType.Brow && n.Name == setting.ModelInfo.EyebrowUpMorphName).FirstOrDefault();
 
                     //まゆ下連動
-                    this.AddBlinkMorphKey(entity, mayuDownMorph, entity.ModelInfo.EyebrowDownSyncValue);
+                    this.AddBlinkMorphKey(setting, mayuDownMorph, setting.ModelInfo.EyebrowDownSyncValue);
 
                     //まゆ上連動
-                    this.AddHandouMorphKey(entity, mayuUpMorph, entity.ModelInfo.EyebrowUpSyncValue);
+                    this.AddHandouMorphKey(setting, mayuUpMorph, setting.ModelInfo.EyebrowUpSyncValue);
                 }
 
                 //目連動を行う
-                if (entity.DoEyeSync)
+                if (setting.DoEyeSync)
                 {
-                    this.AddEyeBone(entity);
+                    this.AddEyeBone(setting);
                 }
 
                 //ゆっくり戻す
-                if (entity.DoYuruyaka)
+                if (setting.DoYuruyaka)
                 {
-                    this.AddYuruyakaMorphKey(entity, blinkMorph);
+                    this.AddYuruyakaMorphKey(setting, blinkMorph);
                 }
 
                 ((Form)this.ApplicationForm).Refresh();
@@ -233,14 +234,14 @@ namespace AutoBlinkerPlugin
 
         private class HokanTemplate
         {
-            public static void ApplyHokanToLastOrDefault(Entity entity, Morph morph, HokanType hokantype)
+            public static void ApplyHokanToLastOrDefault(Args entity, Morph morph, HokanType hokantype)
             {
                 if (morph == null)
                     return;
                 ApplyHokan(entity, morph.Frames.LastOrDefault(), hokantype);
             }
 
-            public static void ApplyHokan(Entity entity, IMorphFrameData mf, HokanType hokantype)
+            public static void ApplyHokan(Args entity, IMorphFrameData mf, HokanType hokantype)
             {
                 if (!entity.DoHokan)
                     return;
@@ -255,7 +256,7 @@ namespace AutoBlinkerPlugin
                 mf.InterpolB = ip[1];
             }
 
-            public static void ApplyHokan(Entity entity, IMotionFrameData mtf, HokanType hokantype)
+            public static void ApplyHokan(Args entity, IMotionFrameData mtf, HokanType hokantype)
             {
                 if (!entity.DoHokan)
                     return;
@@ -330,7 +331,7 @@ namespace AutoBlinkerPlugin
         /// <param name="pos"></param>
         /// <param name="weight"></param>
         /// <param name="hokan"></param>
-        private void AddMorphKeyFrame(Entity entity, Morph morph, long pos, float weight, HokanType hokan = HokanType.Default)
+        private void AddMorphKeyFrame(Args entity, Morph morph, long pos, float weight, HokanType hokan = HokanType.Default)
         {
             morph.Frames.RemoveKeyFrame(pos);
 
@@ -347,7 +348,7 @@ namespace AutoBlinkerPlugin
         /// <param name="entity"></param>
         /// <param name="morph"></param>
         /// <param name="argvalue"></param>
-        private void AddBlinkMorphKey(Entity entity, Morph morph, float argvalue)
+        private void AddBlinkMorphKey(Args entity, Morph morph, float argvalue)
         {
             if (morph == null)
                 return;
@@ -380,7 +381,7 @@ namespace AutoBlinkerPlugin
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="morph"></param>
-        private void AddInvertMorphKey(Entity entity, Morph morph)
+        private void AddInvertMorphKey(Args entity, Morph morph)
         {
             if (morph == null)
                 return;
@@ -412,7 +413,7 @@ namespace AutoBlinkerPlugin
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="morph"></param>
-        private void AddYuruyakaMorphKey(Entity entity, Morph morph)
+        private void AddYuruyakaMorphKey(Args entity, Morph morph)
         {
             if (morph == null)
                 return;
@@ -472,7 +473,7 @@ namespace AutoBlinkerPlugin
         /// <param name="entity"></param>
         /// <param name="morph"></param>
         /// <param name="argvalue"></param>
-        private void AddHandouMorphKey(Entity entity, Morph morph, float argvalue)
+        private void AddHandouMorphKey(Args entity, Morph morph, float argvalue)
         {
             if (morph == null)
                 return;
@@ -525,7 +526,7 @@ namespace AutoBlinkerPlugin
         /// <param name="entity"></param>
         /// <param name="morph"></param>
         /// <param name="argvalue"></param>
-        private void AddEyeBone(Entity entity)
+        private void AddEyeBone(Args entity)
         {
             if (entity.ModelInfo.EyeSyncBoneName.TrimSafe() == "")
                 return;

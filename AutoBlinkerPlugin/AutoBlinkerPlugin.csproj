@@ -105,7 +105,7 @@
     <Compile Include="..\Utility\Vmd\VmdVersion.cs">
       <Link>01_LinkFiles\Vmd\VmdVersion.cs</Link>
     </Compile>
-    <Compile Include="BizLogics\Entity.cs" />
+    <Compile Include="Entities\Settings.cs" />
     <Compile Include="BizLogics\PresetCreator.cs" />
     <Compile Include="UI\frmException.cs">
       <SubType>Form</SubType>
@@ -125,11 +125,11 @@
     <Compile Include="UI\frmFavName.Designer.cs">
       <DependentUpon>frmFavName.cs</DependentUpon>
     </Compile>
-    <Compile Include="UI\frmMain.cs">
+    <Compile Include="UI\frmMainBase.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="UI\frmMain.Designer.cs">
-      <DependentUpon>frmMain.cs</DependentUpon>
+    <Compile Include="UI\frmMainBase.Designer.cs">
+      <DependentUpon>frmMainBase.cs</DependentUpon>
     </Compile>
     <Compile Include="AutoBlinkerPlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -137,6 +137,9 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="UI\frmMainMMM.cs">
+      <SubType>Form</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -155,12 +158,15 @@
     <EmbeddedResource Include="UI\frmFavName.resx">
       <DependentUpon>frmFavName.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="UI\frmMain.resx">
-      <DependentUpon>frmMain.cs</DependentUpon>
+    <EmbeddedResource Include="UI\frmMainBase.resx">
+      <DependentUpon>frmMainBase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\frmMainMMM.resx">
+      <DependentUpon>frmMainMMM.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
