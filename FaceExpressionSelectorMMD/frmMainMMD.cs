@@ -54,6 +54,8 @@ namespace FaceExpressionSelectorMMD
             this.処理中にモデルを非表示にするToolStripMenuItem.Checked = base._args.HideModelsWhileProcessing;
             //MMDで動いている
             OperationgMode = OperatingMode.OnMMD;
+
+            this.Icon = Properties.Resources.ico;
         }
 
         private bool _isBusy = false;
@@ -414,8 +416,8 @@ namespace FaceExpressionSelectorMMD
                         return false;
                 }
 
-                //ダイアログを潰す
-                MMDUtilility.PressOKToDialog(mmd.MainWindowHandle, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
+                ////ダイアログを潰す
+                //MMDUtilility.PressOKToDialog(mmd.MainWindowHandle, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
 
                 //MMDにフォーカスを当てる
                 MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);

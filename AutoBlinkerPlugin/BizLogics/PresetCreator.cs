@@ -26,6 +26,10 @@ namespace AutoBlinkerPlugin
                 DoEyebrowSync = true,
                 DoHandouStart = true,
                 DoHandouEnd = true,
+                EnterFrames=3,
+                BlinkingFrames=4,
+                HandouFramesStart=3,
+                HandouFramesEnd=3,
             });
 
             ret.Add(new FavEntity()

@@ -19,7 +19,7 @@ namespace MMDUtil
         public frmMMDSelect(Process selectedMmd, IList<Process> mmds)
         {
             InitializeComponent();
-
+            this.ShowInTaskbar = false;
             mmdComboBox.Items.Clear();
             mmdComboBox.Items.AddRange(mmds.ToArray());
             mmdComboBox.SelectedIndex = 0;
@@ -55,12 +55,11 @@ namespace MMDUtil
             {
                 windowName = mmd.MainWindowTitle;
             }
-            
-            if (windowName != null && windowName.Contains(" ["))
-                windowName= windowName.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
-            else
-                windowName= "(無題のプロジェクト)";
 
+            if (windowName != null && windowName.Contains(" ["))
+                windowName = windowName.Split(new[] { " [" }, 2, StringSplitOptions.None).Last().TrimEnd(']');
+            else
+                windowName = "(無題のプロジェクト)";
 
             e.Value = "[PID: " + mmd.Id + "] " + windowName;
         }

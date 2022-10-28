@@ -236,6 +236,7 @@ namespace AutoBlinkerPlugin
 
                 if (!this.ApplyBoneToComboBox(this.cboEyeBone, modelInfo.EyeSyncBoneName))
                 {
+                    //MMDではボーン回転を加算で指定することができないため、両目ボーンそのものは指定しないほうがいい。
                     this.ApplyBoneToComboBox(this.cboEyeBone, "両目");
                 }
             }
@@ -390,45 +391,56 @@ namespace AutoBlinkerPlugin
             }
             finally
             {
-                this.EndUpdate();
+                if (this._isInitialized)
+                    this.EndUpdate();
             }
         }
 
         protected virtual void frmMain_Load(object sender, EventArgs e)
         {
-            this.lblModel.Text = string.Empty;
+            this.BeginAndEndUpdate(false);
+            try
+            {
+                this.lblModel.Text = string.Empty;
 
-            string basepath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            _path = System.IO.Path.Combine(basepath, "AutoBlinkerPluginPatterns.xml");
+                string basepath = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                _path = System.IO.Path.Combine(basepath, "AutoBlinkerPluginPatterns.xml");
 
-            _savedState = MyUtility.Serializer.Deserialize<SavedState>(_path);
-            if (_savedState == null)
-                _savedState = new SavedState();
+                _savedState = MyUtility.Serializer.Deserialize<SavedState>(_path);
+                if (_savedState == null)
+                    _savedState = new SavedState();
 
-            if (_savedState.Favorites == null)
-                _savedState.Favorites = new List<FavEntity>();
-            if (string.IsNullOrWhiteSpace(_savedState.Version))
-                _savedState.Version = string.Empty;
+                if (_savedState.Favorites == null)
+                    _savedState.Favorites = new List<FavEntity>();
+                if (string.IsNullOrWhiteSpace(_savedState.Version))
+                    _savedState.Version = string.Empty;
 
-            this.chkTopMost.Checked = _savedState.TopMost;
-            this.ApplyBasicInfo(_savedState);
-            this.ApplyFavourite();
+                this.chkTopMost.Checked = _savedState.TopMost;
+                this.ApplyBasicInfo(_savedState);
+                this.ApplyFavourite();
 
-            System.Diagnostics.FileVersionInfo vi =
-                System.Diagnostics.FileVersionInfo.GetVersionInfo(
-                     System.IO.Path.Combine(basepath, "AutoBlinkerPlugin.dll"));
-            _savedState.Version = vi.FileVersion;
+                System.Diagnostics.FileVersionInfo vi =
+                    System.Diagnostics.FileVersionInfo.GetVersionInfo(
+                         System.IO.Path.Combine(basepath, "AutoBlinkerPlugin.dll"));
+                _savedState.Version = vi.FileVersion;
 
-            chkMayu_CheckedChanged(this, new EventArgs());
-            chkEyeSync_CheckedChanged(this, new EventArgs());
-            chuYuruyaka_CheckedChanged(this, new EventArgs());
+                chkMayu_CheckedChanged(this, new EventArgs());
+                chkEyeSync_CheckedChanged(this, new EventArgs());
+                chuYuruyaka_CheckedChanged(this, new EventArgs());
 
-            this.txtYuruyakaValue.LimitInputToNum(true, true);
-            this._isInitialized = true;
+                this.txtYuruyakaValue.LimitInputToNum(true, true);
+                this._isInitialized = true;
+            }
+            finally
+            {
+                this.BeginAndEndUpdate(true);
+            }
         }
 
         private void btnOK_Click(object sender, EventArgs e)
         {
+            if (!this.btnOK.Enabled)
+                return;
             //Entityを生成
             var entity = this.CreateEntityInstance();
 
@@ -448,7 +460,9 @@ namespace AutoBlinkerPlugin
                 if (string.IsNullOrWhiteSpace(entity.ModelInfo.EyeSyncBoneName))
                     entity.DoEyeSync = false;
 
+            this.btnOK.Enabled = false;
             this.Executed?.Invoke(this, new ExecutedEventArgs(entity));
+            this.btnOK.Enabled = true;
         }
 
         private void cboBikkuri_SelectedIndexChanged(object sender, EventArgs e)
@@ -522,7 +536,7 @@ namespace AutoBlinkerPlugin
 
         private void chuYuruyaka_CheckedChanged(object sender, EventArgs e)
         {
-            this.gbYuruyaka.Enabled = this.chkYuruyaka.Checked;
+            this.OpenAndClose(this.gbYuruyaka, this.chkYuruyaka.Checked, 48);
         }
 
         private void btnCopy_Click(object sender, EventArgs e)
@@ -570,7 +584,7 @@ namespace AutoBlinkerPlugin
             this.ApplyFavColumn();
         }
 
-        private void ApplyFavColumn()
+        private void ApplyFavColumn(bool stayupdated = false)
         {
             this.BeginUpdate();
             try
@@ -584,11 +598,12 @@ namespace AutoBlinkerPlugin
                 }
 
                 this.tlp.ColumnStyles[1] = new ColumnStyle(SizeType.Absolute, width);
-                this.Width = 437 - (120 - width);
+                this.Width = 450 - (120 - width);
             }
             finally
             {
-                this.EndUpdate();
+                if (this._isInitialized)
+                    this.EndUpdate();
             }
         }
 
@@ -633,7 +648,7 @@ namespace AutoBlinkerPlugin
                         var fav = new FavEntity();
                         fav.FavName = ret;
                         currentState.CloneTo(fav);
-
+                        fav.Exceptions = "";//このエンティティに対象外モーフ情報はナシ
                         this._savedState.Favorites.Add(fav);
                         this.ApplyFavourite();
                     }
@@ -669,7 +684,7 @@ namespace AutoBlinkerPlugin
             }
 
             currentState.CloneTo(entity);
-
+            entity.Exceptions = "";//このエンティティに対象外モーフ情報はナシ
             MyUtility.Serializer.Serialize<SavedState>(_savedState, _path);
         }
 
@@ -689,9 +704,11 @@ namespace AutoBlinkerPlugin
                 {
                     this.btnMinimize.Text = "フル";
                     this.btnMinimize.Parent = this.pnlBottom;
+                    this.btnMinimize.Top = 32;
                     this.pnlCopyPaste.Visible = false;
                     this.lblModel.Visible = false;
-
+                    this.TopMost = true;
+                    this.chkTopMost.Visible = false;
                     _prevSize = this.Size;
                     this.Size = new Size(199, 81);
                     this.btnMinimize.Left = 7;
@@ -702,10 +719,14 @@ namespace AutoBlinkerPlugin
                 {
                     this.btnMinimize.Text = "最小化";
                     this.btnMinimize.Parent = this.gbPreset;
+                    this.btnMinimize.Top = 13;
                     this.pnlCopyPaste.Visible = true;
                     this.lblModel.Visible = true;
                     this.Size = _prevSize;
                     this.btnMinimize.Left = 198;
+
+                    this.TopMost = this.chkTopMost.Checked;
+                    this.chkTopMost.Visible = true;
                     if (frmMainBase.OperationgMode == OperatingMode.OnMMD)
                         this.mmdSelectorControl1.Visible = true;
                 }
@@ -774,6 +795,15 @@ namespace AutoBlinkerPlugin
             this.TopMost = this.chkTopMost.Checked;
             if (this._isInitialized)
                 this.SaveCurrentState();
+        }
+
+        protected virtual void cboEyeBone_SelectedIndexChanged(object sender, EventArgs e)
+        {
+        }
+
+        private void lstFav_DoubleClick(object sender, EventArgs e)
+        {
+            this.btnOK.PerformClick();
         }
     }
 

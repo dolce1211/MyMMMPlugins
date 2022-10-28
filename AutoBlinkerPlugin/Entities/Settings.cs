@@ -168,6 +168,11 @@ namespace AutoBlinkerPlugin
         /// </summary>
         public bool CreateEyeMotionLayer { get; set; }
 
+        /// <summary>
+        /// 例外
+        /// </summary>
+        public string Exceptions { get; set; } = String.Empty;
+
         protected void SetBaseValue()
         {
             EnterFrames = 2;
@@ -184,11 +189,6 @@ namespace AutoBlinkerPlugin
             DoEyeSync = false;
             DoHokan = false;
         }
-
-        /// <summary>
-        /// 例外
-        /// </summary>
-        public string Exceptions { get; set; }
 
         public void CloneTo<T>(T entity)
             where T : RawEntity

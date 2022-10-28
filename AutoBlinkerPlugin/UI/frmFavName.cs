@@ -53,5 +53,11 @@ namespace AutoBlinkerPlugin
             }
             this.Close();
         }
+
+        private void txtName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Return)
+                this.btnOK.PerformClick();
+        }
     }
 }

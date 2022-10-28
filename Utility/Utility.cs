@@ -17,6 +17,7 @@ using System.IO.Pipes;
 using System.Security;
 using System.Threading.Tasks;
 using System.Threading;
+using MMDUtil;
 
 namespace MyUtility
 
@@ -812,8 +813,6 @@ namespace MyUtility
             return new Quaternion(x, y, z, w);
         }
 
-
-
         /// <summary>
         /// クォータニオンからオイラーに変換します。
         /// </summary>
@@ -834,9 +833,9 @@ namespace MyUtility
         /// <returns></returns>
         public static double[] ToDoubleArray(this Quaternion q)
         {
-
             return new double[] { q.X, q.Y, q.Z, q.W };
         }
+
         /// <summary>
         /// クォータニオンからダブルの配列に変換します。
         /// </summary>
@@ -844,8 +843,7 @@ namespace MyUtility
         /// <returns></returns>
         public static float[] ToFloatArray(this Quaternion q)
         {
-
-            return new float[] {(float) q.X, (float)q.Y, (float)q.Z, (float)q.W };
+            return new float[] { (float)q.X, (float)q.Y, (float)q.Z, (float)q.W };
         }
     }
 
@@ -909,7 +907,7 @@ namespace MyUtility
             // NOTE: the drop target will automatically release it, so doing this would cause a Win32 exception.
             // Marshal.FreeHGlobal(hGlobal);
 
-            var pipes = files.Where(_ => _.IsPipe).Select(_ => new
+            var pipes = files.Where(n => n.IsPipe).Select(_ => new
             {
                 Pipe = new NamedPipeServerStream(_.FileName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous),
                 File = _,
@@ -967,14 +965,15 @@ namespace MyUtility
                         });
 
                     handle.WaitOne();
+
+                    //ダイアログを潰す
+                    MMDUtilility.PressOKToDialog(hWnd, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
+
                     if (!string.IsNullOrEmpty(errMsg))
-                        if (Debugger.IsAttached || true) //0.1.4 もう常時スローじゃなくてmsgboxで行こう。
-                        {
-                            MessageBox.Show(errMsg);
-                            return false;
-                        }
-                        else
-                            throw new Exception(errMsg);
+                    {
+                        MessageBox.Show(errMsg);
+                        return false;
+                    }  
                 }
             }
             return true;

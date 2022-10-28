@@ -42,6 +42,7 @@ namespace AutoBlinkerPlugin
             this.txtName.Name = "txtName";
             this.txtName.Size = new System.Drawing.Size(141, 19);
             this.txtName.TabIndex = 0;
+            this.txtName.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtName_KeyDown);
             // 
             // lblHandouStart
             // 

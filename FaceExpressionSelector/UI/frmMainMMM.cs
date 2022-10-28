@@ -29,6 +29,8 @@ namespace FaceExpressionHelper.UI
             OperationgMode = OperatingMode.OnMMM;
 
             OnActiveModelChanged(this, new ActiveModelChangedEventArgs(this.ActiveModelName));
+
+            this.ShowInTaskbar = false;
         }
 
         /// <summary>
@@ -128,6 +130,7 @@ namespace FaceExpressionHelper.UI
 
             //操作対象モーフ一覧(対象外モーフを除く)
             var allMorphs = activeModel.Morphs.Where(n =>
+
             {
                 var morphitem = new MorphItem()
                 {
@@ -137,7 +140,6 @@ namespace FaceExpressionHelper.UI
                 };
                 return this._args.IsTargetMorph(morphitem);
             }).ToList();
-
             //処理対象のモーフ情報を取得
             var applyingMorphs = this.GetApplyingMorphs(item);
             //無いモーフチェック

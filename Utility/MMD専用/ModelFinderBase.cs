@@ -84,18 +84,13 @@ namespace MyUtility
                     return default;
                 try
                 {
-                    mmd = this._frm.Invoke((Func<Process>)(() =>
+                    try
                     {
-                        try
-                        {
-                            return this._mmdSelector.SelectMMD();
-                        }
-                        catch (Exception ex)
-                        {
-                            return null;
-                        }
+                        mmd = this._frm.Invoke((Func<Process>)(() => this._mmdSelector.SelectMMD())) as Process;
                     }
-                    )) as Process;
+                    catch (Exception)
+                    {
+                    }
 
                     if (mmd == null)
                     {

@@ -7,7 +7,7 @@
     <ProjectGuid>{39FBB6DF-2355-4E89-B4D1-54A01786BD93}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <RootNamespace>FaceExpressionSelectorMMD</RootNamespace>
-    <AssemblyName>FaceExpressionSelector64</AssemblyName>
+    <AssemblyName>FaceExpressionSelector</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

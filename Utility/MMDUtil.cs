@@ -1127,6 +1127,8 @@ namespace MMDUtil
                 {
                     var morphType = kvp.Key;
                     var morphwindow = kvp.Value;
+                    //今のSelectIndexを取得
+                    var prevIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_GETCURSEL, 0, "");
                     //BeginAndEndUpdate(morphwindow.Parent.hWnd, false);
                     BeginAndEndUpdate(morphwindow.TrackBar.hWnd, false);
                     BeginAndEndUpdate(morphwindow.Edit.hWnd, false);
@@ -1136,17 +1138,27 @@ namespace MMDUtil
                     {
                         //コンボのインデックスをそれに合わせる
                         var selectedIndex = SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, i, "");
-                        //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
-                        int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
 
-                        if (i == 0)
-                            //なんか先頭のコンボの値の取得に失敗することが多い
-                            System.Threading.Thread.Sleep(10);
-                        SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+                        if (true)
+                        {
+                            //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+                            int send_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+
+                            if (i == 0)
+                                //なんか先頭のコンボの値の取得に失敗することが多い
+                                System.Threading.Thread.Sleep(10);
+                            SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, send_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
+                        }
 
                         var value = Convert.ToSingle(morphwindow.Edit.Text);
                         ret.Add((morphType, i), value);
                     }
+
+                    //コンボのインデックスを戻す
+                    SendMessage(morphwindow.ComboBox.hWnd, CB_SETCURSEL, prevIndex, "");
+                    //↑だけでは必要なEventが発生しないので、こちらから強制的にCBN_SELCHANGEを発生させる
+                    int finalsend_cbn_selchange = MakeWParam(morphwindow.ComboBox.ID, CBN_SELCHANGE);
+                    SendMessage(morphwindow.Parent.hWnd, WM_COMMAND, finalsend_cbn_selchange, morphwindow.ComboBox.hWnd.ToInt32());
 
                     //BeginAndEndUpdate(morphwindow.Parent.hWnd, true);
                     BeginAndEndUpdate(morphwindow.TrackBar.hWnd, true);

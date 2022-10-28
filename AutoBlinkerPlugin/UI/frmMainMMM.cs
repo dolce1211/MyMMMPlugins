@@ -15,6 +15,8 @@ namespace AutoBlinkerPlugin.UI
         public frmMainMMM(Scene scene)
         {
             this._scene = scene;
+
+            this.ShowInTaskbar = false;
         }
 
         private void InitializeComponent()
