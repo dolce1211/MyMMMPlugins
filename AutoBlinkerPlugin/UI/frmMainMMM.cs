@@ -17,6 +17,10 @@ namespace AutoBlinkerPlugin.UI
             this._scene = scene;
 
             this.ShowInTaskbar = false;
+
+            base.mmdSelectorControl1.Visible = false;
+            this.Height -= base.mmdSelectorControl1.Height - 50;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
         }
 
         private void InitializeComponent()
@@ -44,8 +48,6 @@ namespace AutoBlinkerPlugin.UI
 
         private void frmMainMMM_Load(object sender, EventArgs e)
         {
-            base.mmdSelectorControl1.Visible = false;
-            this.Height -= base.mmdSelectorControl1.Height;
         }
 
         public void ModelChanged(Scene scene)

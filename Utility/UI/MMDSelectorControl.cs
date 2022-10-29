@@ -46,6 +46,7 @@ namespace MMDUtil
             var selector = new MMDUtil.MMDFinder(this.ParentForm, this.MMDProcess, this.lblMMD, this.lblMMPlus, new MMDSelector(this.ParentForm));
             this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate);
             this.IsBusy = false;
+
             return this.MMDProcess;
         }
     }
@@ -71,6 +72,10 @@ namespace MMDUtil
             {
                 if (f.ShowDialog(this._parentForm) != DialogResult.OK)
                     return null;
+
+                var ret = f.SelectedMmd;
+                if (ret != null && !ret.HasExited)
+                    MMDUtilility.SetForegroundWindow(ret.MainWindowHandle);
                 return f.SelectedMmd;
             }
         }

@@ -16,6 +16,10 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Threading;
 using static System.Windows.Forms.AxHost;
 using System.Windows.Media.Animation;
+using System.IO.Pipes;
+using System.IO;
+using System.Security;
+using Linearstar.Keystone.IO.MikuMikuDance;
 
 namespace MMDUtil
 {
@@ -540,38 +544,6 @@ namespace MMDUtil
             return -1;
         }
 
-        /// <summary>
-        /// エフェクトのオンオフ状態を取得します。
-        /// </summary>
-        /// <param name="parentHandle"></param>
-        /// <returns></returns>
-        public static bool TryGetEffectState(IntPtr parentHandle)
-        {
-            if (parentHandle == IntPtr.Zero)
-                return false;
-
-            //MMEメニューのハンドルをゲット
-            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "MMEffect");
-            if (subMenuhWnd != IntPtr.Zero)
-            {
-                //選択したメニュー項目のIDをゲットする。
-                for (int i = 0; i <= 10; i++)
-                {
-                    int intIDx = GetMenuItemID(subMenuhWnd, i);
-                    StringBuilder ssb = new StringBuilder(100);
-                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
-                    if (ssb.ToString().IndexOf("エフェクト使用(&E)\tCtrl+Shift+E") == 0)
-                    {
-                        var state = GetMenuState(subMenuhWnd, intIDx, 0);
-                        if ((int)state == MF_CHECKED)
-                            //チェックあり。現在エフェクト有効である
-                            return true;
-                    }
-                }
-            }
-
-            return false;
-        }
 
         /// <summary>
         /// 物理演算状態をセットします。
@@ -605,40 +577,7 @@ namespace MMDUtil
             return false;
         }
 
-        /// <summary>
-        /// エフェクトのオンオフ状態を取得します。
-        /// </summary>
-        /// <param name="parentHandle"></param>
-        /// <returns></returns>
-        public static bool TrySetEffectState(IntPtr parentHandle, bool state)
-        {
-            if (parentHandle == IntPtr.Zero)
-                return false;
-
-            var currentstate = TryGetEffectState(parentHandle);
-            if (currentstate == state)
-                return true;
-
-            //MMEメニューのハンドルをゲット
-            IntPtr subMenuhWnd = TryGetMenuHandleByCaption(parentHandle, "MMEffect");
-            if (subMenuhWnd != IntPtr.Zero)
-            {
-                //選択したメニュー項目のIDをゲットする。
-                for (int i = 0; i <= 10; i++)
-                {
-                    int intIDx = GetMenuItemID(subMenuhWnd, i);
-                    StringBuilder ssb = new StringBuilder(100);
-                    var retx = GetMenuString(subMenuhWnd, i, ssb, ssb.Capacity, MF_BYPOSITION);
-                    if (ssb.ToString().IndexOf("エフェクト使用(&E)\tCtrl+Shift+E") == 0)
-                    {
-                        //メニューをクリック
-                        var ret = SendMessage(parentHandle, WM_COMMAND, intIDx, "0");
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+        
 
         /// <summary>
         /// メニューのハンドルを取得します。
@@ -1732,4 +1671,244 @@ namespace MMDUtil
     }
 
     #endregion "プロセス検索"
+
+    #region "vmdファイルなどのD&D"
+
+    public static class MmdDrop
+    {
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [SuppressUnmanagedCodeSecurity, DllImport("user32")]
+        private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+        private const uint WM_DROPFILES = 0x233;
+
+        private struct DropFiles
+        {
+            public uint pFiles;
+            public int x;
+            public int y;
+
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fNC;
+
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fWide;
+        }
+
+        /// <summary>
+        /// 指定されたウィンドウにファイルをドロップします。
+        /// </summary>
+        /// <param name="hWnd">ドロップ先のウィンドウ ハンドル。</param>
+        /// <param name="file">ドロップするファイル。</param>
+        public static bool TryDropVmd(IntPtr hWnd, VmdDocument vmd)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                using (var vmdStream = new MemoryStream())
+                {
+                    vmd.Write(vmdStream);
+                    vmdStream.Seek(0, SeekOrigin.Begin);
+
+                    var mmddropfile = new MmdDropFile("TempMotion" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".vmd", vmdStream) { Timeout = 100 };
+                    try
+                    {
+                        var rtn = MmdDrop.DropFile(hWnd, new MmdDropFile[] { mmddropfile });
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+
+                //10ms待って再チャレンジ
+                System.Threading.Thread.Sleep(10);
+            }
+
+            return false;
+        }
+
+        private static bool DropFile(IntPtr hWnd, IList<MmdDropFile> files)
+        {
+            var names = Encoding.Unicode.GetBytes(string.Join("\0", files.Select(_ => _.FullName).ToArray()) + "\0\0");
+
+            var dropFilesSize = Marshal.SizeOf(typeof(DropFiles));
+            var hGlobal = Marshal.AllocHGlobal(dropFilesSize + names.Length);
+
+            var dropFiles = new DropFiles
+            {
+                pFiles = (uint)dropFilesSize,
+                x = 0,
+                y = 0,
+                fNC = false,
+                fWide = true,
+            };
+
+            Marshal.StructureToPtr(dropFiles, hGlobal, true);
+            Marshal.Copy(names, 0, new IntPtr(hGlobal.ToInt64() + dropFiles.pFiles), names.Length);
+            //IntPtr num = new IntPtr(dropFiles.pFiles);
+            //Marshal.Copy(names, 0, new IntPtr(hGlobal + dropFiles.pFiles), names.Length);
+
+            PostMessage(hWnd, WM_DROPFILES, hGlobal, IntPtr.Zero);
+
+            // NOTE: the drop target will automatically release it, so doing this would cause a Win32 exception.
+            // Marshal.FreeHGlobal(hGlobal);
+
+            var pipes = files.Where(n => n.IsPipe).Select(_ => new
+            {
+                Pipe = new NamedPipeServerStream(_.FileName, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous),
+                File = _,
+            }).ToArray();
+
+            bool isSuccessful = false;
+            string errMsg = string.Empty;
+            foreach (var i in pipes)
+            {
+                using (var handle = new ManualResetEvent(false))
+                {
+                    var success = false;
+
+                    i.Pipe.BeginWaitForConnection(ar =>
+                    {
+                        try
+                        {
+                            i.Pipe.EndWaitForConnection(ar);
+                            success = true;
+
+                            try
+                            {
+                                i.File.Stream.CopyTo(i.Pipe, (int)i.File.Stream.Length);
+                                i.Pipe.WaitForPipeDrain();
+                            }
+                            catch (IOException)
+                            {
+                            }
+
+                            i.Pipe.Dispose();
+                            i.File.Stream.Dispose();
+                            handle.Set();
+                            isSuccessful = true;
+                        }
+                        catch (ObjectDisposedException)
+                        {
+                        }
+                    }, null);
+
+                    if (i.File.Timeout != -1)
+                        ThreadPool.QueueUserWorkItem(_ =>
+                        {
+                            Thread.Sleep(i.File.Timeout);
+
+                            if (!success && !i.Pipe.IsConnected)
+                            {
+                                i.Pipe.Dispose();
+                                i.File.Stream.Dispose();
+                                handle.Set();
+                            }
+                            if (!isSuccessful)
+                            {
+                                errMsg = "処理がタイムアウトしました";
+                            }
+                        });
+
+                    handle.WaitOne();
+
+                    //ダイアログを潰す
+                    MMDUtilility.PressOKToDialog(hWnd, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
+
+                    if (!string.IsNullOrEmpty(errMsg))
+                    {
+                        throw new Exception(errMsg);
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+    internal class PipeEntity
+    {
+        public NamedPipeServerStream Pipe { get; set; }
+        public MmdDropFile File { get; set; }
+    }
+
+    /// <summary>
+    /// 対象のアプリケーションにドロップするファイルのデータを表します。
+    /// </summary>
+    public class MmdDropFile
+    {
+        /// <summary>
+        /// ファイル名を取得します。
+        /// </summary>
+        public string FileName
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// ファイル名を取得します。これはファイルのフルパスまたは名前付きパイプの名前です。
+        /// </summary>
+        public string FullName
+        {
+            get
+            {
+                return this.IsPipe ? @"\\.\pipe\" + this.FileName : this.FileName;
+            }
+        }
+
+        /// <summary>
+        /// 基になるストリームを取得します。
+        /// </summary>
+        public Stream Stream
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// このファイルが名前付きパイプを使用して転送されるかどうかを取得します。
+        /// </summary>
+        public bool IsPipe
+        {
+            get
+            {
+                return this.Stream != null;
+            }
+        }
+
+        /// <summary>
+        /// 転送のタイムアウトを取得または設定します。
+        /// </summary>
+        public int Timeout
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// ファイル名を指定して MmdDropFile の新しいインスタンスを初期化します。
+        /// </summary>
+        /// <param name="fileName">ドロップするファイル パス。</param>
+        public MmdDropFile(string fileName)
+            : this(fileName, null)
+        {
+        }
+
+        /// <summary>
+        /// ファイル名および基になるストリームを指定して MmdDropFile の新しいインスタンスを初期化します。
+        /// </summary>
+        /// <param name="fileName">ドロップするファイルの任意の名前。</param>
+        /// <param name="stream">ドロップするデータを提供するストリーム。</param>
+        public MmdDropFile(string fileName, Stream stream)
+        {
+            this.Timeout = -1;
+            this.FileName = stream == null ? fileName : Path.GetFileName(fileName);
+            this.Stream = stream;
+        }
+    }
+
+    #endregion "vmdファイルなどのD&D"
 }

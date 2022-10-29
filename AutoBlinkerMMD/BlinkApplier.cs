@@ -32,7 +32,7 @@ namespace AutoBlinkerMMD
             this._currentModel = currentModel;
         }
 
-        public bool Execute()
+        public async Task<bool> Execute()
         {
             var mmd = this._mmdSelectorControl.SelectMMD();
 
@@ -51,14 +51,33 @@ namespace AutoBlinkerMMD
             ModelItem currentModelWithWeight = null;
             this._frm.Cursor = Cursors.WaitCursor;
 
+            //現在の物理演算状態を取得する
+            //-1:取得失敗 0:オン/オフモード  1:常に演算 2:トレースモード 3:演算しない
+            var currentphysicsState = MMDUtilility.TryGetPhysicsState(mmd.MainWindowHandle);
+            //現在のエフェクトオンオフ
+            var currentEffectState = (MMDUtilility.TryGetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用") == 1);
+
+            MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);
             try
             {
+
+                //物理演算をオフにする
+                MMDUtilility.TrySetPhysicsState(mmd.MainWindowHandle, 3);
+                //エフェクトをオフにする
+                MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用", false);
+
+
                 currentModelWithWeight = this.TryApplyCurrentWeight();
                 if (currentModelWithWeight == null)
                     return false;
             }
             finally
             {
+                //物理演算を戻す
+                MMDUtilility.TrySetPhysicsState(mmd.MainWindowHandle, currentphysicsState);
+                //エフェクト状態を戻す
+                MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用", currentEffectState);
+
                 this._frm.Cursor = Cursors.Default;
             }
 
@@ -120,23 +139,16 @@ namespace AutoBlinkerMMD
                 if (delmorph != null)
                     //最後のキーを消して入れ直す
                     vmd.MorphFrames.Remove(delmorph);
-                vmd.MorphFrames.Add(new VmdMorphFrame() { Name = blinkMorph.MorphName, Weight = blinkMorph.Weight+ this._setting.YuruyakaValue * 0.01f, FrameTime = fr });
+                vmd.MorphFrames.Add(new VmdMorphFrame() { Name = blinkMorph.MorphName, Weight = blinkMorph.Weight + this._setting.YuruyakaValue * 0.01f, FrameTime = fr });
                 fr += (uint)this._setting.YuruyakaFrame;
                 vmd.MorphFrames.Add(new VmdMorphFrame() { Name = blinkMorph.MorphName, Weight = blinkMorph.Weight, FrameTime = fr });
             }
 
             //vmdデータをMMDに投げる
-            using (var vmdStream = new MemoryStream())
+            //vmdデータをMMDに投げる
+            if (!MmdDrop.TryDropVmd(mmd.MainWindowHandle, vmd))
             {
-                vmd.Write(vmdStream);
-                vmdStream.Seek(0, SeekOrigin.Begin);
-
-                var rtn = MmdDrop.DropFile(mmd.MainWindowHandle, new MmdDropFile("TempMotion" + mmd.Id + ".vmd", vmdStream)
-                {
-                    Timeout = 500,
-                });
-                if (!rtn)
-                    return false;
+                MessageBox.Show("適用に失敗しました");
             }
 
             //MMDにフォーカスを当てる

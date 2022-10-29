@@ -11,41 +11,6 @@ using static MMDUtil.MMDUtilility;
 
 namespace FaceExpressionSelectorMMD
 {
-    /// <summary>
-    /// モデル情報をキャッシュするエンティティ
-    /// </summary>
-    public class ActiveModelInfo : IMMDModel
-    {
-        /// <summary>
-        /// constructor
-        /// </summary>
-        /// <param name="modelName">モデル名</param>
-        /// <param name="morphHash">モーフ情報</param>
-        public ActiveModelInfo(string modelName, Dictionary<MorphType, List<MorphItemWithIndex>> allMorphs)
-        {
-            this.ModelName = modelName;
-            this.AllMorphs = allMorphs;
-            if (this.AllMorphs == null)
-                this.AllMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
-        }
-
-        public ActiveModelInfo()
-        {
-            this.ModelName = String.Empty;
-            this.AllMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
-        }
-
-        /// <summary>
-        /// モーフ情報
-        /// </summary>
-        public Dictionary<MorphType, List<MorphItemWithIndex>> AllMorphs { get; }
-
-        /// <summary>
-        /// モデル名
-        /// </summary>
-        public string ModelName { get; }
-    }
-
     public class ActiveMorphModelFinder : ModelFinder<ActiveModelInfo>
     {
         /// <summary>
@@ -91,5 +56,40 @@ namespace FaceExpressionSelectorMMD
 
             return new ActiveModelInfo(pmx.ModelNameLocal, allMorphs);
         }
+    }
+
+    /// <summary>
+    /// モデル情報をキャッシュするエンティティ
+    /// </summary>
+    public class ActiveModelInfo : IMMDModel
+    {
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="modelName">モデル名</param>
+        /// <param name="morphHash">モーフ情報</param>
+        public ActiveModelInfo(string modelName, Dictionary<MorphType, List<MorphItemWithIndex>> allMorphs)
+        {
+            this.ModelName = modelName;
+            this.AllMorphs = allMorphs;
+            if (this.AllMorphs == null)
+                this.AllMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
+        }
+
+        public ActiveModelInfo()
+        {
+            this.ModelName = String.Empty;
+            this.AllMorphs = new Dictionary<MorphType, List<MorphItemWithIndex>>();
+        }
+
+        /// <summary>
+        /// モーフ情報
+        /// </summary>
+        public Dictionary<MorphType, List<MorphItemWithIndex>> AllMorphs { get; }
+
+        /// <summary>
+        /// モデル名
+        /// </summary>
+        public string ModelName { get; }
     }
 }

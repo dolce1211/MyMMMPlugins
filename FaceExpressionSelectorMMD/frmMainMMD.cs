@@ -24,24 +24,10 @@ namespace FaceExpressionSelectorMMD
     {
         private ActiveModelInfo _currentModel = new ActiveModelInfo();
 
-        private bool _isBusyGettingActiveModel;
-
-        /// <summary>
-        /// 取得済みのActiveModelInfoのキャッシュ。モデル名をキーにしてるので、同名かつモーフ状態が異なるモデルが同じプロジェクトに複数読み込まれるとおかしくなるかも
-        /// </summary>
-        //private Dictionary<string, ActiveModelInfo> _oldCache = new Dictionary<string, ActiveModelInfo>();
-
         /// <summary>
         /// テストキャッシュ
         /// </summary>
         private Dictionary<string, ActiveModelInfo> _modelCache = new Dictionary<string, ActiveModelInfo>();
-
-        /// <summary>
-        /// 監視対象のpmmが前回保存された日時
-        /// </summary>
-        private DateTime _prevpmmSavedTime = new DateTime();
-
-        private int _prevmmdID = -1;
 
         private ActiveMorphModelFinder _modelFinder = null;
         //private System.Threading.Timer _timer = null;
@@ -312,7 +298,7 @@ namespace FaceExpressionSelectorMMD
                     }
                 }
             }
-            var vmd1 = new VmdDocument() { ModelName = this.ActiveModelName };
+            var vmd = new VmdDocument() { ModelName = this.ActiveModelName };
 
             //現在の物理演算状態を取得する
             //-1:取得失敗 0:オン/オフモード  1:常に演算 2:トレースモード 3:演算しない
@@ -329,6 +315,9 @@ namespace FaceExpressionSelectorMMD
 
             try
             {
+                //MMDにフォーカスを当てる
+                MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);
+
                 var msg = $"「{item.Name}」を適用中です。\r\nMMDに触らないでください。";
                 this.ShowlblWait(msg);
 
@@ -353,7 +342,6 @@ namespace FaceExpressionSelectorMMD
                 var notTargetMorphs = new List<MorphItemWithIndex>();
 
                 //適用
-                var failed = new List<string>();
                 foreach (MorphItemWithIndex morph in this._currentModel.AllMorphs.Values.SelectMany(n => n))
                 {
                     if (!base._args.IsTargetMorph(morph))
@@ -369,7 +357,7 @@ namespace FaceExpressionSelectorMMD
                         //対象のモーフ
                         if (morph.Weight != applyingMI.Weight && true)
                         {
-                            vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
+                            vmd.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
                             targetMorphs.Add((applyingMI.Weight, morph));
                         }
                     }
@@ -378,7 +366,7 @@ namespace FaceExpressionSelectorMMD
                         if (morph.Weight != 0)
                         {
                             //対象外のモーフでウェイトが乗っている
-                            vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
+                            vmd.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)0, Name = morph.MorphName, Weight = morph.Weight });
                         }
 
                         notTargetMorphs.Add(morph);
@@ -389,13 +377,13 @@ namespace FaceExpressionSelectorMMD
                 {
                     var weight = tuple.Item1;
                     var morph = tuple.Item2;
-                    vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = weight });
+                    vmd.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = weight });
                 }
                 foreach (MorphItemWithIndex morph in notTargetMorphs)
                 {
                     if (morph.Weight != 0)
                     {
-                        vmd1.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = 0 });
+                        vmd.MorphFrames.Add(new VmdMorphFrame() { FrameTime = (uint)Math.Abs(bufferFrames), Name = morph.MorphName, Weight = 0 });
                     }
                 }
 
@@ -403,17 +391,9 @@ namespace FaceExpressionSelectorMMD
                     MMDUtilility.TrySetFrameNumber(mmd.MainWindowHandle, currentFrame + Convert.ToInt64(bufferFrames));
 
                 //vmdデータをMMDに投げる
-                using (var vmdStream = new MemoryStream())
+                if (!MmdDrop.TryDropVmd(mmd.MainWindowHandle, vmd))
                 {
-                    vmd1.Write(vmdStream);
-                    vmdStream.Seek(0, SeekOrigin.Begin);
-
-                    var rtn = MmdDrop.DropFile(mmd.MainWindowHandle, new MmdDropFile("TempMotion" + mmd.Id + ".vmd", vmdStream)
-                    {
-                        Timeout = 500,
-                    });
-                    if (!rtn)
-                        return false;
+                    MessageBox.Show("適用に失敗しました");
                 }
 
                 ////ダイアログを潰す
