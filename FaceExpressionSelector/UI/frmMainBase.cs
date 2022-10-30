@@ -823,41 +823,41 @@ namespace FaceExpressionHelper
                 return;
 
             this._frmExceptions = new frmExceptions(mode, this.lblActiveModel.Text, morphNames, targetMorphs, this.MorphSelectedEventHandler);
+            this._frmExceptions.ExceptionChangedEventHandler -= this.ExceptionChanged;
+            this._frmExceptions.ExceptionChangedEventHandler += this.ExceptionChanged;
             this.ShowDialog(this._frmExceptions, new Action(() =>
             {
-                if (sender == this.対象外の目まゆリップモーフToolStripMenuItem)
-                {
-                    this._args.ExceptionMainMorphs.Clear();
-                    this._args.ExceptionMainMorphs.AddRange(this._frmExceptions.Result);
-                }
-                else if (sender == this.対象のその他モーフToolStripMenuItem)
-                {
-                    this._args.TargetOtherMorphs.Clear();
-                    this._args.TargetOtherMorphs.AddRange(this._frmExceptions.Result);
-                }
+                //if (sender == this.対象外の目まゆリップモーフToolStripMenuItem)
+                //{
+                //    this._args.ExceptionMainMorphs.Clear();
+                //    this._args.ExceptionMainMorphs.AddRange(this._frmExceptions.Result);
+                //}
+                //else if (sender == this.対象のその他モーフToolStripMenuItem)
+                //{
+                //    this._args.TargetOtherMorphs.Clear();
+                //    this._args.TargetOtherMorphs.AddRange(this._frmExceptions.Result);
+                //}
 
-                this.TrySaveSettings();
+                //this.TrySaveSettings();
             }));
-            //this._frmExceptions.Show(this);
-            //this._frmExceptions.FormClosed += (ss, ee) =>
-            //{
-            //    if (this._frmExceptions.DialogResult == DialogResult.OK)
-            //    {
-            //        if (sender == this.対象外の目まゆリップモーフToolStripMenuItem)
-            //        {
-            //            this._args.ExceptionMainMorphs.Clear();
-            //            this._args.ExceptionMainMorphs.AddRange(this._frmExceptions.Result);
-            //        }
-            //        else if (sender == this.対象のその他モーフToolStripMenuItem)
-            //        {
-            //            this._args.TargetOtherMorphs.Clear();
-            //            this._args.TargetOtherMorphs.AddRange(this._frmExceptions.Result);
-            //        }
+        }
 
-            //        this.TrySaveSettings();
-            //    }
-            //    this._frmExceptions = null;
-            //};
+        private void ExceptionChanged(object sender, ExceptionChangedEventArgs e)
+        {
+            if (e.Mode == 0)
+            {
+                //対象外の目まゆリップモーフ
+                this._args.ExceptionMainMorphs.Clear();
+                this._args.ExceptionMainMorphs.AddRange(e.Exceptions);
+            }
+            else if (e.Mode == 1)
+            {
+                //対象のその他モーフ
+                this._args.TargetOtherMorphs.Clear();
+                this._args.TargetOtherMorphs.AddRange(e.Exceptions);
+            }
+
+            this.TrySaveSettings();
         }
 
         private void ShowDialog(Form frm, Action afterAction)

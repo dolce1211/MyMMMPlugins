@@ -93,6 +93,11 @@ namespace FaceExpressionHelper.UI
         /// </summary>
         public List<string> Result { get; private set; } = new List<string>();
 
+        /// <summary>
+        /// 除外する結果
+        /// </summary>
+        public List<string> RemovingResult { get; private set; } = new List<string>();
+
         private void btnAdd_Click(object sender, EventArgs e)
         {
             ListBox lstbox = null;
@@ -119,9 +124,11 @@ namespace FaceExpressionHelper.UI
         private void btnOK_Click(object sender, EventArgs e)
         {
             this.Result = new List<string>();
+            this.RemovingResult = new List<string>();
             if (sender == this.btnOK)
             {
                 this.Result.AddRange(this._selected);
+                this.RemovingResult.AddRange(this._allMorphs.Where(n => !this._selected.Contains(n)));
                 this.DialogResult = DialogResult.OK;
             }
             this.Close();

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,6 +16,8 @@ namespace FaceExpressionHelper.UI
 {
     public partial class frmExceptions : Form
     {
+        public EventHandler<ExceptionChangedEventArgs> ExceptionChangedEventHandler = null;
+
         /// <summary>
         /// 0:対象外の目まゆリップモーフ 1:対象のその他モーフ
         /// </summary>
@@ -97,8 +100,11 @@ namespace FaceExpressionHelper.UI
             if (sender == this.btnOK)
             {
                 this.Result.AddRange(this.listBox.Items.Cast<string>());
+
+                this.ExceptionChangedEventHandler?.Invoke(this, new ExceptionChangedEventArgs(this._mode, this.Result));
                 this.DialogResult = DialogResult.OK;
             }
+
             this.Close();
         }
 
@@ -117,7 +123,18 @@ namespace FaceExpressionHelper.UI
                 {
                     this._allTargetMorphs.AddRange(this._frmBulkExceptions.Result);
                     this._allTargetMorphs = this._allTargetMorphs.Distinct().ToList();
+
+                    if (this._frmBulkExceptions.RemovingResult != null)
+                    {
+                        foreach (var rm in this._frmBulkExceptions.RemovingResult)
+                        {
+                            this._allTargetMorphs.Remove(rm);
+                        }
+                    }
+
                     this.CreateListBox();
+
+                    this.ExceptionChangedEventHandler?.Invoke(this, new ExceptionChangedEventArgs(this._mode, this._allTargetMorphs));
                 }
                 this._frmBulkExceptions = null;
             };
@@ -174,6 +191,25 @@ namespace FaceExpressionHelper.UI
         {
             var morphname = this.listBox.SelectedItem.ToString();
             this._morphselectedHandler?.Invoke(this, new MorphSelectedEventArgs(this._modelName, morphname));
+        }
+    }
+
+    public class ExceptionChangedEventArgs : EventArgs
+    {
+        /// <summary>
+        /// 0:対象外の目まゆリップモーフ 1:対象のその他モーフ
+        /// </summary>
+        public int Mode { get; }
+
+        /// <summary>
+        /// 対象のモーフ
+        /// </summary>
+        public List<string> Exceptions { get; }
+
+        public ExceptionChangedEventArgs(int mode, List<string> exceptions)
+        {
+            this.Mode = mode;
+            this.Exceptions = exceptions;
         }
     }
 }
