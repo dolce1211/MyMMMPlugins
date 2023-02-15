@@ -544,7 +544,6 @@ namespace MMDUtil
             return -1;
         }
 
-
         /// <summary>
         /// 物理演算状態をセットします。
         /// </summary>
@@ -576,8 +575,6 @@ namespace MMDUtil
             }
             return false;
         }
-
-        
 
         /// <summary>
         /// メニューのハンドルを取得します。
@@ -1512,7 +1509,8 @@ namespace MMDUtil
         private Process _currentmmd = null;
         private string _mmPlusPath = string.Empty;
         private string _mmPlusIniPath = string.Empty;
-
+        private string _mmePath = string.Empty;
+        public string MMEPath => _mmePath;
         private Form _parentForm;
         private Label _lblMMPlus = null;
         private Label _lblMMD = null;
@@ -1658,6 +1656,13 @@ namespace MMDUtil
 
                                 if (System.IO.File.Exists(mmPlusIniPath))
                                     this._mmPlusIniPath = mmPlusIniPath;
+
+                                this._mmePath = "";
+                                var mmepath = System.IO.Path.Combine(mmdDir, "mmeffect.dll");
+                                if (System.IO.File.Exists(mmepath))
+                                {
+                                    this._mmePath = mmepath;
+                                }
                             }
 
                             if (this._lblMMPlus != null)

@@ -32,7 +32,7 @@ namespace AutoBlinkerMMD
             this._currentModel = currentModel;
         }
 
-        public async Task<bool> Execute()
+        public bool Execute()
         {
             var mmd = this._mmdSelectorControl.SelectMMD();
 
@@ -60,12 +60,10 @@ namespace AutoBlinkerMMD
             MMDUtilility.SetForegroundWindow(mmd.MainWindowHandle);
             try
             {
-
                 //物理演算をオフにする
                 MMDUtilility.TrySetPhysicsState(mmd.MainWindowHandle, 3);
                 //エフェクトをオフにする
                 MMDUtilility.TrySetMenuChecked(mmd.MainWindowHandle, "MMEffect", "エフェクト使用", false);
-
 
                 currentModelWithWeight = this.TryApplyCurrentWeight();
                 if (currentModelWithWeight == null)
@@ -174,8 +172,10 @@ namespace AutoBlinkerMMD
                 //アクティブモデル無し
                 return null;
             }
-
-            var retHash = MMDUtilility.TryGetAllMorphValue(mmd.MainWindowHandle, new List<MorphType> { MorphType.Eye, MorphType.Brow });
+            var morphtypes = new List<MorphType> { MorphType.Eye };
+            if (_setting.DoEyebrowSync)
+                morphtypes.Add(MorphType.Brow);
+            var retHash = MMDUtilility.TryGetAllMorphValue(mmd.MainWindowHandle, morphtypes);
             foreach (var kvp in retHash)
             {
                 var tuple = kvp.Key;
@@ -257,7 +257,12 @@ namespace AutoBlinkerMMD
                 vmd.MorphFrames.Add(new VmdMorphFrame() { Name = morph.MorphName, Weight = 0, FrameTime = fr });
                 fr += (uint)setting.BlinkingFrames;
             }
+            else
+            {
+                fr+= (uint)setting.EnterFrames;
+                fr += (uint)setting.BlinkingFrames;
 
+            }
             if (setting.DoHandouEnd && setting.HandouFramesEnd > 0)
             {
                 vmd.MorphFrames.Add(new VmdMorphFrame() { Name = morph.MorphName, Weight = 0, FrameTime = fr });

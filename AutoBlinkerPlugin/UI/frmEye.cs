@@ -25,7 +25,7 @@ namespace AutoBlinkerPlugin
 
             this.txtUp.Text = defvalue[0].ToString();
             this.txtDown.Text = defvalue[1].ToString();
-        }
+        } 
 
         public float[] Result { get; private set; }
 

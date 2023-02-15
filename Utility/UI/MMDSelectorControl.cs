@@ -29,6 +29,11 @@ namespace MMDUtil
         /// </summary>
         public Process MMDProcess { get; private set; } = null;
 
+        /// <summary>
+        /// MMEffect.dllのパス
+        /// </summary>
+        public string MMEPath { get; private set; } = string.Empty;
+
         private void btnSelectMMD_Click(object sender, EventArgs e)
         {
             this.MMDProcess = this.SelectMMD(true, true);
@@ -47,6 +52,7 @@ namespace MMDUtil
             this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate);
             this.IsBusy = false;
 
+            this.MMEPath = selector.MMEPath;
             return this.MMDProcess;
         }
     }

@@ -96,13 +96,23 @@ namespace AutoBlinkerMMD
         {
             this.Invoke((Action)(() =>
             {
-                this.lblWait.Parent = this;
-                this.lblWait.Size = new System.Drawing.Size(this.Width, 300);
-                this.lblWait.Location = new System.Drawing.Point(0, (int)(this.Height - 300) / 2);
-                this.lblWait.Text = text;
-                this.lblWait.Visible = true;
+                if (this._isMinimized)
+                {
+                    //最小化時には邪魔なので出さない
+                    this.lblWait.Visible = false;
+                }
+                else
+                {
+                    this.lblWait.Parent = this;
+                    this.lblWait.Size = new System.Drawing.Size(this.Width, 300);
+                    this.lblWait.Location = new System.Drawing.Point(0, (int)(this.Height - 300) / 2);
+                    this.lblWait.Text = text;
+                    this.lblWait.Visible = true;
+                }
+
                 this.lblWait.BringToFront();
                 this.lblWait.Refresh();
+
                 this.ApplyModel(null);
             }));
         }

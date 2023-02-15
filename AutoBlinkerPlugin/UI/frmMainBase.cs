@@ -27,6 +27,11 @@ namespace AutoBlinkerPlugin
         /// </summary>
         protected ModelItem _currentModel = null;
 
+        /// <summary>
+        /// 最小化されてればtrue
+        /// </summary>
+        protected bool _isMinimized = false;
+
         private string _path = string.Empty;
         private SavedState _savedState = null;
 
@@ -145,6 +150,7 @@ namespace AutoBlinkerPlugin
             morphnames = new string[]
             {
                 "びっくり",
+                "ビックリ",
                 "見開き",
                 "みひらき"
             };
@@ -200,9 +206,9 @@ namespace AutoBlinkerPlugin
             this.cboEyeBone.Items.AddRange(this._currentModel.Bones.ToArray());
             this.ApplyBoneToComboBox(this.cboEyeBone, "両目");
 
-            this.tbBikkuri.Value = 10;
-            this.tbMayuDown.Value = 2;
-            this.tbMayuUp.Value = 2;
+            this.tbBikkuri.Value = 20;
+            this.tbMayuDown.Value = 4;
+            this.tbMayuUp.Value = 4;
             this.lblEyeSync.Tag = new float[] { 1f, 10f };
 
             if (modelInfo != null)
@@ -228,9 +234,9 @@ namespace AutoBlinkerPlugin
                 //眉上適用
                 this.ApplyMorphToComboBox(mayuMorphs, this.cboMayuUp, new string[] { modelInfo.EyebrowUpMorphName });
 
-                this.tbBikkuri.Value = (int)(modelInfo.BikkuriMorphValue * 10);
-                this.tbMayuDown.Value = (int)(modelInfo.EyebrowDownSyncValue * 10);
-                this.tbMayuUp.Value = (int)(modelInfo.EyebrowUpSyncValue * 10);
+                this.tbBikkuri.Value = (int)(modelInfo.BikkuriMorphValue * 20);
+                this.tbMayuDown.Value = (int)(modelInfo.EyebrowDownSyncValue * 20);
+                this.tbMayuUp.Value = (int)(modelInfo.EyebrowUpSyncValue * 20);
 
                 this.lblEyeSync.Tag = new float[] { modelInfo.EyeSyncValueUp, modelInfo.EyeSyncValueDown };
 
@@ -303,6 +309,8 @@ namespace AutoBlinkerPlugin
         /// <returns></returns>
         private Args CreateEntityInstance()
         {
+            if (_currentModel == null || string.IsNullOrEmpty(_currentModel.ModelName))
+                return null;
             var eyesyncvalue = this.lblEyeSync.Tag as float[];
             if (eyesyncvalue == null || eyesyncvalue.Length < 2)
                 eyesyncvalue = new float[] { 1f, 10f };
@@ -312,11 +320,11 @@ namespace AutoBlinkerPlugin
                 ModelName = this._currentModel.ModelName,
                 BlinkingMorphName = cboBlink.SelectedItem.ToString(),
                 BikkuriMorphName = cboBikkuri.SelectedItem.ToString(),
-                BikkuriMorphValue = (float)this.tbBikkuri.Value / 10,
+                BikkuriMorphValue = (float)this.tbBikkuri.Value / 20,
                 EyebrowDownMorphName = cboMayuDown.SelectedItem.ToString(),
                 EyebrowUpMorphName = cboMayuUp.SelectedItem.ToString(),
-                EyebrowDownSyncValue = (float)this.tbMayuDown.Value / 10,
-                EyebrowUpSyncValue = (float)this.tbMayuUp.Value / 10,
+                EyebrowDownSyncValue = (float)this.tbMayuDown.Value / 20,
+                EyebrowUpSyncValue = (float)this.tbMayuUp.Value / 20,
                 EyeSyncValueUp = eyesyncvalue[0],
                 EyeSyncValueDown = eyesyncvalue[1],
                 EyeSyncBoneName = this.cboEyeBone.Text,
@@ -352,7 +360,8 @@ namespace AutoBlinkerPlugin
         private void SaveCurrentState()
         {
             var entity = this.CreateEntityInstance();
-
+            if (entity == null)
+                return;
             //状態を保存する
             var savedState = entity.CloneToSavedState();
             savedState.Favorites = new List<FavEntity>();
@@ -441,8 +450,11 @@ namespace AutoBlinkerPlugin
         {
             if (!this.btnOK.Enabled)
                 return;
+
             //Entityを生成
             var entity = this.CreateEntityInstance();
+            if (entity == null)
+                return;
 
             //状態を保存する
             this.SaveCurrentState();
@@ -491,9 +503,9 @@ namespace AutoBlinkerPlugin
 
         private void trackBar1_Scroll(object sender, EventArgs e)
         {
-            this.lblBikkuriValue.Text = ((float)this.tbBikkuri.Value / 10).ToString();
-            this.lblDownValue.Text = ((float)this.tbMayuDown.Value / 10).ToString();
-            this.lblUpValue.Text = ((float)this.tbMayuUp.Value / 10).ToString();
+            this.lblBikkuriValue.Text = ((float)this.tbBikkuri.Value / 20).ToString();
+            this.lblDownValue.Text = ((float)this.tbMayuDown.Value / 20).ToString();
+            this.lblUpValue.Text = ((float)this.tbMayuUp.Value / 20).ToString();
         }
 
         private void chkStartExtra_CheckedChanged(object sender, EventArgs e)
@@ -520,6 +532,8 @@ namespace AutoBlinkerPlugin
         private void button1_Click(object sender, EventArgs e)
         {
             var eyesyncvalue = this.lblEyeSync.Tag as float[];
+            if (eyesyncvalue == null)
+                return;
             if (eyesyncvalue.Length < 2)
                 eyesyncvalue = new float[] { 1f, 10f };
             using (var frm = new frmEye())
@@ -702,6 +716,7 @@ namespace AutoBlinkerPlugin
             {
                 if (this.btnMinimize.Text == "最小化")
                 {
+                    _isMinimized = true;
                     this.btnMinimize.Text = "フル";
                     this.btnMinimize.Parent = this.pnlBottom;
                     this.btnMinimize.Top = 32;
@@ -712,11 +727,13 @@ namespace AutoBlinkerPlugin
                     _prevSize = this.Size;
                     this.Size = new Size(199, 81);
                     this.btnMinimize.Left = 7;
+
                     if (frmMainBase.OperationgMode == OperatingMode.OnMMD)
                         this.mmdSelectorControl1.Visible = false;
                 }
                 else
                 {
+                    _isMinimized = false;
                     this.btnMinimize.Text = "最小化";
                     this.btnMinimize.Parent = this.gbPreset;
                     this.btnMinimize.Top = 13;

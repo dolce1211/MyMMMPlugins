@@ -143,12 +143,21 @@ namespace MyUtility
                                 if (tmpcache != null)
                                     _modelCache = tmpcache;
 
-                                if (!_modelCache.ContainsKey(activeModelName))
+                                var errmsg = string.Empty;
+
+                                if (string.IsNullOrEmpty(this._mmdSelector.MMEPath))
+                                {
+                                    //MMEが入ってないとemmファイルが作られないのでpmxファイルの場所を特定できない
+                                    errmsg = $"MMEffectが導入されていないようです。\r\n本ツールを使用するにはMMEffectの導入が必須となります。";
+                                }
+                                else if (!_modelCache.ContainsKey(activeModelName))
                                 {
                                     //おそらく後から追加されてまだ保存されていないモデルだ
-                                    var msg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
-
-                                    this._showWaitAction?.Invoke(msg);
+                                    errmsg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
+                                }
+                                if (!string.IsNullOrEmpty(errmsg))
+                                {
+                                    this._showWaitAction?.Invoke(errmsg);
                                     _currentModel = this.CreateInstance();
                                     activeModelName = "";
                                     isModelChanged = false;

@@ -42,6 +42,7 @@ namespace AutoBlinkerPlugin
             this.btnPaste = new System.Windows.Forms.Button();
             this.tlp = new System.Windows.Forms.TableLayoutPanel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnException = new System.Windows.Forms.Button();
             this.gbMayu = new System.Windows.Forms.GroupBox();
             this.chkMayu = new System.Windows.Forms.CheckBox();
             this.lblUpValue = new System.Windows.Forms.Label();
@@ -94,7 +95,6 @@ namespace AutoBlinkerPlugin
             this.label4 = new System.Windows.Forms.Label();
             this.numEnter = new System.Windows.Forms.NumericUpDown();
             this.panel2 = new System.Windows.Forms.Panel();
-            this.btnException = new System.Windows.Forms.Button();
             this.btnDown = new System.Windows.Forms.Button();
             this.btnUp = new System.Windows.Forms.Button();
             this.btnEditFav = new System.Windows.Forms.Button();
@@ -264,6 +264,17 @@ namespace AutoBlinkerPlugin
             this.panel1.Size = new System.Drawing.Size(308, 542);
             this.panel1.TabIndex = 0;
             // 
+            // btnException
+            // 
+            this.btnException.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnException.Location = new System.Drawing.Point(219, 517);
+            this.btnException.Name = "btnException";
+            this.btnException.Size = new System.Drawing.Size(85, 22);
+            this.btnException.TabIndex = 56;
+            this.btnException.Text = "反転対象外";
+            this.btnException.UseVisualStyleBackColor = true;
+            this.btnException.Click += new System.EventHandler(this.btnException_Click);
+            // 
             // gbMayu
             // 
             this.gbMayu.Controls.Add(this.chkMayu);
@@ -311,10 +322,11 @@ namespace AutoBlinkerPlugin
             // tbMayuUp
             // 
             this.tbMayuUp.Location = new System.Drawing.Point(119, 112);
+            this.tbMayuUp.Maximum = 20;
             this.tbMayuUp.Name = "tbMayuUp";
             this.tbMayuUp.Size = new System.Drawing.Size(174, 45);
             this.tbMayuUp.TabIndex = 46;
-            this.tbMayuUp.Value = 10;
+            this.tbMayuUp.Value = 20;
             this.tbMayuUp.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // label11
@@ -356,10 +368,11 @@ namespace AutoBlinkerPlugin
             // tbMayuDown
             // 
             this.tbMayuDown.Location = new System.Drawing.Point(119, 47);
+            this.tbMayuDown.Maximum = 20;
             this.tbMayuDown.Name = "tbMayuDown";
             this.tbMayuDown.Size = new System.Drawing.Size(174, 45);
             this.tbMayuDown.TabIndex = 41;
-            this.tbMayuDown.Value = 10;
+            this.tbMayuDown.Value = 20;
             this.tbMayuDown.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // cboMayuUp
@@ -693,10 +706,11 @@ namespace AutoBlinkerPlugin
             // tbBikkuri
             // 
             this.tbBikkuri.Location = new System.Drawing.Point(116, 50);
+            this.tbBikkuri.Maximum = 20;
             this.tbBikkuri.Name = "tbBikkuri";
             this.tbBikkuri.Size = new System.Drawing.Size(174, 45);
             this.tbBikkuri.TabIndex = 46;
-            this.tbBikkuri.Value = 10;
+            this.tbBikkuri.Value = 20;
             this.tbBikkuri.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // label14
@@ -856,17 +870,6 @@ namespace AutoBlinkerPlugin
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(114, 542);
             this.panel2.TabIndex = 1;
-            // 
-            // btnException
-            // 
-            this.btnException.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnException.Location = new System.Drawing.Point(219, 517);
-            this.btnException.Name = "btnException";
-            this.btnException.Size = new System.Drawing.Size(85, 22);
-            this.btnException.TabIndex = 56;
-            this.btnException.Text = "反転対象外";
-            this.btnException.UseVisualStyleBackColor = true;
-            this.btnException.Click += new System.EventHandler(this.btnException_Click);
             // 
             // btnDown
             // 
