@@ -1183,7 +1183,7 @@ namespace MMDUtil
             {
                 _cache = new Dictionary<IntPtr, Dictionary<int, Window>>();
                 var desc = GetAllChildWindows(mmdhWnd, new List<Window>(), true);
-
+                desc = desc.Where(n => n.ID != 0).ToList();
                 if (false)
                 {
                     foreach (var win in desc)
@@ -1226,10 +1226,15 @@ namespace MMDUtil
                         Console.WriteLine($"{win.ID},{win.ClassName},{win.Text},{addedstr.ToString()}");
                     }
                 }
-
-                var dict = desc.ToDictionary(n => n.ID);
-                if (!_cache.ContainsKey(mmdhWnd))
-                    _cache.Add(mmdhWnd, dict);
+                if (desc.Count > 160)
+                {
+                    var dict = desc.ToDictionary(n => n.ID);
+                    if (!_cache.ContainsKey(mmdhWnd))
+                        _cache.Add(mmdhWnd, dict);
+                }
+                else
+                {
+                }
             }
 
             if (_cache.ContainsKey(mmdhWnd))
