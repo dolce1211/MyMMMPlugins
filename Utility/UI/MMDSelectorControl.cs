@@ -49,10 +49,11 @@ namespace MMDUtil
         {
             this.IsBusy = true;
             var selector = new MMDUtil.MMDFinder(this.ParentForm, this.MMDProcess, this.lblMMD, this.lblMMPlus, new MMDSelector(this.ParentForm));
-            this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate);
+            var retmmdChanged = false;
+            this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate, ref retmmdChanged);
             this.IsBusy = false;
-
-            this.MMEPath = selector.MMEPath;
+            if (retmmdChanged)//2023/05/28 MMDプロセスが変更された場合のみthis.MMEPathを更新する
+                this.MMEPath = selector.MMEPath;
             return this.MMDProcess;
         }
     }

@@ -1532,12 +1532,12 @@ namespace MMDUtil
         /// <param name="showmsg">true:見つからなかった時にメッセージを出す</param>
         /// <param name="forceUpdate">true:現在選択中のMMDがあっても選択フォームを出す</param>
         /// <returns></returns>
-        public Process TryFindMMDProcess(bool showmsg, bool forceUpdate)
+        public Process TryFindMMDProcess(bool showmsg, bool forceUpdate, ref bool retchanged)
         {
             var unchanged = true;
             _mmPlusPath = null;
             _mmPlusIniPath = null;
-
+            retchanged = false;
             Process mmd = null;
             if (_isBusy)
                 return _currentmmd;
@@ -1574,6 +1574,12 @@ namespace MMDUtil
                         if (tmpmmd != null && string.IsNullOrEmpty(this._currentmmd.MainWindowTitle))
                         {
                             //ロード中のpmmを拾うとタイトルが入ってないことがあるのでそれ対策
+                            this._currentmmd = tmpmmd;
+                            unchanged = false;
+                        }
+                        else if (tmpmmd != null && tmpmmd.MainWindowTitle != this._currentmmd.MainWindowTitle)
+                        {
+                            //今選択中のMMDのファイル名が代わったっぽい
                             this._currentmmd = tmpmmd;
                             unchanged = false;
                         }
@@ -1622,6 +1628,7 @@ namespace MMDUtil
             }
             finally
             {
+                retchanged = !unchanged; //mmdのプロセスに変更があった
                 if (!unchanged)
                 {
                     this._parentForm.Invoke((Action)(() =>
