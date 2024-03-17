@@ -1226,7 +1226,7 @@ namespace MMDUtil
                         Console.WriteLine($"{win.ID},{win.ClassName},{win.Text},{addedstr.ToString()}");
                     }
                 }
-                if (desc.Count > 160)
+                if (desc.Count > 140)
                 {
                     var dict = desc.ToDictionary(n => n.ID);
                     if (!_cache.ContainsKey(mmdhWnd))
@@ -1554,15 +1554,18 @@ namespace MMDUtil
                 var mmds = new List<Process>();
                 foreach (var tmpmmd in mmdarray)
                 {
-                    //32bit/64bitが不一致のプロセスを除外する →やっぱやめ
-                    try
+                    if (tmpmmd.MainWindowTitle.IndexOf("MikuMikuDance") == 0) //別窓にフォーカスが行ってると変になる
                     {
-                        //var x = tmpmmd.MainModule;
-                        mmds.Add(tmpmmd);
-                    }
-                    catch (Win32Exception ex)
-                    {
-                        Console.WriteLine($"32bit/64bit{tmpmmd.MainWindowTitle}");
+                        //32bit/64bitが不一致のプロセスを除外する →やっぱやめ
+                        try
+                        {
+                            //var x = tmpmmd.MainModule;
+                            mmds.Add(tmpmmd);
+                        }
+                        catch (Win32Exception ex)
+                        {
+                            Console.WriteLine($"32bit/64bit{tmpmmd.MainWindowTitle}");
+                        }
                     }
                 }
                 if (this._currentmmd != null && this._currentmmd.HasExited)
@@ -1729,7 +1732,7 @@ namespace MMDUtil
                     vmd.Write(vmdStream);
                     vmdStream.Seek(0, SeekOrigin.Begin);
 
-                    var mmddropfile = new MmdDropFile("TempMotion" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".vmd", vmdStream) { Timeout = 100 };
+                    var mmddropfile = new MmdDropFile("TempMotion" + DateTime.Now.ToString("yyyyMMddHHmmssfff") + ".vmd", vmdStream) { Timeout = 500 };
                     try
                     {
                         var rtn = MmdDrop.DropFile(hWnd, new MmdDropFile[] { mmddropfile });
@@ -1833,7 +1836,7 @@ namespace MMDUtil
                     handle.WaitOne();
 
                     //ダイアログを潰す
-                    MMDUtilility.PressOKToDialog(hWnd, new string[] { "モーションチェック", "MMPlus", "モーションデータ読込" });
+                    MMDUtilility.PressOKToDialog(hWnd, new string[] { "", "モーションチェック", "MMPlus", "モーションデータ読込" });
 
                     if (!string.IsNullOrEmpty(errMsg))
                     {

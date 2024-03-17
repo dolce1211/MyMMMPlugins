@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static MMDUtil.MMDUtilility;
@@ -150,7 +151,7 @@ namespace MyUtility
                                     //MMEが入ってないとemmファイルが作られないのでpmxファイルの場所を特定できない
                                     errmsg = $"MMEffectが導入されていないようです。\r\n本ツールを使用するにはMMEffectの導入が必須となります。";
                                 }
-                                else if (!_modelCache.ContainsKey(activeModelName))
+                                else if (!string.IsNullOrWhiteSpace(activeModelName) && !_modelCache.ContainsKey(activeModelName))
                                 {
                                     //おそらく後から追加されてまだ保存されていないモデルだ
                                     errmsg = $"「{activeModelName}」の情報は\r\nまだpmmに保存されていません。 \r\n\r\n pmmを保存してください。";
@@ -358,7 +359,7 @@ namespace MyUtility
                     var model = PmxParser.Parse(stream);
                     return model;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                 }
             }
@@ -369,5 +370,6 @@ namespace MyUtility
         {
             this._timer.Change(int.MaxValue, int.MaxValue);
         }
+
     }
 }

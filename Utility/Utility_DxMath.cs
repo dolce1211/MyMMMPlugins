@@ -51,6 +51,11 @@ namespace MyUtility
             return new DxMath.Vector3((float)rx, (float)ry, (float)rz);
         }
 
+        public static float ToRadians(this float degrees)
+        {
+            return (float)(degrees / 180 * Math.PI);
+        }
+
         public static DxMath.Quaternion AddEular(this DxMath.Quaternion q, DxMath.Vector3 angle)
         {
             var eular = q.ToEularDxMath();
