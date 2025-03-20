@@ -164,13 +164,19 @@ namespace FaceExpressionSelectorMMD
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
             //
+            // _frmPic
+            //
+            this._frmPic.Load += new System.EventHandler(this._frmPic_Load);
+            //
             // mmdSelector
             //
             this.mmdSelector.Location = new System.Drawing.Point(0, 578);
+            this.mmdSelector.Size = new System.Drawing.Size(287, 46);
             //
             // pnlBottom
             //
             this.pnlBottom.Location = new System.Drawing.Point(0, 513);
+            this.pnlBottom.Size = new System.Drawing.Size(287, 65);
             //
             // frmMainMMD
             //
@@ -484,6 +490,10 @@ namespace FaceExpressionSelectorMMD
         private void frmMainMMD_FormClosing(object sender, FormClosingEventArgs e)
         {
             this._modelFinder?.Dispose();
+        }
+
+        private void _frmPic_Load(object sender, EventArgs e)
+        {
         }
     }
 

@@ -14,7 +14,7 @@ namespace MyUtility
 
 {
     public abstract class ModelFinder<T> : IDisposable
-        where T : IMMDModel
+        where T : IMMDModelWithExtension
     {
         /// <summary>
         /// アクティブモデルが変更された時に走るイベントハンドら
@@ -49,8 +49,14 @@ namespace MyUtility
                (Action<object>)(async x =>
                {
                    _timer.Change(int.MaxValue, int.MaxValue);
-
-                   await this.TryApplyActiveModel();
+                   try
+                   {
+                       await this.TryApplyActiveModel();
+                   }
+                   catch (Exception ex)
+                   {
+                       MessageBox.Show($"{ex.StackTrace}\r\n{ex.Message}");
+                   }
 
                    _timer.Change(1000, 0);
                }))
@@ -92,7 +98,8 @@ namespace MyUtility
                     catch (Exception)
                     {
                     }
-
+                    if (_modelCache == null)
+                        _modelCache = new Dictionary<string, T>();
                     if (mmd == null)
                     {
                         //MMD紐づけ無し。キャッシュクリア
@@ -135,6 +142,9 @@ namespace MyUtility
                             if (_modelCache.ContainsKey(activeModelName))
                             {
                                 _currentModel = _modelCache[activeModelName];
+                            }
+                            if (_currentModel != null && _currentModel.Extension == ".pmx")
+                            {
                                 this._hideWaitAction?.Invoke();
                             }
                             else
@@ -146,10 +156,14 @@ namespace MyUtility
 
                                 var errmsg = string.Empty;
 
+                                if (_currentModel != null && _currentModel.Extension == ".pmd")
+                                {
+                                    errmsg = $"{_currentModel.ModelName}\r\n .pmdファイルは未サポートです。\r\n\r\nお手数ですが.pmxに変換してご利用ください。";
+                                }
                                 if (string.IsNullOrEmpty(this._mmdSelector.MMEPath))
                                 {
                                     //MMEが入ってないとemmファイルが作られないのでpmxファイルの場所を特定できない
-                                    errmsg = $"MMEffectが導入されていないようです。\r\n本ツールを使用するにはMMEffectの導入が必須となります。";
+                                    errmsg = $"MMEffectが導入されていないようです。\r\n本ツールを使用するにはMMEffectの導入が必須となります。\r\n\r\nMMDの場所:{this._mmdSelector.MMDPath}";
                                 }
                                 else if (!string.IsNullOrWhiteSpace(activeModelName) && !_modelCache.ContainsKey(activeModelName))
                                 {
@@ -214,6 +228,10 @@ namespace MyUtility
                 //直近のpmm保存日時を保持しておく
                 _prevpmmSavedTime = pmminfo.LastWriteTime;
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{ex.StackTrace}\r\n{ex.Message}");
+            }
             finally
             {
                 this._hideWaitAction?.Invoke();
@@ -223,7 +241,7 @@ namespace MyUtility
 
         //protected abstract Dictionary<string, T> CreateActiveModelInfoHashFromProcess(Process mmd);
 
-        protected abstract T PmxModel2ActiveModelInfo(PmxModel pmxmdls);
+        protected abstract T PmxModel2ActiveModelInfo(string pmxFilePath);
 
         /// <summary>
         /// pmxPnlTypeからMMDUtilility.MorphTypeへ変換して返します。
@@ -255,12 +273,13 @@ namespace MyUtility
         protected Dictionary<string, T> CreateActiveModelInfoHashFromProcess(Process mmd)
         {
             var ret = new Dictionary<string, T>();
-            var pmxmodels = GetPmxFromProcess(mmd);
-            foreach (var pmxmdls in pmxmodels)
+            var pmxmodelPaths = GetPmxPathsFromProcess(mmd);
+            foreach (var pmxModelPath in pmxmodelPaths)
             {
-                var model = this.PmxModel2ActiveModelInfo(pmxmdls);
-                if (!ret.ContainsKey(model.ModelName))
-                    ret.Add(model.ModelName, model);
+                var model = this.PmxModel2ActiveModelInfo(pmxModelPath);
+                if (model != null)
+                    if (!ret.ContainsKey(model?.ModelName))
+                        ret.Add(model.ModelName, model);
             }
             return ret;
         }
@@ -290,6 +309,78 @@ namespace MyUtility
         public List<PmxModel> GetPmxFromProcess(Process mmd)
         {
             var ret = new List<PmxModel>();
+            var pmxfilePaths = GetPmxPathsFromProcess(mmd);
+            foreach (var pmxpath in pmxfilePaths)
+            {
+                var pmxmodel = FilePath2PmxModel(pmxpath);
+                if (pmxmodel != null)
+                    ret.Add(pmxmodel);
+            }
+            return ret;
+
+            if (false)
+            {
+                if (mmd == null)
+                    return ret;
+                var pmminfo = GetPmmInfoFromProcess(mmd);
+                if (pmminfo == null)
+                    return ret;
+
+                var mmdexedir = MMDUtilility.GetProgramPathFromProcess(mmd);
+                if (string.IsNullOrEmpty(mmdexedir))
+                    return ret;
+                mmdexedir = System.IO.Path.GetDirectoryName(mmdexedir);
+
+                if (System.IO.File.Exists(pmminfo.FullName))
+                {
+                    var pmxfiles = new List<string>();
+                    var pmdfiles = new List<string>();//pmdはサポート外
+                                                      //pmmからemmファイルを取得
+                    var emmfilepath = pmminfo.FullName.ToLower().Replace(".pmm", ".emm");
+                    if (System.IO.File.Exists(emmfilepath))
+                    {
+                        var emmlines = System.IO.File.ReadAllLines(emmfilepath, System.Text.Encoding.GetEncoding("shift_jis"));
+                        var start = false;
+
+                        foreach (var line in emmlines)
+                        {
+                            if (start)
+                            {
+                                var array = line.Split('=');
+                                if (array[0].ToLower().Trim().IndexOf("pmd") == 0)
+                                {
+                                    var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
+                                    if (System.IO.File.Exists(pmxpath))
+                                        pmxfiles.Add(pmxpath);
+                                }
+                            }
+                            if (start && line.IndexOf("[") == 0)
+                                break;
+                            if (line.ToLower() == "[object]")
+                                start = true;
+                        }
+
+                        foreach (var pmxpath in pmxfiles)
+                        {
+                            var pmxmodel = FilePath2PmxModel(pmxpath);
+                            if (pmxmodel != null)
+                                ret.Add(pmxmodel);
+                        }
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// MMDのプロセスで読み込まれているモデルのパスの一覧を返します。
+        /// </summary>
+        /// <param name="mmd"></param>
+        /// <returns></returns>
+        public List<string> GetPmxPathsFromProcess(Process mmd)
+        {
+            var ret = new List<string>();
             if (mmd == null)
                 return ret;
             var pmminfo = GetPmmInfoFromProcess(mmd);
@@ -303,7 +394,6 @@ namespace MyUtility
 
             if (System.IO.File.Exists(pmminfo.FullName))
             {
-                var pmxfiles = new List<string>();
                 //pmmからemmファイルを取得
                 var emmfilepath = pmminfo.FullName.ToLower().Replace(".pmm", ".emm");
                 if (System.IO.File.Exists(emmfilepath))
@@ -320,7 +410,7 @@ namespace MyUtility
                             {
                                 var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
                                 if (System.IO.File.Exists(pmxpath))
-                                    pmxfiles.Add(pmxpath);
+                                    ret.Add(pmxpath);
                             }
                         }
                         if (start && line.IndexOf("[") == 0)
@@ -328,16 +418,8 @@ namespace MyUtility
                         if (line.ToLower() == "[object]")
                             start = true;
                     }
-
-                    foreach (var pmxpath in pmxfiles)
-                    {
-                        var pmxmodel = FilePath2PmxModel(pmxpath);
-                        if (pmxmodel != null)
-                            ret.Add(pmxmodel);
-                    }
                 }
             }
-
             return ret;
         }
 
@@ -346,7 +428,7 @@ namespace MyUtility
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
-        private PmxModel FilePath2PmxModel(string filePath)
+        protected PmxModel FilePath2PmxModel(string filePath)
         {
             if (!System.IO.File.Exists(filePath))
                 return null;
@@ -370,6 +452,5 @@ namespace MyUtility
         {
             this._timer.Change(int.MaxValue, int.MaxValue);
         }
-
     }
 }

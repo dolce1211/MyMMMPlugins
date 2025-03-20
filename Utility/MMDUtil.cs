@@ -1516,6 +1516,10 @@ namespace MMDUtil
         private string _mmPlusIniPath = string.Empty;
         private string _mmePath = string.Empty;
         public string MMEPath => _mmePath;
+
+        private string _mmdPath = string.Empty;
+        public string MMDPath => _mmdPath;
+
         private Form _parentForm;
         private Label _lblMMPlus = null;
         private Label _lblMMD = null;
@@ -1658,6 +1662,7 @@ namespace MMDUtil
 
                             //mmPlusが入っているか確認
                             var mmdPath = MMDUtilility.GetProgramPathFromProcess(mmd);
+                            this._mmdPath = mmdPath;
                             var mmdDir = System.IO.Path.GetDirectoryName(mmdPath);
                             if (System.IO.Directory.Exists(mmdDir))
                             {

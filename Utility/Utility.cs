@@ -873,6 +873,11 @@ namespace MyUtility
         string ModelName { get; }
     }
 
+    public interface IMMDModelWithExtension : IMMDModel
+    {
+        string Extension { get; }
+    }
+
     public class SimpleMMDModel : IMMDModel
     {
         /// <summary>

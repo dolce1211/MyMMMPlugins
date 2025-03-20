@@ -34,6 +34,11 @@ namespace MMDUtil
         /// </summary>
         public string MMEPath { get; private set; } = string.Empty;
 
+        /// <summary>
+        /// Mikumikudance.exeのパス
+        /// </summary>
+        public string MMDPath { get; private set; } = string.Empty;
+
         private void btnSelectMMD_Click(object sender, EventArgs e)
         {
             this.MMDProcess = this.SelectMMD(true, true);
@@ -53,7 +58,12 @@ namespace MMDUtil
             this.MMDProcess = selector.TryFindMMDProcess(showmsg, forceUpdate, ref retmmdChanged);
             this.IsBusy = false;
             if (retmmdChanged)//2023/05/28 MMDプロセスが変更された場合のみthis.MMEPathを更新する
+            {
                 this.MMEPath = selector.MMEPath;
+                this.MMDPath = selector.MMDPath;
+                //MessageBox.Show(selector.MMDPath);
+            }
+
             return this.MMDProcess;
         }
     }
