@@ -256,7 +256,7 @@ namespace AutoBlinkerPlugin
     /// 選択中モデルの状態を表すエンティティ
     /// </summary>
     [DebuggerDisplay("{ModelName}")]
-    public class ModelItem : IMMDModel
+    public class ModelItem : IMMDModelWithExtension
     {
         public string ModelName { get; set; }
 
@@ -274,6 +274,8 @@ namespace AutoBlinkerPlugin
         /// ボーン
         /// </summary>
         public List<string> Bones { get; set; } = new List<string>();
+
+        public string Extension => "";
     }
 
     /// <summary>

@@ -21,6 +21,7 @@ namespace MMDUtil
         /// 自分自身のプロセスを取得して保持します。
         /// </summary>
         /// <param name="mmmForm"></param>
+        /// <param name="scene"></param>
         public static void Initialize(Form mmmForm, Scene scene)
         {
             _mmmForm = mmmForm;
@@ -173,5 +174,43 @@ namespace MMDUtil
 
             MMDUtil.MMDUtilility.BeginAndEndUpdate(handle, flg);
         }
+
+        /// <summary>
+        /// ApplicationFormにEnterキーを送信します（MMMUtilityのヘルパーメソッド）
+        /// </summary>
+        /// <returns>成功した場合true</returns>
+        public static bool SendEnterToApplicationForm(Form frm)
+        {
+            if (frm == null)
+            {
+                Debugger.Break();
+                return false;
+            }
+
+            try
+            {
+                // 完全なキー操作をシミュレート：KEYDOWNとKEYUPの両方を送信
+                bool keyDownResult = PostMessage(frm.Handle, WM_KEYDOWN, VK_RETURN, 0);
+
+                // 短時間待機してからKEYUPを送信（より自然なキー操作のシミュレート）
+                System.Threading.Thread.Sleep(10);
+
+                bool keyUpResult = PostMessage(frm.Handle, WM_KEYUP, VK_RETURN, 0);
+
+                // 両方のメッセージが正常に送信された場合のみ成功とする
+                return keyDownResult && keyUpResult;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        private const int WM_KEYDOWN = 0x0100;
+        private const int WM_KEYUP = 0x0101;
+        private const int VK_RETURN = 0x0D;
     }
 }

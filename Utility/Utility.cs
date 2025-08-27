@@ -826,6 +826,42 @@ namespace MyUtility
             return new Vector3D(rx, ry, rz);
         }
 
+        ///// <summary>
+        ///// オイラーからクォータニオンに変換します。
+        ///// </summary>
+        ///// <param name="v"></param>
+        ///// <returns></returns>
+        //public static DxMath.Quaternion ToQuatanionDxMath(this DxMath.Vector3 v)
+        //{
+        //    double Rcosx = Math.Cos(v.X / 180.0 * Math.PI / 2.0);
+        //    double Rcosy = Math.Cos(v.Y / 180.0 * Math.PI / 2.0);
+        //    double Rcosz = Math.Cos(v.Z / 180.0 * Math.PI / 2.0);
+
+        //    double Rsinx = Math.Sin(v.X / 180.0 * Math.PI / 2.0);
+        //    double Rsiny = Math.Sin(v.Y / 180.0 * Math.PI / 2.0);
+        //    double Rsinz = Math.Sin(v.Z / 180.0 * Math.PI / 2.0);
+
+        //    float w = (float)(Rcosy * Rcosx * Rcosz + Rsiny * Rsinx * Rsinz);
+        //    float y = (float)(Rsiny * Rcosx * Rcosz - Rcosy * Rsinx * Rsinz);
+        //    float x = (float)(Rcosy * Rsinx * Rcosz + Rsiny * Rcosx * Rsinz);
+        //    float z = (float)(Rcosy * Rcosx * Rsinz - Rsiny * Rsinx * Rcosz);
+
+        //    return new DxMath.Quaternion(x, y, z, w);
+        //}
+
+        ///// <summary>
+        ///// クォータニオンからオイラーに変換します。
+        ///// </summary>
+        ///// <param name="q"></param>
+        ///// <returns></returns>
+        //public static DxMath.Vector3 ToEularDxMath(this DxMath.Quaternion q)
+        //{
+        //    float ry = (float)(Math.Atan2((2.0 * (q.W * q.Y + q.X * q.Z)), (1.0 - 2.0 * (q.X * q.X + q.Y * q.Y))) / Math.PI * 180.0);
+        //    float rx = (float)(Math.Asin((2.0 * (q.W * q.X - q.Z * q.Y))) / Math.PI * 180.0);
+        //    float rz = (float)(Math.Atan2((2.0 * (q.W * q.Z + q.X * q.Y)), (1.0 - 2.0 * (q.X * q.X + q.Z * q.Z))) / Math.PI * 180.0);
+        //    return new DxMath.Vector3(rx, ry, rz);
+        //}
+
         /// <summary>
         /// クォータニオンからダブルの配列に変換します。
         /// </summary>
@@ -845,6 +881,7 @@ namespace MyUtility
         {
             return new float[] { (float)q.X, (float)q.Y, (float)q.Z, (float)q.W };
         }
+
     }
 
     /// <summary>

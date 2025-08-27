@@ -32,8 +32,10 @@ namespace AutoBlinkerMMD
             return new ModelItem();
         }
 
-        protected override ModelItem PmxModel2ActiveModelInfo(PmxModel pmxmdls)
+        protected override ModelItem PmxModel2ActiveModelInfo(string pmxFilePath)
         {
+            PmxModel pmxmdls = FilePath2PmxModel(pmxFilePath);
+
             var ret = new ModelItem() { ModelName = pmxmdls.ModelNameLocal };
 
             var allMorphs = new Dictionary<MorphType, List<MorphItem>>();

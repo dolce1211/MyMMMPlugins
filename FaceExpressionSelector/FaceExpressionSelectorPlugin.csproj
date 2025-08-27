@@ -240,16 +240,13 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="22.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="32.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="22.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="32.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

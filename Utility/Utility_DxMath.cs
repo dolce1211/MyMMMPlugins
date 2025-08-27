@@ -62,5 +62,36 @@ namespace MyUtility
             eular += angle;
             return eular.ToQuatanionDxMath();
         }
+
+        /// <summary>
+        /// Vector3の各成分を指定した小数点桁数で四捨五入する
+        /// </summary>
+        /// <param name="vector">対象のVector3</param>
+        /// <param name="decimals">保持する小数点桁数</param>
+        /// <returns>四捨五入後のVector3</returns>
+        public static DxMath.Vector3 RoundVector3(this DxMath.Vector3 vector, int decimals)
+        {
+            return new DxMath.Vector3(
+                (float)Math.Round(vector.X, decimals, MidpointRounding.AwayFromZero),
+                (float)Math.Round(vector.Y, decimals, MidpointRounding.AwayFromZero),
+                (float)Math.Round(vector.Z, decimals, MidpointRounding.AwayFromZero)
+            );
+        }
+
+        /// <summary>
+        /// Quaternionの各成分を指定した小数点桁数で四捨五入する
+        /// </summary>
+        /// <param name="quaternion">対象のQuaternion</param>
+        /// <param name="decimals">保持する小数点桁数</param>
+        /// <returns>四捨五入後のQuaternion</returns>
+        public static DxMath.Quaternion RoundQuaternion(this DxMath.Quaternion quaternion, int decimals)
+        {
+            return new DxMath.Quaternion(
+                (float)Math.Round(quaternion.X, decimals, MidpointRounding.AwayFromZero),
+                (float)Math.Round(quaternion.Y, decimals, MidpointRounding.AwayFromZero),
+                (float)Math.Round(quaternion.Z, decimals, MidpointRounding.AwayFromZero),
+                (float)Math.Round(quaternion.W, decimals, MidpointRounding.AwayFromZero)
+            );
+        }
     }
 }
