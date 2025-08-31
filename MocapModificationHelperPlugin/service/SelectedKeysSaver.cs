@@ -55,7 +55,7 @@ namespace MoCapModificationHelperPlugin.service
         {
             if (this.Scene.ActiveModel == null)
                 return false;
-            if (SelectedKeysSaverService.SelectedKeys?.Count == 0)
+            if (SelectedKeysSaverService.SelectedKeys==null || SelectedKeysSaverService.SelectedKeys?.Count == 0)
                 return false;
 
             foreach (var tuple in this.Scene.ActiveModel.Bones.SelectMany(b => b.Layers.Select(l => (bone: b, layer: l))))
@@ -66,9 +66,16 @@ namespace MoCapModificationHelperPlugin.service
                     var keyTuple = (bone: tuple.bone, layer: tuple.layer, frame: f);
                     var keyString = SelectedKeysSaverService.Tuple2String(keyTuple);
                     if (SelectedKeysSaverService.SelectedKeys.Contains(keyString))
+                    {
                         f.Selected = true;
+                        if(!tuple.layer.Selected)
+                            tuple.layer.Selected = true;
+
+                    }
+
                     else
                         f.Selected = false;
+
                 }
             }
             return true;

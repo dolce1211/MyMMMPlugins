@@ -27,7 +27,7 @@ namespace MoCapModificationHelperPlugin.service
         public void Execute(int mode)
         {
             this.ApplicationForm.Cursor = Cursors.WaitCursor;
-            //BeginAndEndUpdate(false);
+            BeginAndEndUpdate(false);
             ServiceFactory.IsBusy = true;
             try
             {
@@ -39,10 +39,14 @@ namespace MoCapModificationHelperPlugin.service
                 this.ApplicationForm.Cursor = Cursors.Default;
                 BeginAndEndUpdate(true);
                 this.ApplicationForm.Refresh();
-                ServiceFactory.IsBusy = false;
+                Task.Delay(200).ContinueWith((t) =>
+                {
+                    ServiceFactory.IsBusy = false;
+                });
             }
             PostExecute();
         }
+
 
         /// <summary>
         /// ウィンドウの描画を一時的に止めたり再開したりします。

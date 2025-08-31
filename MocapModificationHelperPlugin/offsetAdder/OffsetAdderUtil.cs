@@ -101,43 +101,6 @@ namespace MoCapModificationHelperPlugin.offsetAdder
         }
 
         /// <summary>
-        /// DataGridViewのカラムを設定する
-        /// </summary>
-        public static void ConfigureDataGridViewColumns(DataGridView dataGridView)
-        {
-            dataGridView.DataSource = new List<OffsetGridItem>();
-            try
-            {
-                // 属性によって列の表示/非表示やヘッダー名が自動設定されるため、
-                // 基本的な設定のみを行う
-
-                // 読み取り専用に設定
-                dataGridView.ReadOnly = true;
-
-                // 行の高さを調整
-                dataGridView.RowTemplate.Height = 20;
-
-                // カラム幅を中身に合わせる設定
-                dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
-
-                // ヘッダーのスタイル設定
-                dataGridView.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.SystemColors.Control;
-                dataGridView.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Bold);
-
-                // 選択モードを行全体に設定
-                dataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-                dataGridView.MultiSelect = false;
-
-                // 行ヘッダーを非表示
-                dataGridView.RowHeadersVisible = false;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"DataGridViewカラム設定エラー: {ex.Message}");
-            }
-        }
-
-        /// <summary>
         /// 現在のフレーム位置における、移動・回転状態を取得します。
         /// </summary>
         /// <param name="scene"></param>
@@ -213,10 +176,47 @@ namespace MoCapModificationHelperPlugin.offsetAdder
         }
 
         /// <summary>
+        /// DataGridViewのカラムを設定する
+        /// </summary>
+        public static void ConfigureDataGridViewColumns(DataGridView dataGridView)
+        {
+            dataGridView.DataSource = new List<OffsetGridItem>();
+            try
+            {
+                // 属性によって列の表示/非表示やヘッダー名が自動設定されるため、
+                // 基本的な設定のみを行う
+
+                // 読み取り専用に設定
+                dataGridView.ReadOnly = true;
+
+                // 行の高さを調整
+                dataGridView.RowTemplate.Height = 20;
+
+                // カラム幅を中身に合わせる設定
+                dataGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+
+                // ヘッダーのスタイル設定
+                dataGridView.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.SystemColors.Control;
+                dataGridView.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("MS UI Gothic", 9F, System.Drawing.FontStyle.Bold);
+
+                // 選択モードを行全体に設定
+                dataGridView.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                dataGridView.MultiSelect = false;
+
+                // 行ヘッダーを非表示
+                dataGridView.RowHeadersVisible = false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DataGridViewカラム設定エラー: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// offsetState.ItemsをDataGridViewに反映する
         /// </summary>
         /// <param name="itemsHash">OffsetStateItemのリスト</param>
-        public static void UpdateDataGridView(Scene scene, DataGridView dataGridView, Dictionary<string, IMotionFrameData> previousStates, OffsetState offsetState)
+        public static List<OffsetGridItem> UpdateDataGridView(Scene scene, DataGridView dataGridView, Dictionary<string, IMotionFrameData> previousStates, OffsetState offsetState)
         {
             try
             {
@@ -265,6 +265,8 @@ namespace MoCapModificationHelperPlugin.offsetAdder
                 var prevGridData = dataGridView.DataSource as List<OffsetGridItem>;
                 if (!OffsetGridItemEqualsTo(gridData, prevGridData))
                     dataGridView.DataSource = gridData;
+
+                return gridData;
             }
             catch (Exception ex)
             {
@@ -275,6 +277,7 @@ namespace MoCapModificationHelperPlugin.offsetAdder
                 // DataGridViewの描画を再開
                 dataGridView.ResumeLayout();
             }
+            return new List<OffsetGridItem>();
         }
 
         private static bool OffsetGridItemEqualsTo(List<OffsetGridItem> prev, List<OffsetGridItem> current)
@@ -337,27 +340,26 @@ namespace MoCapModificationHelperPlugin.offsetAdder
             [System.ComponentModel.DisplayName("ボーン")]
             public string LayerName { get; set; }
 
-            [System.ComponentModel.DisplayName("選択\r\nフレーム数")]
+            [System.ComponentModel.DisplayName("選択\r\nkey数")]
             public int FrameCount { get; set; }
 
-            [System.ComponentModel.DisplayName("移動量")]
+            [System.ComponentModel.DisplayName("オフセット\r\n移動量")]
             public string Move
             {
                 get
                 {
-                    return $"X:{MoveValue.X:0.00} Y:{MoveValue.Y:0.00} Z:{MoveValue.Z:0.00}";
+                    return $"X:{MoveValue.X:0.000}  Y:{MoveValue.Y:0.000}  Z:{MoveValue.Z:0.000}";
                 }
             }
 
-            [System.ComponentModel.DisplayName("回転量")]
+            [System.ComponentModel.DisplayName("オフセット\r\n回転量")]
             public string Rotation
             {
                 get
                 {
                     try
                     {
-                        var euler = MyUtility.ControlHelper_DxMath.ToEularDxMath(this.RotationValue);
-                        return $"X:{euler.X:0.00} Y:{euler.Y:0.00} Z:{euler.Z:0.00}";
+                        return $"X:{this._rotationEular.X:0.000}  Y:{this._rotationEular.Y:0.000}  Z:{this._rotationEular.Z:0.000}";
                     }
                     catch
                     {
@@ -369,8 +371,21 @@ namespace MoCapModificationHelperPlugin.offsetAdder
             [System.ComponentModel.Browsable(false)]
             public DxMath.Vector3 MoveValue { get; set; }
 
+            private DxMath.Vector3 _rotationEular = new DxMath.Vector3(0, 0, 0);
+
             [System.ComponentModel.Browsable(false)]
-            public DxMath.Quaternion RotationValue { get; set; }
+            private DxMath.Quaternion _rotationValue = new DxMath.Quaternion(0, 0, 0, 1);
+
+            [System.ComponentModel.Browsable(false)]
+            public DxMath.Quaternion RotationValue
+            {
+                get => _rotationValue;
+                set
+                {
+                    _rotationValue = value;
+                    _rotationEular = MyUtility.ControlHelper_DxMath.ToEularDxMath(_rotationValue);
+                }
+            }
         }
     }
 }

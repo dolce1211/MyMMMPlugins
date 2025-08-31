@@ -130,6 +130,11 @@ namespace MoCapModificationHelperPlugin
 
         public void Update(float Frame, float ElapsedTime)
         {
+            if(this.Scene.Mode!= EditMode.ModelMode)
+                return;
+            
+            if (ServiceFactory.IsBusy)
+                return;
             _frm?.Update(Frame, ElapsedTime);
         }
     }
