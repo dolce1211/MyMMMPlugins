@@ -35,7 +35,7 @@ namespace MoCapModificationHelperPlugin
 
         public System.Drawing.Image SmallImage => Properties.Resources._22;
 
-        private Config _config = new Config();
+        private Configs _configs = new Configs();
         private frmMain _frm = null;
 
         public Scene Scene { get; set; }
@@ -43,6 +43,9 @@ namespace MoCapModificationHelperPlugin
         public void Disabled()
         {
             _frm?.Close();
+            var mainform = (Form)ApplicationForm;
+            mainform.KeyDown -= KeydownHandler;
+            _frm.KeyDown -= KeydownHandler;
         }
 
         public void Dispose()
@@ -51,64 +54,68 @@ namespace MoCapModificationHelperPlugin
 
         public void Enabled()
         {
-            _config = LoadConfig();
-            _frm = new frmMain((Form)ApplicationForm, this.Scene, _config);
+            _configs = LoadConfig();
+            _frm = new frmMain((Form)ApplicationForm, this.Scene, _configs);
             _frm.Show();
 
             var mainform = (Form)ApplicationForm;
-            Keys prevPressedKeys = Keys.None;
-            DateTime prevPressedTime = DateTime.MinValue;
-            mainform.KeyDown += (s, e) =>
-            {
-                if (Scene.ActiveModel == null)
-                    return;
 
-                DateTime now = DateTime.Now;
-
-                var doublePressed = false;
-                if ((now - prevPressedTime).TotalSeconds <= 0.3)
-                {
-                    if (prevPressedKeys == e.KeyCode)
-                    {
-                        prevPressedTime = DateTime.MinValue;
-                        //素早く二度押しされた
-                        doublePressed = true;
-                    }
-                }
-                if (doublePressed)
-                {
-                    if (ServiceFactory.IsBusy)
-                        return;
-                    //二度押しされたキーに対応する処理を実行
-                    prevPressedKeys = Keys.None;
-                    prevPressedTime = DateTime.MinValue;
-                    if (_config.Services.Any(n => n.Keys == e.KeyCode))
-                    {
-                        var serviceType = _config.Services.FirstOrDefault(n => n.Keys == e.KeyCode).ServiceType;
-                        int mode = 0;
-                        if (e.Shift) mode |= 1;
-                        var service = ServiceFactory.Create(serviceType, this.Scene, this.ApplicationForm);
-                        if (service != null)
-                            service.Execute(mode);
-                    }
-                }
-                else
-                {
-                    prevPressedKeys = e.KeyCode;
-                    prevPressedTime = now;
-                }
-            };
+            mainform.KeyDown -= KeydownHandler;
+            mainform.KeyDown += KeydownHandler;
+            _frm.KeyDown -= KeydownHandler;
+            _frm.KeyDown += KeydownHandler;
         }
 
-        private Config LoadConfig()
+        private Keys _prevPressedKeys = Keys.None;
+        private DateTime _prevPressedTime = DateTime.MinValue;
+
+        private void KeydownHandler(object sender, KeyEventArgs e)
         {
-            Config ret = null;
+            if (Scene.ActiveModel == null)
+                return;
+
+            DateTime now = DateTime.Now;
+
+            var doublePressed = false;
+            if ((now - _prevPressedTime).TotalSeconds <= 0.3)
+            {
+                if (_prevPressedKeys == e.KeyCode)
+                {
+                    _prevPressedTime = DateTime.MinValue;
+                    //素早く二度押しされた
+                    doublePressed = true;
+                }
+            }
+            if (doublePressed)
+            {
+                if (ServiceFactory.IsBusy)
+                    return;
+                //二度押しされたキーに対応する処理を実行
+                _prevPressedKeys = Keys.None;
+                _prevPressedTime = DateTime.MinValue;
+                if (_configs.Services.Any(n => n.Keys == e.KeyCode))
+                {
+                    var serviceItem = _configs.Services.FirstOrDefault(n => n.Keys == e.KeyCode);
+                    // 該当するサービスを実行
+                    _frm.ExecuteService(serviceItem);
+                }
+            }
+            else
+            {
+                _prevPressedKeys = e.KeyCode;
+                _prevPressedTime = now;
+            }
+        }
+
+        private Configs LoadConfig()
+        {
+            Configs ret = null;
             try
             {
-                var configPath = Config.GetConfigFilePath();
+                var configPath = Configs.GetConfigFilePath();
                 if (File.Exists(configPath))
                 {
-                    ret = MyUtility.Serializer.Deserialize<Config>(configPath);
+                    ret = MyUtility.Serializer.Deserialize<Configs>(configPath);
                 }
             }
             catch (Exception ex)
@@ -116,7 +123,7 @@ namespace MoCapModificationHelperPlugin
                 // ログ出力やエラーハンドリングが必要に応じて追加
             }
             if (ret == null)
-                ret = new Config();
+                ret = new Configs();
             if (ret.Services.Count < 5)
                 ret.Initialize();
 
@@ -130,9 +137,9 @@ namespace MoCapModificationHelperPlugin
 
         public void Update(float Frame, float ElapsedTime)
         {
-            if(this.Scene.Mode!= EditMode.ModelMode)
+            if (this.Scene.Mode != EditMode.ModelMode)
                 return;
-            
+
             if (ServiceFactory.IsBusy)
                 return;
             _frm?.Update(Frame, ElapsedTime);

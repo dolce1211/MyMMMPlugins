@@ -16,7 +16,7 @@ namespace MoCapModificationHelperPlugin.service
     /// <returns></returns>
     internal class GapSelectorService : BaseService
     {
-        public override bool ExecuteInternal(int mode)
+        public override bool ExecuteInternal(ConfigItem config)
         {
             if (this.Scene.ActiveModel == null)
                 return false;

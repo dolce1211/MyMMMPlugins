@@ -33,6 +33,8 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.panel = new System.Windows.Forms.Panel();
+            this.cboHistory = new System.Windows.Forms.ComboBox();
+            this.chkModifiedLayerSelector = new System.Windows.Forms.CheckBox();
             this.cboSelectedKeyLoader = new System.Windows.Forms.ComboBox();
             this.cboSelectedKeySaver = new System.Windows.Forms.ComboBox();
             this.btnSelectedKeyLoader = new System.Windows.Forms.Button();
@@ -46,8 +48,8 @@
             this.cboGapSelector = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.pnlOffset = new System.Windows.Forms.Panel();
-            this.btnExecuteOffset = new System.Windows.Forms.Button();
             this.btnUndo = new System.Windows.Forms.Button();
+            this.btnExecuteOffset = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel.SuspendLayout();
@@ -73,7 +75,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(500, 166);
+            this.dataGridView1.Size = new System.Drawing.Size(462, 166);
             this.dataGridView1.TabIndex = 2;
             // 
             // timer1
@@ -85,6 +87,8 @@
             this.panel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel.Controls.Add(this.cboHistory);
+            this.panel.Controls.Add(this.chkModifiedLayerSelector);
             this.panel.Controls.Add(this.cboSelectedKeyLoader);
             this.panel.Controls.Add(this.cboSelectedKeySaver);
             this.panel.Controls.Add(this.btnSelectedKeyLoader);
@@ -97,10 +101,36 @@
             this.panel.Controls.Add(this.btnGapSelector);
             this.panel.Controls.Add(this.cboGapSelector);
             this.panel.Controls.Add(this.label1);
-            this.panel.Location = new System.Drawing.Point(77, 47);
+            this.panel.Location = new System.Drawing.Point(12, 60);
             this.panel.Name = "panel";
-            this.panel.Size = new System.Drawing.Size(500, 166);
+            this.panel.Size = new System.Drawing.Size(462, 166);
             this.panel.TabIndex = 3;
+            // 
+            // cboHistory
+            // 
+            this.cboHistory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.cboHistory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboHistory.FormattingEnabled = true;
+            this.cboHistory.Items.AddRange(new object[] {
+            "Enter",
+            "Space"});
+            this.cboHistory.Location = new System.Drawing.Point(356, 139);
+            this.cboHistory.Name = "cboHistory";
+            this.cboHistory.Size = new System.Drawing.Size(102, 20);
+            this.cboHistory.TabIndex = 15;
+            this.cboHistory.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.cboHistory_Format);
+            // 
+            // chkModifiedLayerSelector
+            // 
+            this.chkModifiedLayerSelector.AutoSize = true;
+            this.chkModifiedLayerSelector.Location = new System.Drawing.Point(356, 83);
+            this.chkModifiedLayerSelector.Name = "chkModifiedLayerSelector";
+            this.chkModifiedLayerSelector.Size = new System.Drawing.Size(36, 16);
+            this.chkModifiedLayerSelector.TabIndex = 14;
+            this.chkModifiedLayerSelector.Text = "逆";
+            this.chkModifiedLayerSelector.UseVisualStyleBackColor = true;
+            this.chkModifiedLayerSelector.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // cboSelectedKeyLoader
             // 
@@ -157,7 +187,7 @@
             this.cboModifiedLayerSelector.Items.AddRange(new object[] {
             "Enter",
             "Space"});
-            this.cboModifiedLayerSelector.Location = new System.Drawing.Point(292, 84);
+            this.cboModifiedLayerSelector.Location = new System.Drawing.Point(292, 81);
             this.cboModifiedLayerSelector.Name = "cboModifiedLayerSelector";
             this.cboModifiedLayerSelector.Size = new System.Drawing.Size(58, 20);
             this.cboModifiedLayerSelector.TabIndex = 9;
@@ -191,13 +221,13 @@
             // chkLayerBoneSelector
             // 
             this.chkLayerBoneSelector.AutoSize = true;
-            this.chkLayerBoneSelector.Location = new System.Drawing.Point(356, 52);
+            this.chkLayerBoneSelector.Location = new System.Drawing.Point(356, 54);
             this.chkLayerBoneSelector.Name = "chkLayerBoneSelector";
             this.chkLayerBoneSelector.Size = new System.Drawing.Size(36, 16);
             this.chkLayerBoneSelector.TabIndex = 6;
             this.chkLayerBoneSelector.Text = "逆";
             this.chkLayerBoneSelector.UseVisualStyleBackColor = true;
-            this.chkLayerBoneSelector.CheckedChanged += new System.EventHandler(this.chkLayerBoneSelector_CheckedChanged);
+            this.chkLayerBoneSelector.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // btnLayerBoneSelector
             // 
@@ -205,7 +235,7 @@
             this.btnLayerBoneSelector.Name = "btnLayerBoneSelector";
             this.btnLayerBoneSelector.Size = new System.Drawing.Size(280, 23);
             this.btnLayerBoneSelector.TabIndex = 5;
-            this.btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンを残して非選択";
+            this.btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンのみ選択";
             this.btnLayerBoneSelector.UseVisualStyleBackColor = true;
             this.btnLayerBoneSelector.Click += new System.EventHandler(this.btnGapSelector_Click);
             // 
@@ -251,27 +281,15 @@
             this.pnlOffset.Controls.Add(this.btnExecuteOffset);
             this.pnlOffset.Location = new System.Drawing.Point(117, 2);
             this.pnlOffset.Name = "pnlOffset";
-            this.pnlOffset.Size = new System.Drawing.Size(388, 26);
+            this.pnlOffset.Size = new System.Drawing.Size(350, 26);
             this.pnlOffset.TabIndex = 4;
             this.pnlOffset.Visible = false;
-            // 
-            // btnExecuteOffset
-            // 
-            this.btnExecuteOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnExecuteOffset.BackColor = System.Drawing.Color.Orange;
-            this.btnExecuteOffset.Location = new System.Drawing.Point(228, 1);
-            this.btnExecuteOffset.Name = "btnExecuteOffset";
-            this.btnExecuteOffset.Size = new System.Drawing.Size(85, 25);
-            this.btnExecuteOffset.TabIndex = 1;
-            this.btnExecuteOffset.Text = "オフセット付与";
-            this.btnExecuteOffset.UseVisualStyleBackColor = false;
-            this.btnExecuteOffset.Click += new System.EventHandler(this.btnExecuteOffset_Click);
             // 
             // btnUndo
             // 
             this.btnUndo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnUndo.Enabled = false;
-            this.btnUndo.Location = new System.Drawing.Point(312, 1);
+            this.btnUndo.Location = new System.Drawing.Point(274, 1);
             this.btnUndo.Name = "btnUndo";
             this.btnUndo.Size = new System.Drawing.Size(76, 25);
             this.btnUndo.TabIndex = 2;
@@ -279,13 +297,25 @@
             this.btnUndo.UseVisualStyleBackColor = true;
             this.btnUndo.Click += new System.EventHandler(this.btnUndo_Click);
             // 
+            // btnExecuteOffset
+            // 
+            this.btnExecuteOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnExecuteOffset.BackColor = System.Drawing.Color.Orange;
+            this.btnExecuteOffset.Location = new System.Drawing.Point(190, 1);
+            this.btnExecuteOffset.Name = "btnExecuteOffset";
+            this.btnExecuteOffset.Size = new System.Drawing.Size(85, 25);
+            this.btnExecuteOffset.TabIndex = 1;
+            this.btnExecuteOffset.Text = "オフセット付与";
+            this.btnExecuteOffset.UseVisualStyleBackColor = false;
+            this.btnExecuteOffset.Click += new System.EventHandler(this.btnExecuteOffset_Click);
+            // 
             // progressBar1
             // 
             this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.progressBar1.Location = new System.Drawing.Point(6, 34);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(499, 20);
+            this.progressBar1.Size = new System.Drawing.Size(461, 20);
             this.progressBar1.TabIndex = 5;
             this.progressBar1.Visible = false;
             // 
@@ -293,12 +323,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(513, 211);
+            this.ClientSize = new System.Drawing.Size(475, 211);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.pnlOffset);
             this.Controls.Add(this.panel);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.button1);
+            this.KeyPreview = true;
             this.Name = "frmMain";
             this.Text = "色々ヘルパー";
             this.TopMost = true;
@@ -333,5 +364,7 @@
         private System.Windows.Forms.Button btnExecuteOffset;
         private System.Windows.Forms.Button btnUndo;
         private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.CheckBox chkModifiedLayerSelector;
+        private System.Windows.Forms.ComboBox cboHistory;
     }
 }

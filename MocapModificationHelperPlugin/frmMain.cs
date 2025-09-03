@@ -32,15 +32,15 @@ namespace MoCapModificationHelperPlugin
 
         private Form _parentForm;
         private Scene _scene;
-        private Config _config;
+        private Configs _configs;
 
-        public frmMain(Form parentForm, Scene scene, Config config)
+        public frmMain(Form parentForm, Scene scene, Configs configs)
         {
             InitializeComponent();
             this.panel.Location = this.dataGridView1.Location;
             _parentForm = parentForm;
             _scene = scene;
-            _config = config;
+            _configs = configs;
 
             DateTime lastPressed = DateTime.MinValue;
 
@@ -50,17 +50,18 @@ namespace MoCapModificationHelperPlugin
 
             this.cboLayerBoneSelector.Tag = ServiceType.LayerBoneSelectorService;
             this.btnLayerBoneSelector.Tag = ServiceType.LayerBoneSelectorService;
+            this.chkLayerBoneSelector.Tag = ServiceType.LayerBoneSelectorService;
 
             this.cboModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
             this.btnModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
-
+            this.chkModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
             this.cboSelectedKeySaver.Tag = ServiceType.SelectedKeysSaverService;
             this.btnSelectedKeySaver.Tag = ServiceType.SelectedKeysSaverService;
 
             this.cboSelectedKeyLoader.Tag = ServiceType.SelectedKeysLoaderService;
             this.btnSelectedKeyLoader.Tag = ServiceType.SelectedKeysLoaderService;
 
-            CreateComboBoxes();
+            CreateControls();
             this.timer1.Interval = 500;
             this.timer1.Enabled = false;
 
@@ -117,7 +118,7 @@ namespace MoCapModificationHelperPlugin
 
             this._offsetAdder.Update();
 
-            this._offsetAdder.BeginAndEndUpdate(false);
+            //this._offsetAdder.BeginAndEndUpdate(false);
 
             try
             {
@@ -136,7 +137,7 @@ namespace MoCapModificationHelperPlugin
             }
             finally
             {
-                this._offsetAdder.BeginAndEndUpdate(true);
+                //this._offsetAdder.BeginAndEndUpdate(true);
                 _prefSelectedFrames = currentSelectedFrames;
             }
             return false;
@@ -224,22 +225,15 @@ namespace MoCapModificationHelperPlugin
             ApplyAndGetCurrentMode(_offsetAdder == null ? 0 : 1);
         }
 
-        private void chkLayerBoneSelector_CheckedChanged(object sender, EventArgs e)
+        private void CreateControls()
         {
-            if (chkLayerBoneSelector.Checked)
-                this.btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンを非選択";
-            else
-                this.btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンを残して非選択";
-        }
-
-        private void CreateComboBoxes()
-        {
+            this.panel.BeginUpdate();
             this.panel.Enabled = false;
             try
             {
-                var keys = new List<Keys>();
-                keys.Add(Keys.Enter);
-                keys.Add(Keys.Space);
+                var keysList = new List<Keys>();
+                keysList.Add(Keys.Enter);
+                keysList.Add(Keys.Space);
 
                 // A-Zのキーを追加
                 for (Keys key = Keys.A; key <= Keys.Z; key++)
@@ -255,46 +249,73 @@ namespace MoCapModificationHelperPlugin
                             // MMMのショートカットキーのうち制作に影響がでそうなものと被るキーは除外
                             continue;
                     }
-                    keys.Add(key);
+                    keysList.Add(key);
                 }
                 var comboBoxes = GetAllComboBoxes();
+                var chkboxes = GetAllChkBoxes();
                 foreach (var cbo in comboBoxes)
                 {
                     cbo.Items.Clear();
                     cbo.Items.Add(Keys.None);
-                    foreach (var key in keys)
-                    {
-                        cbo.Items.Add(key);
-                    }
+
                     var serviceType = (ServiceType)cbo.Tag;
-                    if (_config.Services.Any(s => s.ServiceType == serviceType))
+                    ConfigItem serviceItem = null;
+
+                    if (_configs.Services.Any(s => s.ServiceType == serviceType))
+                        serviceItem = _configs.Services.FirstOrDefault(p => p.ServiceType == serviceType);
+
+                    cbo.SelectedItem = Keys.None;
+                    foreach (var key in keysList)
                     {
-                        var serviceItem = _config.Services.FirstOrDefault(p => p.ServiceType == serviceType);
-                        cbo.SelectedItem = serviceItem.Keys;
-                        if (serviceItem.Keys != Keys.None)
-                            keys.Remove(serviceItem.Keys); // 他のコンボボックスで選択されないようにする
+                        if (!_configs.Services.Any(n => n.Keys == key) || serviceItem?.Keys == key)
+                        {
+                            cbo.Items.Add(key);
+                            if (serviceItem?.Keys == key)
+                            {
+                                cbo.SelectedItem = key;
+                            }
+                        }
                     }
-                    else
+                    var chkbox = chkboxes.FirstOrDefault(n => n.Tag != null && n.Tag.Equals(serviceType));
+                    if (chkbox != null && serviceItem != null)
                     {
-                        cbo.SelectedItem = Keys.None;
+                        chkbox.Checked = serviceItem.Inverse;
                     }
                 }
             }
             finally
             {
                 this.panel.Enabled = true;
+                this.panel.EndUpdate();
             }
         }
 
         private List<ComboBox> GetAllComboBoxes()
         {
-            return new List<ComboBox> {
-            this.cboGapSelector,
-            this.cboLayerBoneSelector,
-            this.cboModifiedLayerSelector,
-            this.cboSelectedKeySaver,
-            this.cboSelectedKeyLoader
-            };
+            var list = new List<ComboBox>();
+            foreach (Control ctrl in this.panel.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
+            {
+                if (ctrl is ComboBox cbo)
+                {
+                    if (ctrl.Tag != null && ctrl.Tag.GetType() == typeof(ServiceType))
+                        list.Add(cbo);
+                }
+            }
+            return list;
+        }
+
+        private List<CheckBox> GetAllChkBoxes()
+        {
+            var list = new List<CheckBox>();
+            foreach (Control ctrl in this.panel.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
+            {
+                if (ctrl is CheckBox cbo)
+                {
+                    if (ctrl.Tag.GetType() == typeof(ServiceType))
+                        list.Add(cbo);
+                }
+            }
+            return list;
         }
 
         private void cboGapSelector_Format(object sender, ListControlConvertEventArgs e)
@@ -318,31 +339,43 @@ namespace MoCapModificationHelperPlugin
         {
             if (!this.panel.Enabled)
                 return;
-            ComboBox cbo = (ComboBox)sender;
 
             SaveConfig();
 
-            this.CreateComboBoxes();
+            this.CreateControls();
+            this.cboGapSelector.Focus();
         }
 
         public void SaveConfig()
         {
             var comboBoxes = GetAllComboBoxes();
-            _config.Services.Clear();
+            var chkBoxes = GetAllChkBoxes();
+            _configs.Services.Clear();
             foreach (var tmpCombo in comboBoxes)
             {
                 var serviceType = (ServiceType)tmpCombo.Tag;
                 var key = (Keys)tmpCombo.SelectedItem;
+                var chkbox = chkBoxes.FirstOrDefault(n => n.Tag != null && n.Tag.Equals(serviceType));
+                var inverse = chkbox == null ? false : chkbox.Checked;
 
-                if (!_config.Services.Any(s => s.ServiceType == serviceType))
+                if (!_configs.Services.Any(s => s.ServiceType == serviceType))
                 {
-                    _config.Services.Add(new ConfigItem() { ServiceType = serviceType, Keys = key });
+                    _configs.Services.Add(new ConfigItem() { ServiceType = serviceType, Keys = key, Inverse = inverse });
                 }
             }
 
+            if (chkLayerBoneSelector.Checked)
+                btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーン以外を選択";
+            else
+                btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンのみ選択";
+            if (chkModifiedLayerSelector.Checked)
+                btnModifiedLayerSelector.Text = "現Frで変更が加えられてないボーンを全選択";
+            else
+                btnModifiedLayerSelector.Text = "現Frで変更が加えられているボーンを全選択";
+
             try
             {
-                MyUtility.Serializer.Serialize(this._config, Config.GetConfigFilePath());
+                MyUtility.Serializer.Serialize(this._configs, Configs.GetConfigFilePath());
             }
             catch (Exception ex)
             {
@@ -357,14 +390,53 @@ namespace MoCapModificationHelperPlugin
                 return;
             }
             var serviceType = (ServiceType)((Button)sender).Tag;
-            int mode = 0;
-            if (serviceType == ServiceType.LayerBoneSelectorService)
-                mode = chkLayerBoneSelector.Checked ? 1 : 0;
-            var service = ServiceFactory.Create(serviceType, this._scene, this._parentForm);
+            var config = _configs.Services.FirstOrDefault(n => n.ServiceType == serviceType);
+            ExecuteService(config);
+        }
+
+        public void ExecuteService(ConfigItem config)
+        {
+            if (config == null)
+                return;
+            var service = ServiceFactory.Create(config.ServiceType, this._scene, this._parentForm);
             if (service != null)
-                service.Execute(mode);
+            {
+                if (service is SelectedKeysLoaderService loaderService)
+                    loaderService.HistoryIndex = this.cboHistory.SelectedIndex;
+
+                service.Execute(config);
+                ApplyService(service, config);
+            }
 
             MMDUtilility.SetForegroundWindow(this._parentForm.Handle);
+        }
+
+        /// <summary>
+        /// サービスの実行結果をフォームに反映させる
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="config"></param>
+        private void ApplyService(BaseService service, ConfigItem config)
+        {
+            if (service == null || config == null)
+                return;
+            if (service is SelectedKeysSaverService saverService)
+            {
+                this.cboHistory.BeginUpdate();
+                try
+                {
+                    this.cboHistory.Items.Clear();
+                    if (SelectedKeysSaverService.Histories.Count > 0)
+                    {
+                        this.cboHistory.Items.AddRange(SelectedKeysSaverService.Histories.ToArray());
+                        this.cboHistory.SelectedIndex = 0;
+                    }
+                }
+                finally
+                {
+                    this.cboHistory.EndUpdate();
+                }
+            }
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -413,7 +485,7 @@ namespace MoCapModificationHelperPlugin
             if (MessageBox.Show(msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                 return;
 
-            _offsetAdder.Execute(0);
+            _offsetAdder.Execute(new ConfigItem() { ServiceType = ServiceType.OffsetAdderService });
 
             this.OffsetExecuted = offsetExecuted;
         }
@@ -452,6 +524,19 @@ namespace MoCapModificationHelperPlugin
                 this.progressBar1.Visible = false;
                 this._parentForm.BeginAndEndUpdate(true);
                 ServiceFactory.IsBusy = false;
+            }
+        }
+
+        private void cboHistory_Format(object sender, ListControlConvertEventArgs e)
+        {
+            var history = e.Value as service.KeySaverHistory;
+            if (history == null)
+            {
+                e.Value = "";
+            }
+            else
+            {
+                e.Value = $"{history.DateTime.ToString("HH:mm:ss")} (b:{history.SelectedBones.Count},m:{history.SelectedMorphs.Count})";
             }
         }
     }

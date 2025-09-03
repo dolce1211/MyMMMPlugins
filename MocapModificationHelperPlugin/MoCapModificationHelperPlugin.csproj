@@ -124,7 +124,7 @@
     <Compile Include="..\Utility\Vmd\VmdVersion.cs">
       <Link>Linkfiles\vmd\VmdVersion.cs</Link>
     </Compile>
-    <Compile Include="config\config.cs" />
+    <Compile Include="config\Configs.cs" />
     <Compile Include="frmMain.cs">
       <SubType>Form</SubType>
     </Compile>

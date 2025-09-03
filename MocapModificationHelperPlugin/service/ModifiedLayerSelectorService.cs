@@ -18,12 +18,12 @@ namespace MoCapModificationHelperPlugin.service
     /// <returns></returns>
     internal class ModifiedLayerSelectorService : BaseService
     {
-        public override bool ExecuteInternal(int mode)
+        public override bool ExecuteInternal(ConfigItem config)
         {
             if (this.Scene.ActiveModel == null)
                 return false;
 
-            return ExecuteSpace();
+            return ExecuteSpace(config);
         }
 
         // フレーム検索の高速化のためのキャッシュ
@@ -31,44 +31,23 @@ namespace MoCapModificationHelperPlugin.service
 
         private static readonly Quaternion IdentityQuaternion = Quaternion.Identity;
 
-        private bool ExecuteSpace()
+        private bool ExecuteSpace(ConfigItem config)
         {
             var ret = false;
             var currentPosition = Scene.MarkerPosition;
+            var inverse = config.Inverse;
+            // キーボードでshiftが押下されている場合は一時的に反転
+            if (Control.ModifierKeys.HasFlag(Keys.Shift))
+                inverse = !inverse;
 
             foreach (var tuple in this.Scene.ActiveModel.Bones.SelectMany(b => b.Layers.Select(l => (bone: b, layer: l))))
             {
-                if (tuple.layer.Name != null)
-                    Debug.WriteLine("Center");
-                //if (tuple.layer.Frames.Count == 0)
-                //{
-                //    tuple.layer.Selected = false;
-                //    continue;
-                //}
-
-                //// 現行フレーム直前のフレームを取得
-                //IMotionFrameData lastFrame = null;
-                //long maxFrameNumber = -1;
-
-                //foreach (var frame in tuple.layer.Frames)
-                //{
-                //    if (frame.FrameNumber <= currentPosition && frame.FrameNumber > maxFrameNumber)
-                //    {
-                //        maxFrameNumber = frame.FrameNumber;
-                //        lastFrame = frame;
-                //    }
-                //}
-
-                //if (lastFrame == null)
-                //{
-                //    tuple.layer.Selected = false;
-
-                //    continue;
-                //}
-
-                // 値の比較を効率化
                 var selected = tuple.layer.CurrentLocalMotion.Move.RoundVector3(4) != ZeroVector || tuple.layer.CurrentLocalMotion.Rotation.RoundQuaternion(4) != IdentityQuaternion;
+                if (inverse)
+                    selected = !selected;
+
                 tuple.layer.Selected = selected;
+
                 tuple.layer.Frames.FirstOrDefault().Selected = selected;
                 if (selected)
                     ret = true;
@@ -76,6 +55,5 @@ namespace MoCapModificationHelperPlugin.service
 
             return ret;
         }
-
     }
 }

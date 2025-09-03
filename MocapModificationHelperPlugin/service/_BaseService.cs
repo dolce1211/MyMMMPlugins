@@ -24,14 +24,14 @@ namespace MoCapModificationHelperPlugin.service
             this.ApplicationForm = (Form)applicationForm;
         }
 
-        public void Execute(int mode)
+        public void Execute(ConfigItem config)
         {
             this.ApplicationForm.Cursor = Cursors.WaitCursor;
             BeginAndEndUpdate(false);
             ServiceFactory.IsBusy = true;
             try
             {
-                if (ExecuteInternal(mode))
+                if (ExecuteInternal(config))
                     this.ApplicationForm.Refresh();
             }
             finally
@@ -47,7 +47,6 @@ namespace MoCapModificationHelperPlugin.service
             PostExecute();
         }
 
-
         /// <summary>
         /// ウィンドウの描画を一時的に止めたり再開したりします。
         /// </summary>
@@ -60,10 +59,9 @@ namespace MoCapModificationHelperPlugin.service
                 MMDUtil.MMDUtilility.BeginAndEndUpdate(otherWindow.hWnd, flg);
         }
 
-        public abstract bool ExecuteInternal(int mode);
+        public abstract bool ExecuteInternal(ConfigItem config);
 
         public virtual void PostExecute()
-        {
-        }
+        { }
     }
 }

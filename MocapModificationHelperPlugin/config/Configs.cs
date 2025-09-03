@@ -6,11 +6,14 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace MoCapModificationHelperPlugin
 {
     public enum ServiceType
     {
+        None = 0,
+
         /// <summary>
         /// 選択中のキーからレイヤーボーンのみを抽出して選択する
         /// </summary>
@@ -42,11 +45,11 @@ namespace MoCapModificationHelperPlugin
         OffsetAdderService,
     }
 
-    public class Config
+    public class Configs
     {
         public List<ConfigItem> Services = new List<ConfigItem>();
 
-        public Config()
+        public Configs()
         {
         }
 
@@ -72,5 +75,6 @@ namespace MoCapModificationHelperPlugin
     {
         public Keys Keys { get; set; }
         public ServiceType ServiceType { get; set; }
+        public bool Inverse { get; set; }
     }
 }

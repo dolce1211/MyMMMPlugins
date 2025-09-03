@@ -12,25 +12,30 @@ namespace MoCapModificationHelperPlugin.service
     /// </summary>
     internal class LayerBoneSelectorService : BaseService
     {
-        public override bool ExecuteInternal(int mode)
+        public override bool ExecuteInternal(ConfigItem config)
         {
             if
                 (this.Scene.ActiveModel == null)
                 return false;
+
+            var inverse = config.Inverse;
+            // キーボードでshiftが押下されている場合は一時的に反転
+            if (Control.ModifierKeys.HasFlag(Keys.Shift))
+                inverse = !inverse;
 
             //レイヤーボーンのみ選択する
             var selectedMainLayers = this.Scene.ActiveModel.Bones.SelectMany(n => n.SelectedLayers.Where(l =>
             {
                 if (l.Selected)
                 {
-                    if (mode == 1)
+                    if (inverse)
                     {
-                        //shift押してるとメインレイヤーのみ残す
+                        //メインレイヤーのみ残す
                         return (l.LayerID != 0);
                     }
                     else
                     {
-                        //shift押してないとメインレイヤー以外を残す
+                        //メインレイヤー以外を残す
                         return (l.LayerID == 0);
                     }
                 }

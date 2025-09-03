@@ -24,6 +24,7 @@ namespace MoCapModificationHelperPlugin.service
         private long _frameNumber = 0;
         private ProgressBar _progressBar = null;
         private Form _frmMain = null;
+
         public void Update()
         {
             if (this.Scene.MarkerPosition != _frameNumber)
@@ -35,13 +36,12 @@ namespace MoCapModificationHelperPlugin.service
 
         public void ExecuteUndo()
         {
-
         }
 
-        public void Initialize(Scene scene, IWin32Window applicationForm,Form frmMain, ProgressBar progressBar)
+        public void Initialize(Scene scene, IWin32Window applicationForm, Form frmMain, ProgressBar progressBar)
         {
             _progressBar = progressBar;
-            _frmMain = frmMain; 
+            _frmMain = frmMain;
             Initialize(scene, applicationForm);
         }
 
@@ -74,7 +74,7 @@ namespace MoCapModificationHelperPlugin.service
             }
         }
 
-        public override bool ExecuteInternal(int mode)
+        public override bool ExecuteInternal(ConfigItem config)
         {
             //全ての選択されているフレームを取得
             var currentPosition = this.Scene.MarkerPosition;
