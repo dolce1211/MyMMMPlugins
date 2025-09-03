@@ -241,8 +241,8 @@ ClientBin/
 orleans.codegen.cs
 
 # Project directories to ignore
-»ì’†_ApplyOffsetRegidentPlugin/
-»ì’†_MocopiReceiverPlugin/
+ongoing_ApplyOffsetRegidentPlugin/
+ongoing_MocopiReceiverPlugin/
 WindowsFormsApp1/
 
 # Including strong name files can present a security risk
