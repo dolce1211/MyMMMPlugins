@@ -1,5 +1,6 @@
 ﻿using DxMath;
 using MikuMikuPlugin;
+using MMDUtil;
 using MyUtility;
 using System;
 using System.Collections.Generic;
@@ -40,19 +41,41 @@ namespace MoCapModificationHelperPlugin.service
             if (Control.ModifierKeys.HasFlag(Keys.Shift))
                 inverse = !inverse;
 
-            foreach (var tuple in this.Scene.ActiveModel.Bones.SelectMany(b => b.Layers.Select(l => (bone: b, layer: l))))
+            foreach (var bone in this.Scene.ActiveModel.Bones)
             {
-                var selected = tuple.layer.CurrentLocalMotion.Move.RoundVector3(4) != ZeroVector || tuple.layer.CurrentLocalMotion.Rotation.RoundQuaternion(4) != IdentityQuaternion;
-                if (inverse)
-                    selected = !selected;
+                if (this.Scene.ActiveModel.FindDisplayFramesFromBone(bone) != null) // 表示枠内のボーンのみ処理
+                {
+                    foreach (var tuple in bone.Layers.Select(l => (bone: bone, layer: l)))
+                    {
+                        var selected = tuple.layer.CurrentLocalMotion.Move.RoundVector3(4) != ZeroVector || tuple.layer.CurrentLocalMotion.Rotation.RoundQuaternion(4) != IdentityQuaternion;
+                        if (inverse)
+                            selected = !selected;
 
-                tuple.layer.Selected = selected;
+                        tuple.layer.Selected = selected;
 
-                tuple.layer.Frames.FirstOrDefault().Selected = selected;
-                if (selected)
-                    ret = true;
+                        tuple.layer.Frames.FirstOrDefault().Selected = selected;
+                        if (selected)
+                            ret = true;
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine($"FindDisplayFramesFromBone is null. bone:{bone.Name} ");
+                }
+            }
+            foreach (var morph in this.Scene.ActiveModel.Morphs)
+            {
+                if (this.Scene.ActiveModel.FindDisplayFramesFromMorph(morph) != null)// 表示枠内のモーフのみ処理
+                {
+                    morph.Selected = morph.CurrentWeight != 0.0f;
+                }
             }
 
+            var gridHandle = MMMUtilility.FindTimelineGridControl(this.ApplicationForm);
+            if (gridHandle != IntPtr.Zero)
+            {
+                MMMUtilility.ClickControlAt(gridHandle, 20, 200);
+            }
             return ret;
         }
     }

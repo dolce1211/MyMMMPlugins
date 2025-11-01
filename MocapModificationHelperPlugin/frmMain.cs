@@ -55,12 +55,17 @@ namespace MoCapModificationHelperPlugin
             this.cboModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
             this.btnModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
             this.chkModifiedLayerSelector.Tag = ServiceType.ModifiedLayerSelectorService;
+
             this.cboSelectedKeySaver.Tag = ServiceType.SelectedKeysSaverService;
             this.btnSelectedKeySaver.Tag = ServiceType.SelectedKeysSaverService;
 
             this.cboSelectedKeyLoader.Tag = ServiceType.SelectedKeysLoaderService;
             this.btnSelectedKeyLoader.Tag = ServiceType.SelectedKeysLoaderService;
 
+            this.cboFillDisplayFrame.Tag = ServiceType.FillDisplayFramesService;
+            this.btnFillDisplayFrame.Tag = ServiceType.FillDisplayFramesService;
+
+            this.chkClickOffsetBtnByShiftEnter.Checked = configs.ClickOffsetBtnByShiftEnter;
             CreateControls();
             this.timer1.Interval = 500;
             this.timer1.Enabled = false;
@@ -89,7 +94,7 @@ namespace MoCapModificationHelperPlugin
                 return;
             }
             _datetime = DateTime.Now;
-            this.button1.Enabled = !(_scene?.ActiveModel == null);
+            this.btnOffset.Enabled = !(_scene?.ActiveModel == null);
             if (_offsetAdder == null)
                 // オフセット付与モードでなければ何もしない
                 return;
@@ -143,26 +148,26 @@ namespace MoCapModificationHelperPlugin
             return false;
         }
 
-        private void SwitchOffsetAddMode()
-        {
-            int mode = 0;
-            if (_scene?.ActiveModel == null)
-            {
-                _offsetAdder = null;
-            }
-            if (_offsetAdder != null)
-            {
-                //オフセット付与モードオン
-                mode = 1;
-            }
-            else
-            {
-                //オフセット付与モードオフ
-                mode = 0;
-            }
+        //private void SwitchOffsetAddMode()
+        //{
+        //    int mode = 0;
+        //    if (_scene?.ActiveModel == null)
+        //    {
+        //        _offsetAdder = null;
+        //    }
+        //    if (_offsetAdder != null)
+        //    {
+        //        //オフセット付与モードオン
+        //        mode = 1;
+        //    }
+        //    else
+        //    {
+        //        //オフセット付与モードオフ
+        //        mode = 0;
+        //    }
 
-            ApplyAndGetCurrentMode(mode);
-        }
+        //    ApplyAndGetCurrentMode(mode);
+        //}
 
         /// <summary>
         /// オフセット付与モードの適用と現在のモードの取得を行う
@@ -182,14 +187,14 @@ namespace MoCapModificationHelperPlugin
             }
             if (mode == 1)
             {
-                button1.Text = "戻る";
+                btnOffset.Text = "戻る";
                 this.BackColor = Color.Black;
 
                 ret = 1;
             }
             else
             {
-                button1.Text = "オフセット付与準備";
+                btnOffset.Text = "オフセット付与準備";
                 this.BackColor = _defBackColor;
                 //オフセット付与モードオフなら何もしない
                 // DataGridViewもクリア
@@ -204,7 +209,7 @@ namespace MoCapModificationHelperPlugin
             return ret;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnOffset_Click(object sender, EventArgs e)
         {
             if (_scene?.ActiveModel == null)
             {
@@ -280,6 +285,36 @@ namespace MoCapModificationHelperPlugin
                     if (chkbox != null && serviceItem != null)
                     {
                         chkbox.Checked = serviceItem.Inverse;
+                    }
+                }
+                var interpolateService = _configs.Services.FirstOrDefault(n => n.ServiceType == ServiceType.InterpolateSetterService);
+                if (interpolateService != null)
+                {
+                    switch (interpolateService.InterpolateType)
+                    {
+                        case InterpolateType.R:
+                            rbInterpolateR.Checked = true;
+                            break;
+
+                        case InterpolateType.X:
+                            rbInterpolateX.Checked = true;
+                            break;
+
+                        case InterpolateType.Y:
+                            rbInterpolateY.Checked = true;
+                            break;
+
+                        case InterpolateType.Z:
+                            rbInterpolateZ.Checked = true;
+                            break;
+
+                        case InterpolateType.ALL:
+                            rbInterpolateAll.Checked = true;
+                            break;
+
+                        default:
+                            rbInterpolateR.Checked = true;
+                            break;
                     }
                 }
             }
@@ -373,6 +408,13 @@ namespace MoCapModificationHelperPlugin
             else
                 btnModifiedLayerSelector.Text = "現Frで変更が加えられているボーンを全選択";
 
+            var interpolateConfig = Configs.CreateInterpolateSetterService();
+            interpolateConfig.InterpolateType = GetInterpolateType();
+            if (interpolateConfig.InterpolateType == InterpolateType.none)
+                interpolateConfig.InterpolateType = InterpolateType.R;
+
+            _configs.Services.Add(interpolateConfig);
+
             try
             {
                 MyUtility.Serializer.Serialize(this._configs, Configs.GetConfigFilePath());
@@ -394,7 +436,14 @@ namespace MoCapModificationHelperPlugin
             ExecuteService(config);
         }
 
-        public void ExecuteService(ConfigItem config)
+        public void TryClickOffsetButton()
+        {
+            if (chkClickOffsetBtnByShiftEnter.Checked)
+                if (this.btnExecuteOffset.Visible && this.btnExecuteOffset.Enabled)
+                    this.btnExecuteOffset.PerformClick();
+        }
+
+        public void ExecuteService(ConfigItem config, Keys key = Keys.None)
         {
             if (config == null)
                 return;
@@ -403,12 +452,71 @@ namespace MoCapModificationHelperPlugin
             {
                 if (service is SelectedKeysLoaderService loaderService)
                     loaderService.HistoryIndex = this.cboHistory.SelectedIndex;
-
+                if (service is InterpolateService interpolateSetterService)
+                {
+                    int palletteindex = GetPalletteIndex(key);
+                    InterpolateType interpolateType = GetInterpolateType();
+                    interpolateSetterService.SetTypeAndPallette(palletteindex, interpolateType);
+                    if (config.InterpolateType == InterpolateType.none)
+                        config.InterpolateType = InterpolateType.R;
+                }
                 service.Execute(config);
                 ApplyService(service, config);
             }
 
             MMDUtilility.SetForegroundWindow(this._parentForm.Handle);
+        }
+
+        private InterpolateType GetInterpolateType()
+        {
+            if (rbInterpolateR.Checked)
+                return InterpolateType.R;
+            else if (rbInterpolateX.Checked)
+                return InterpolateType.X;
+            else if (rbInterpolateY.Checked)
+                return InterpolateType.Y;
+            else if (rbInterpolateZ.Checked)
+                return InterpolateType.Z;
+            else if (rbInterpolateAll.Checked)
+                return InterpolateType.ALL;
+            else
+                return InterpolateType.none;
+        }
+
+        private int GetPalletteIndex(Keys key)
+        {
+            switch (key)
+            {
+                case Keys.D0:
+                case Keys.NumPad0:
+                    return -1; // デフォルト値
+                case Keys.D1:
+                case Keys.NumPad1:
+                    return 0;
+
+                case Keys.D2:
+                case Keys.NumPad2:
+                    return 1;
+
+                case Keys.D3:
+                case Keys.NumPad3:
+                    return 2;
+
+                case Keys.D4:
+                case Keys.NumPad4:
+                    return 3;
+
+                case Keys.D5:
+                case Keys.NumPad5:
+                    return 4;
+
+                case Keys.D6:
+                case Keys.NumPad6:
+                    return 5;
+
+                default:
+                    return -10;
+            }
         }
 
         /// <summary>
@@ -437,6 +545,9 @@ namespace MoCapModificationHelperPlugin
                     this.cboHistory.EndUpdate();
                 }
             }
+
+            if (service is InterpolateService interpolateSetterService)
+                SaveConfig();
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -538,6 +649,15 @@ namespace MoCapModificationHelperPlugin
             {
                 e.Value = $"{history.DateTime.ToString("HH:mm:ss")} (b:{history.SelectedBones.Count},m:{history.SelectedMorphs.Count})";
             }
+        }
+
+        private void panel_Paint(object sender, PaintEventArgs e)
+        {
+        }
+
+        private void chkClickOffsetBtnByShiftEnter_CheckedChanged(object sender, EventArgs e)
+        {
+            SaveConfig();
         }
     }
 }

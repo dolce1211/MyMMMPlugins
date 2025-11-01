@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MMDUtil;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,24 +25,26 @@ namespace MoCapModificationHelperPlugin.service
                 inverse = !inverse;
 
             //レイヤーボーンのみ選択する
-            var selectedMainLayers = this.Scene.ActiveModel.Bones.SelectMany(n => n.SelectedLayers.Where(l =>
-            {
-                if (l.Selected)
+            var selectedMainLayers = this.Scene.ActiveModel.Bones
+                    .Where(b => this.Scene.ActiveModel.FindDisplayFramesFromBone(b) != null)
+                    .SelectMany(n => n.SelectedLayers.Where(l =>
                 {
-                    if (inverse)
+                    if (l.Selected)
                     {
-                        //メインレイヤーのみ残す
-                        return (l.LayerID != 0);
+                        if (inverse)
+                        {
+                            //メインレイヤーのみ残す
+                            return (l.LayerID != 0);
+                        }
+                        else
+                        {
+                            //メインレイヤー以外を残す
+                            return (l.LayerID == 0);
+                        }
                     }
-                    else
-                    {
-                        //メインレイヤー以外を残す
-                        return (l.LayerID == 0);
-                    }
+                    return false;
                 }
-                return false;
-            }
-            )).ToList();
+                )).ToList();
 
             if (selectedMainLayers != null)
             {

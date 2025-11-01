@@ -90,7 +90,7 @@ namespace MoCapModificationHelperPlugin.service
 
             try
             {
-                return ExecuteOffsetAsync(processingItems);
+                return ExecuteAddOffsetAsync(processingItems);
             }
             finally
             {
@@ -102,6 +102,7 @@ namespace MoCapModificationHelperPlugin.service
                         return b.Layers.Select(layer => (name: b.Name, bone: b, layer: layer));
                     }).FirstOrDefault(tuple => kvp.Key == $"{tuple.bone.Name}{tuple.layer.Name ?? ""}");
                     currentLayer.layer.CurrentLocalMotion = new MotionData(kvp.Value.Position, kvp.Value.Quaternion);
+                    kvp.Value.Selected = true;
                 });
                 this.Scene.MarkerPosition = currentPosition;
                 SetPrevisouState();
@@ -207,7 +208,7 @@ namespace MoCapModificationHelperPlugin.service
             return processingItems;
         }
 
-        private bool ExecuteOffsetAsync(List<(string layerName, MotionLayer layer, MotionFrameData frameData)> processingItems)
+        private bool ExecuteAddOffsetAsync(List<(string layerName, MotionLayer layer, MotionFrameData frameData)> processingItems)
         {
             _progressBar.Visible = true;
             _progressBar.Maximum = processingItems.Count;

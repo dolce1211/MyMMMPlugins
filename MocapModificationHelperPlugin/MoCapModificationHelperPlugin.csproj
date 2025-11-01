@@ -140,7 +140,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ServiceFactory.cs" />
+    <Compile Include="service\FillDisplayFramesService.cs" />
     <Compile Include="service\GapSelectorService.cs" />
+    <Compile Include="service\InterpolateService.cs" />
     <Compile Include="service\LayerBoneSelectorService.cs" />
     <Compile Include="service\ModifiedLayerSelectorService.cs" />
     <Compile Include="offsetAdder\OffsetAdderService.cs" />

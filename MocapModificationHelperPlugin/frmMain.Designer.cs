@@ -29,10 +29,20 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnOffset = new System.Windows.Forms.Button();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.panel = new System.Windows.Forms.Panel();
+            this.cboFillDisplayFrame = new System.Windows.Forms.ComboBox();
+            this.btnFillDisplayFrame = new System.Windows.Forms.Button();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.rbInterpolateAll = new System.Windows.Forms.RadioButton();
+            this.rbInterpolateZ = new System.Windows.Forms.RadioButton();
+            this.rbInterpolateY = new System.Windows.Forms.RadioButton();
+            this.rbInterpolateX = new System.Windows.Forms.RadioButton();
+            this.rbInterpolateR = new System.Windows.Forms.RadioButton();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.cboHistory = new System.Windows.Forms.ComboBox();
             this.chkModifiedLayerSelector = new System.Windows.Forms.CheckBox();
             this.cboSelectedKeyLoader = new System.Windows.Forms.ComboBox();
@@ -48,23 +58,25 @@
             this.cboGapSelector = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.pnlOffset = new System.Windows.Forms.Panel();
+            this.chkClickOffsetBtnByShiftEnter = new System.Windows.Forms.CheckBox();
             this.btnUndo = new System.Windows.Forms.Button();
             this.btnExecuteOffset = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.pnlOffset.SuspendLayout();
             this.SuspendLayout();
             // 
-            // button1
+            // btnOffset
             // 
-            this.button1.Location = new System.Drawing.Point(6, 3);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(105, 25);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "オフセット付与準備";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnOffset.Location = new System.Drawing.Point(6, 3);
+            this.btnOffset.Name = "btnOffset";
+            this.btnOffset.Size = new System.Drawing.Size(105, 25);
+            this.btnOffset.TabIndex = 0;
+            this.btnOffset.Text = "オフセット付与準備";
+            this.btnOffset.UseVisualStyleBackColor = true;
+            this.btnOffset.Click += new System.EventHandler(this.btnOffset_Click);
             // 
             // dataGridView1
             // 
@@ -75,7 +87,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(462, 166);
+            this.dataGridView1.Size = new System.Drawing.Size(462, 227);
             this.dataGridView1.TabIndex = 2;
             // 
             // timer1
@@ -87,6 +99,11 @@
             this.panel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel.Controls.Add(this.cboFillDisplayFrame);
+            this.panel.Controls.Add(this.btnFillDisplayFrame);
+            this.panel.Controls.Add(this.panel1);
+            this.panel.Controls.Add(this.label3);
+            this.panel.Controls.Add(this.label2);
             this.panel.Controls.Add(this.cboHistory);
             this.panel.Controls.Add(this.chkModifiedLayerSelector);
             this.panel.Controls.Add(this.cboSelectedKeyLoader);
@@ -103,8 +120,125 @@
             this.panel.Controls.Add(this.label1);
             this.panel.Location = new System.Drawing.Point(12, 60);
             this.panel.Name = "panel";
-            this.panel.Size = new System.Drawing.Size(462, 166);
+            this.panel.Size = new System.Drawing.Size(462, 227);
             this.panel.TabIndex = 3;
+            this.panel.Paint += new System.Windows.Forms.PaintEventHandler(this.panel_Paint);
+            // 
+            // cboFillDisplayFrame
+            // 
+            this.cboFillDisplayFrame.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboFillDisplayFrame.FormattingEnabled = true;
+            this.cboFillDisplayFrame.Items.AddRange(new object[] {
+            "Enter",
+            "Space"});
+            this.cboFillDisplayFrame.Location = new System.Drawing.Point(293, 137);
+            this.cboFillDisplayFrame.Name = "cboFillDisplayFrame";
+            this.cboFillDisplayFrame.Size = new System.Drawing.Size(58, 20);
+            this.cboFillDisplayFrame.TabIndex = 20;
+            // 
+            // btnFillDisplayFrame
+            // 
+            this.btnFillDisplayFrame.Location = new System.Drawing.Point(7, 136);
+            this.btnFillDisplayFrame.Name = "btnFillDisplayFrame";
+            this.btnFillDisplayFrame.Size = new System.Drawing.Size(280, 23);
+            this.btnFillDisplayFrame.TabIndex = 19;
+            this.btnFillDisplayFrame.Text = "選択中の表示枠のキーを全選択";
+            this.btnFillDisplayFrame.UseVisualStyleBackColor = true;
+            this.btnFillDisplayFrame.Click += new System.EventHandler(this.btnGapSelector_Click);
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.rbInterpolateAll);
+            this.panel1.Controls.Add(this.rbInterpolateZ);
+            this.panel1.Controls.Add(this.rbInterpolateY);
+            this.panel1.Controls.Add(this.rbInterpolateX);
+            this.panel1.Controls.Add(this.rbInterpolateR);
+            this.panel1.Location = new System.Drawing.Point(121, 165);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(138, 24);
+            this.panel1.TabIndex = 18;
+            // 
+            // rbInterpolateAll
+            // 
+            this.rbInterpolateAll.Appearance = System.Windows.Forms.Appearance.Button;
+            this.rbInterpolateAll.AutoSize = true;
+            this.rbInterpolateAll.Location = new System.Drawing.Point(89, 1);
+            this.rbInterpolateAll.Name = "rbInterpolateAll";
+            this.rbInterpolateAll.Size = new System.Drawing.Size(35, 22);
+            this.rbInterpolateAll.TabIndex = 23;
+            this.rbInterpolateAll.Text = "ALL";
+            this.rbInterpolateAll.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.rbInterpolateAll.UseVisualStyleBackColor = true;
+            // 
+            // rbInterpolateZ
+            // 
+            this.rbInterpolateZ.Appearance = System.Windows.Forms.Appearance.Button;
+            this.rbInterpolateZ.AutoSize = true;
+            this.rbInterpolateZ.Location = new System.Drawing.Point(65, 1);
+            this.rbInterpolateZ.Name = "rbInterpolateZ";
+            this.rbInterpolateZ.Size = new System.Drawing.Size(22, 22);
+            this.rbInterpolateZ.TabIndex = 22;
+            this.rbInterpolateZ.Text = "Z";
+            this.rbInterpolateZ.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.rbInterpolateZ.UseVisualStyleBackColor = true;
+            // 
+            // rbInterpolateY
+            // 
+            this.rbInterpolateY.Appearance = System.Windows.Forms.Appearance.Button;
+            this.rbInterpolateY.AutoSize = true;
+            this.rbInterpolateY.Location = new System.Drawing.Point(44, 1);
+            this.rbInterpolateY.Name = "rbInterpolateY";
+            this.rbInterpolateY.Size = new System.Drawing.Size(22, 22);
+            this.rbInterpolateY.TabIndex = 21;
+            this.rbInterpolateY.Text = "Y";
+            this.rbInterpolateY.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.rbInterpolateY.UseVisualStyleBackColor = true;
+            // 
+            // rbInterpolateX
+            // 
+            this.rbInterpolateX.Appearance = System.Windows.Forms.Appearance.Button;
+            this.rbInterpolateX.AutoSize = true;
+            this.rbInterpolateX.Location = new System.Drawing.Point(23, 1);
+            this.rbInterpolateX.Name = "rbInterpolateX";
+            this.rbInterpolateX.Size = new System.Drawing.Size(22, 22);
+            this.rbInterpolateX.TabIndex = 20;
+            this.rbInterpolateX.Text = "X";
+            this.rbInterpolateX.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.rbInterpolateX.UseVisualStyleBackColor = true;
+            // 
+            // rbInterpolateR
+            // 
+            this.rbInterpolateR.Appearance = System.Windows.Forms.Appearance.Button;
+            this.rbInterpolateR.AutoSize = true;
+            this.rbInterpolateR.Checked = true;
+            this.rbInterpolateR.Location = new System.Drawing.Point(1, 1);
+            this.rbInterpolateR.Name = "rbInterpolateR";
+            this.rbInterpolateR.Size = new System.Drawing.Size(23, 22);
+            this.rbInterpolateR.TabIndex = 19;
+            this.rbInterpolateR.TabStop = true;
+            this.rbInterpolateR.Text = "R";
+            this.rbInterpolateR.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.rbInterpolateR.UseVisualStyleBackColor = true;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.label3.Location = new System.Drawing.Point(3, 168);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(113, 20);
+            this.label3.TabIndex = 17;
+            this.label3.Text = "補完曲線パレット";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
+            this.label2.Location = new System.Drawing.Point(291, 168);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(35, 20);
+            this.label2.TabIndex = 16;
+            this.label2.Text = "0~6";
             // 
             // cboHistory
             // 
@@ -115,7 +249,7 @@
             this.cboHistory.Items.AddRange(new object[] {
             "Enter",
             "Space"});
-            this.cboHistory.Location = new System.Drawing.Point(356, 139);
+            this.cboHistory.Location = new System.Drawing.Point(354, 110);
             this.cboHistory.Name = "cboHistory";
             this.cboHistory.Size = new System.Drawing.Size(102, 20);
             this.cboHistory.TabIndex = 15;
@@ -139,7 +273,7 @@
             this.cboSelectedKeyLoader.Items.AddRange(new object[] {
             "Enter",
             "Space"});
-            this.cboSelectedKeyLoader.Location = new System.Drawing.Point(292, 139);
+            this.cboSelectedKeyLoader.Location = new System.Drawing.Point(292, 110);
             this.cboSelectedKeyLoader.Name = "cboSelectedKeyLoader";
             this.cboSelectedKeyLoader.Size = new System.Drawing.Size(58, 20);
             this.cboSelectedKeyLoader.TabIndex = 13;
@@ -153,7 +287,7 @@
             this.cboSelectedKeySaver.Items.AddRange(new object[] {
             "Enter",
             "Space"});
-            this.cboSelectedKeySaver.Location = new System.Drawing.Point(292, 110);
+            this.cboSelectedKeySaver.Location = new System.Drawing.Point(115, 110);
             this.cboSelectedKeySaver.Name = "cboSelectedKeySaver";
             this.cboSelectedKeySaver.Size = new System.Drawing.Size(58, 20);
             this.cboSelectedKeySaver.TabIndex = 12;
@@ -162,9 +296,9 @@
             // 
             // btnSelectedKeyLoader
             // 
-            this.btnSelectedKeyLoader.Location = new System.Drawing.Point(6, 139);
+            this.btnSelectedKeyLoader.Location = new System.Drawing.Point(179, 108);
             this.btnSelectedKeyLoader.Name = "btnSelectedKeyLoader";
-            this.btnSelectedKeyLoader.Size = new System.Drawing.Size(280, 23);
+            this.btnSelectedKeyLoader.Size = new System.Drawing.Size(107, 23);
             this.btnSelectedKeyLoader.TabIndex = 11;
             this.btnSelectedKeyLoader.Text = "選択キーのペースト";
             this.btnSelectedKeyLoader.UseVisualStyleBackColor = true;
@@ -172,9 +306,9 @@
             // 
             // btnSelectedKeySaver
             // 
-            this.btnSelectedKeySaver.Location = new System.Drawing.Point(6, 110);
+            this.btnSelectedKeySaver.Location = new System.Drawing.Point(6, 108);
             this.btnSelectedKeySaver.Name = "btnSelectedKeySaver";
-            this.btnSelectedKeySaver.Size = new System.Drawing.Size(280, 23);
+            this.btnSelectedKeySaver.Size = new System.Drawing.Size(107, 23);
             this.btnSelectedKeySaver.TabIndex = 10;
             this.btnSelectedKeySaver.Text = "選択キーのコピー";
             this.btnSelectedKeySaver.UseVisualStyleBackColor = true;
@@ -277,6 +411,7 @@
             // 
             this.pnlOffset.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlOffset.Controls.Add(this.chkClickOffsetBtnByShiftEnter);
             this.pnlOffset.Controls.Add(this.btnUndo);
             this.pnlOffset.Controls.Add(this.btnExecuteOffset);
             this.pnlOffset.Location = new System.Drawing.Point(117, 2);
@@ -284,6 +419,18 @@
             this.pnlOffset.Size = new System.Drawing.Size(350, 26);
             this.pnlOffset.TabIndex = 4;
             this.pnlOffset.Visible = false;
+            // 
+            // chkClickOffsetBtnByShiftEnter
+            // 
+            this.chkClickOffsetBtnByShiftEnter.AutoSize = true;
+            this.chkClickOffsetBtnByShiftEnter.ForeColor = System.Drawing.SystemColors.Window;
+            this.chkClickOffsetBtnByShiftEnter.Location = new System.Drawing.Point(4, 7);
+            this.chkClickOffsetBtnByShiftEnter.Name = "chkClickOffsetBtnByShiftEnter";
+            this.chkClickOffsetBtnByShiftEnter.Size = new System.Drawing.Size(156, 16);
+            this.chkClickOffsetBtnByShiftEnter.TabIndex = 7;
+            this.chkClickOffsetBtnByShiftEnter.Text = "shift+Enterでオフセット付与";
+            this.chkClickOffsetBtnByShiftEnter.UseVisualStyleBackColor = true;
+            this.chkClickOffsetBtnByShiftEnter.CheckedChanged += new System.EventHandler(this.chkClickOffsetBtnByShiftEnter_CheckedChanged);
             // 
             // btnUndo
             // 
@@ -323,12 +470,12 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(475, 211);
+            this.ClientSize = new System.Drawing.Size(475, 272);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.pnlOffset);
             this.Controls.Add(this.panel);
             this.Controls.Add(this.dataGridView1);
-            this.Controls.Add(this.button1);
+            this.Controls.Add(this.btnOffset);
             this.KeyPreview = true;
             this.Name = "frmMain";
             this.Text = "色々ヘルパー";
@@ -337,14 +484,17 @@
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.panel.ResumeLayout(false);
             this.panel.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.pnlOffset.ResumeLayout(false);
+            this.pnlOffset.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnOffset;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Panel panel;
@@ -366,5 +516,16 @@
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.CheckBox chkModifiedLayerSelector;
         private System.Windows.Forms.ComboBox cboHistory;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.RadioButton rbInterpolateR;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.RadioButton rbInterpolateAll;
+        private System.Windows.Forms.RadioButton rbInterpolateZ;
+        private System.Windows.Forms.RadioButton rbInterpolateY;
+        private System.Windows.Forms.RadioButton rbInterpolateX;
+        private System.Windows.Forms.ComboBox cboFillDisplayFrame;
+        private System.Windows.Forms.Button btnFillDisplayFrame;
+        private System.Windows.Forms.CheckBox chkClickOffsetBtnByShiftEnter;
     }
 }

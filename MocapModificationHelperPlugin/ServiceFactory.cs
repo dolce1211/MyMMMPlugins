@@ -38,6 +38,14 @@ namespace MoCapModificationHelperPlugin
                     ret = new service.SelectedKeysLoaderService();
                     break;
 
+                case ServiceType.InterpolateSetterService:
+                    ret = new service.InterpolateService();
+                    break;
+
+                case ServiceType.FillDisplayFramesService:
+                    ret = new service.FillDisplayFramesService();
+                    break;
+
                 default:
                     return null;
             }

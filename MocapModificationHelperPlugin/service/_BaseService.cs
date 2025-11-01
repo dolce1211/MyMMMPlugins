@@ -29,6 +29,7 @@ namespace MoCapModificationHelperPlugin.service
             this.ApplicationForm.Cursor = Cursors.WaitCursor;
             BeginAndEndUpdate(false);
             ServiceFactory.IsBusy = true;
+            PreExecute();
             try
             {
                 if (ExecuteInternal(config))
@@ -60,6 +61,9 @@ namespace MoCapModificationHelperPlugin.service
         }
 
         public abstract bool ExecuteInternal(ConfigItem config);
+
+        public virtual void PreExecute()
+        { }
 
         public virtual void PostExecute()
         { }

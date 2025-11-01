@@ -104,7 +104,7 @@ namespace MoCapModificationHelperPlugin.offsetAdder
         /// 現在のフレーム位置における、移動・回転状態を取得します。
         /// </summary>
         /// <param name="scene"></param>
-        /// <param name="mode"></param>
+        /// <param name="mode">0:全てのフレームが対象 1:現在選択中のフレームが対象</param>
         /// <returns></returns>
         public static Dictionary<string, IMotionFrameData> TryGetCurrentState(Scene scene, int mode)
         {

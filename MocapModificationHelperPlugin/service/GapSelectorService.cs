@@ -91,8 +91,9 @@ namespace MoCapModificationHelperPlugin.service
                 return ret;
 
             //メインレイヤーのみ抽出
-            var selectedMainLayers = (Scene.ActiveModel.Bones.SelectMany(b => b.Layers))
-                                        .Where(n => n.Selected).ToList();
+            var selectedMainLayers = (Scene.ActiveModel.Bones.Where(b => this.Scene.ActiveModel.FindDisplayFramesFromBone(b) != null)
+                                    .SelectMany(b => b.Layers))
+                                    .Where(n => n.Selected).ToList();
 
             foreach (var selectedLayer in selectedMainLayers)
             {

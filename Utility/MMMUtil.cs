@@ -1,12 +1,16 @@
-using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Windows.Forms;
-using System.Threading.Tasks;
 using MikuMikuPlugin;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Policy;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace MMDUtil
 {
@@ -390,18 +394,508 @@ namespace MMDUtil
             }
         }
 
-        // keybd_event API関連の定義
+        /// <summary>
+        /// MikuMikuMovingの1～6の補間曲線パレットボタンを押下します
+        /// </summary>
+        /// <param name="applicationForm">アプリケーションフォーム</param>
+        /// <param name="buttonNumber">1～6の番号</param>
+        /// <returns>成功した場合true</returns>
+        public static bool ClickInterpolateButton(Form applicationForm, int buttonNumber)
+        {
+            if (buttonNumber < 1 || buttonNumber > 6)
+                return false;
+
+            try
+            {
+                // アプリケーションフォームのハンドルを取得
+                IntPtr mainWindowHandle = applicationForm.Handle;
+
+                // ボタンのテキストとして探すべき文字列
+                string buttonText = buttonNumber.ToString();
+
+                // 子ウィンドウを再帰的に探索してボタンを見つける
+                List<IntPtr> buttonHandles = FindButtonByText(mainWindowHandle, buttonText);
+
+                if (buttonHandles?.Count > 0)
+                {
+                    foreach (var buttonHandle in buttonHandles)
+                    {
+                        ClickButtonWM_LBUTTONDOWN_UP(buttonHandle);
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Form.Controlsを使って補間曲線パレットボタンを検索・クリックします
+        /// </summary>
+        /// <param name="applicationForm">アプリケーションフォーム</param>
+        /// <param name="buttonNumber">1～6の番号</param>
+        /// <returns>成功した場合true</returns>
+        public static bool ClickInterpolateButtonByControls(Form applicationForm, int buttonNumber)
+        {
+            if (buttonNumber < 1 || buttonNumber > 6)
+                return false;
+
+            try
+            {
+                string buttonText = buttonNumber.ToString();
+                var paletteButtons = Get_InterpolatePalletteButtons(applicationForm);
+
+                var button = paletteButtons.FirstOrDefault(b => (b as Control).Text.Trim() == buttonText);
+
+                if (button != null && button is IButtonControl btn)
+                {
+                    btn.PerformClick();
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Form.Controlsを使って補間曲線パレットボタンを検索・クリックします
+        /// </summary>
+        /// <param name="applicationForm">アプリケーションフォーム</param>
+        /// <param name="tabNumber">1～6の番号</param>
+        /// <returns>成功した場合true</returns>
+        public static bool SelectInterpolateTabByControls(Form applicationForm, string tabCaption)
+        {
+            try
+            {
+                var paletteTabs = Get_InterpolatePalletteTabs(applicationForm);
+                if (paletteTabs.ContainsKey(tabCaption))
+                {
+                    var tab = paletteTabs[tabCaption];
+                    Control tabparent = tab?.Parent;
+                    if (tabparent != null)
+                    {
+                        var p = tabparent.GetType().GetProperty("SelectedTabPage", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+                        if (p != null)
+                        {
+                            p.SetValue(tabparent, tab);
+                        }
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private static readonly List<Control> _interpolatePalletteButtons = new List<Control>();
+        private static readonly List<object> _topButtons = new List<object>();
+        private static readonly Dictionary<string, Control> _interpolatePalletteTabs = new Dictionary<string, Control>();
+
+        private static Dictionary<string, Control> Get_InterpolatePalletteTabs(Form applicationForm)
+        {
+            if (_interpolatePalletteTabs.Count == 5)
+                return _interpolatePalletteTabs;
+            _interpolatePalletteTabs.Clear();
+            var captions = new string[] { "R", "X", "Y", "Z", "M" };
+            foreach (var c in captions)
+            {
+                var tab = FindButtonByTextInControls(applicationForm, "XtraTabPage", c, 0);
+                _interpolatePalletteTabs.Add(c, tab);
+            }
+            return _interpolatePalletteTabs;
+        }
+
+        private static List<Control> Get_InterpolatePalletteButtons(Form applicationForm)
+        {
+            if (_interpolatePalletteButtons.Count == 6)
+                return _interpolatePalletteButtons;
+            _interpolatePalletteButtons.Clear();
+            for (int i = 1; i <= 6; i++)
+            {
+                var button = FindButtonByTextInControls(applicationForm, "SimpleButton", i.ToString(), 0);
+                if (button != null)
+                {
+                    _interpolatePalletteButtons.Add(button);
+                }
+            }
+
+            return _interpolatePalletteButtons;
+        }
+
+        private static List<object> Get_TopRibbonButtons(Form applicationForm)
+        {
+            if (_topButtons.Count > 0)
+                return _topButtons;
+
+            _topButtons.Clear();
+            foreach (Control control in applicationForm.Controls)
+            {
+                if (control.GetType().Name == "RibbonControl")
+                {
+                    var pi = control.GetType().GetProperty("Items");
+                    var items = pi?.GetValue(control) as IEnumerable;
+
+                    var itemsPi = items.GetType().GetProperty("InnerList", BindingFlags.NonPublic | BindingFlags.Instance);
+                    var ribbonItems = itemsPi?.GetValue(items) as ArrayList;
+                    var type = ribbonItems.GetType();
+
+                    _topButtons.AddRange(ribbonItems.OfType<object>());
+                }
+            }
+
+            return _topButtons;
+        }
+
+        /// <summary>
+        /// 画面上部のリボンのボタンをテキストで検索してクリックします
+        /// </summary>
+        /// <param name="applicationForm"></param>
+        /// <param name="buttonText"></param>
+        /// <returns></returns>
+        public static bool ClickTopRibbonButtonByText(Form applicationForm, string buttonText)
+        {
+            try
+            {
+                var btns = Get_TopRibbonButtons(applicationForm);
+                var targetBtn = btns.FirstOrDefault(b =>
+                {
+                    var pi = b.GetType().GetProperty("Caption");
+                    var text = pi?.GetValue(b) as string;
+                    return text == buttonText;
+                });
+                if (targetBtn != null)
+                {
+                    //DevExpress.XtraBars.BarButtonItem bb = targetBtn as DevExpress.XtraBars.BarButtonItem;
+                    //bb.PerformClick();
+
+                    var method = targetBtn.GetType().GetMethod("PerformClick", Type.EmptyTypes);
+                    method?.Invoke(targetBtn, null);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Form.Controlsを使って「すべてにコピー」ボタンを検索・クリックします
+        /// </summary>
+        /// <param name="applicationForm">アプリケーションフォーム</param>
+        /// <returns>成功した場合true</returns>
+        public static bool ClickInterpolatePalleteButtonByToolTip(Form applicationForm, string targetToolTip)
+        {
+            try
+            {
+                // まず補間曲線パレットボタン（1-6）を探して、その親コンテナを特定
+                var paletteButtons = Get_InterpolatePalletteButtons(applicationForm);
+                var btns = Get_TopRibbonButtons(applicationForm);
+
+                //var topButtons = Get_TopButtons(applicationForm);
+                if (paletteButtons.Count > 0)
+                {
+                    // パレットボタンの親コンテナ内で「すべてにコピー」ボタンを探す
+                    var copyButton = FindCopyToAllButtonInSameContainer(paletteButtons, targetToolTip);
+                    if (copyButton != null && copyButton is IButtonControl copyBtn)
+                    {
+                        copyBtn.PerformClick();
+                        return true;
+                    }
+                }
+
+                // フォールバック：全体から小さなボタンを探す
+                return FindAndClickSmallButtonInControls(applicationForm);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Form.Controls階層を再帰的に検索してテキストが一致するボタンを探します
+        /// </summary>
+        /// <param name="parent">検索開始コントロール</param>
+        /// <param name="buttonText">探すボタンのテキスト</param>
+        /// <returns>見つかったボタン、または null</returns>
+        private static Control FindButtonByTextInControls(Control parent, string typeName, string text, int mode)
+        {
+            try
+            {
+                // 直接の子コントロールを検索
+                IEnumerable controls = parent.Controls;
+                //if (parent.GetType().Name == "RibbonControl")
+                //{
+                //    var pi = parent.GetType().GetProperty("Items");
+                //    var items = pi?.GetValue(parent) as IEnumerable;
+
+                //    var itemsPi = items.GetType().GetProperty("InnerList", BindingFlags.NonPublic | BindingFlags.Instance);
+                //    controls = itemsPi?.GetValue(items) as IEnumerable;
+                //}
+                foreach (Control control in controls)
+                {
+                    if (string.IsNullOrEmpty(typeName) || control.GetType().Name == typeName)
+                    {
+                        if (mode == 0)
+                        {
+                            if (control.Text.Trim() == text)
+                                return control;
+                        }
+                        else
+                        {
+                            if (control.Text.Contains(text))
+                                return control;
+                            var pi = control.GetType().GetProperty("ToolTip");
+                            var toolTip = pi?.GetValue(control) as string;
+                            if (toolTip == text)
+                                return control;
+                        }
+                    }
+
+                    // 再帰的に子コントロールを検索
+                    var result = FindButtonByTextInControls(control, typeName, text, mode);
+                    if (result != null)
+                    {
+                        return result;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// パレットボタンと同じコンテナ内で「すべてにコピー」ボタンを探します
+        /// </summary>
+        /// <param name="paletteButtons">パレットボタンのリスト</param>
+        /// <returns>見つかったコピーボタン、または null</returns>
+        private static Control FindCopyToAllButtonInSameContainer(List<Control> paletteButtons, string targetTooltip)
+        {
+            try
+            {
+                // 各パレットボタンの親コンテナを調べる
+                var paletteButton = paletteButtons.FirstOrDefault();
+                if (paletteButton != null)
+                {
+                    var container = paletteButton.Parent;
+                    if (container != null)
+                    {
+                        // 同一コンテナ内のすべてのボタンを調べる
+
+                        foreach (Control control in container.Controls)
+                        {
+                            if (control.GetType().Name == "SimpleButton")
+                            {
+                                var pi = control.GetType().GetProperty("ToolTip");
+                                var toolTip = pi?.GetValue(control) as string;
+                                if (toolTip == targetTooltip)
+                                    return control;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// フォールバック：小さなボタンを全体から探してクリック
+        /// </summary>
+        /// <param name="applicationForm">アプリケーションフォーム</param>
+        /// <returns>成功した場合 true</returns>
+        private static bool FindAndClickSmallButtonInControls(Form applicationForm)
+        {
+            try
+            {
+                var smallButtons = new List<Button>();
+                FindSmallButtonsInControls(applicationForm, smallButtons);
+
+                // 候補が少数の場合のみクリック（安全性のため）
+                if (smallButtons.Count > 0 && smallButtons.Count <= 3)
+                {
+                    foreach (var button in smallButtons)
+                    {
+                        button.PerformClick();
+                    }
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 小さなボタンを再帰的に探します
+        /// </summary>
+        /// <param name="parent">検索開始コントロール</param>
+        /// <param name="smallButtons">見つかったボタンのリスト</param>
+        private static void FindSmallButtonsInControls(Control parent, List<Button> smallButtons)
+        {
+            try
+            {
+                foreach (Control control in parent.Controls)
+                {
+                    if (control is Button button &&
+                        string.IsNullOrEmpty(button.Text.Trim()) &&
+                        button.Size.Width <= 25 && button.Size.Height <= 25 &&
+                        button.Size.Width > 12 && button.Size.Height > 12)
+                    {
+                        smallButtons.Add(button);
+                    }
+
+                    // 再帰的に子コントロールも検索
+                    FindSmallButtonsInControls(control, smallButtons);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        /// <summary>
+        /// WM_LBUTTONDOWN + WM_LBUTTONUP メッセージでボタンをクリックします
+        /// </summary>
+        /// <param name="buttonHandle">ボタンのハンドル</param>
+        /// <returns>成功した場合true</returns>
+        private static bool ClickButtonWM_LBUTTONDOWN_UP(IntPtr buttonHandle)
+        {
+            try
+            {
+                const int WM_LBUTTONDOWN = 0x0201;
+                const int WM_LBUTTONUP = 0x0202;
+                SendMessage(buttonHandle, WM_LBUTTONDOWN, (IntPtr)1, IntPtr.Zero);
+                System.Threading.Thread.Sleep(10);
+                SendMessage(buttonHandle, WM_LBUTTONUP, IntPtr.Zero, IntPtr.Zero);
+                System.Threading.Thread.Sleep(50);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 指定されたテキストを持つボタンを子ウィンドウから探します
+        /// </summary>
+        /// <param name="parentHandle">親ウィンドウのハンドル</param>
+        /// <param name="buttonText">探すボタンのテキスト</param>
+        /// <returns>見つかったボタンのハンドルリスト</returns>
+        private static List<IntPtr> FindButtonByText(IntPtr parentHandle, string buttonText)
+        {
+            var ret = new List<IntPtr>();
+            List<IntPtr> childWindows = new List<IntPtr>();
+
+            // 全ての子ウィンドウを列挙
+            EnumChildWindows(parentHandle, (hWnd, lParam) =>
+            {
+                childWindows.Add(hWnd);
+                return true;
+            }, IntPtr.Zero);
+
+            foreach (IntPtr childHandle in childWindows)
+            {
+                try
+                {
+                    // ウィンドウクラス名を取得
+                    StringBuilder className = new StringBuilder(256);
+                    GetClassName(childHandle, className, className.Capacity);
+
+                    // ウィンドウテキストを取得
+                    StringBuilder windowText = new StringBuilder(256);
+                    GetWindowText(childHandle, windowText, windowText.Capacity);
+
+                    string classNameStr = className.ToString();
+                    string windowTextStr = windowText.ToString();
+
+                    // ボタンかどうか判定
+                    bool isButton = classNameStr.Contains("Button") ||
+                                  classNameStr.Contains("WindowsForms") ||
+                                  classNameStr.StartsWith("Button") ||
+                                  classNameStr == "Button";
+
+                    bool textMatches = windowTextStr.Trim() == buttonText;
+
+                    if (isButton && textMatches)
+                    {
+                        ret.Add(childHandle);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // エラーが発生しても継続
+                    continue;
+                }
+            }
+
+            return ret;
+        }
+
+        // Win32 API宣言
+        [DllImport("user32.dll")]
+        private static extern bool EnumChildWindows(IntPtr hWndParent, EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+
         [DllImport("user32.dll", SetLastError = true)]
         private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
-        // keybd_event用の定数
-        private const uint KEYEVENTF_KEYUP = 0x0002;
-
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+
+            public int Width => Right - Left;
+            public int Height => Bottom - Top;
+        }
+
+        private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        // 定数定義
+        private const uint KEYEVENTF_KEYUP = 0x0002;
 
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_KEYUP = 0x0101;
@@ -412,5 +906,78 @@ namespace MMDUtil
         private const int VK_MENU = 0x12; // Alt key
         private const int VK_Z = 0x5A;
         private const int VK_Y = 0x59;
+    }
+ 
+    public static class MMMExtensions
+    {
+        private static Dictionary<int, Dictionary<int, DisplayFrame>> _displayFrameCacheBone = new Dictionary<int, Dictionary<int, DisplayFrame>>();
+        private static Dictionary<int, Dictionary<int, DisplayFrame>> _displayFrameCacheMorph = new Dictionary<int, Dictionary<int, DisplayFrame>>();
+
+        public static DisplayFrame FindDisplayFramesFromBone(this Model model, Bone bone)
+        {
+            return FindDisplayFramesInternal<Bone>(model, bone, _displayFrameCacheBone);
+        }
+
+        public static DisplayFrame FindDisplayFramesFromMorph(this Model model, Morph morph)
+        {
+            return FindDisplayFramesInternal<Morph>(model, morph, _displayFrameCacheMorph);
+        }
+
+        private static int TryGetId<T>(T item)
+        {
+            if (item is Bone bone)
+            {
+                return bone.BoneID;
+            }
+            else if (item is Morph morph)
+            {
+                return morph.MorphID;
+            }
+            return -1;
+        }
+
+        private static DisplayFrame FindDisplayFramesInternal<T>(this Model model, T item, Dictionary<int, Dictionary<int, DisplayFrame>> cache)
+        {
+            var id = TryGetId(item);
+            if (cache.TryGetValue(model.ID, out var dict))
+            {
+                if (dict.TryGetValue(id, out var df))
+                {
+                    return df;
+                }
+            }
+            else
+            {
+                dict = new Dictionary<int, DisplayFrame>();
+                cache[model.ID] = dict;
+            }
+            if (dict.TryGetValue(id, out var ret))
+            {
+                return ret;
+            }
+            if (model == null || item == null)
+            {
+                return null;
+            }
+
+            ret = model.DisplayFrame.Cast<DisplayFrame>().FirstOrDefault(df =>
+            {
+                if (item is Bone bone)
+                {
+                    return df.Bones.Any(b => b.BoneID == bone.BoneID);
+                }
+                else if (item is Morph morph)
+                {
+                    return df.Morphs.Any(m => m.MorphID == morph.MorphID);
+                }
+                else
+                    return false;
+            });
+            if (!dict.ContainsKey(id))
+            {
+                dict[id] = ret;
+            }
+            return ret;
+        }
     }
 }

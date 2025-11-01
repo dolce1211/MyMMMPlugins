@@ -93,17 +93,29 @@ namespace MoCapModificationHelperPlugin
                 //二度押しされたキーに対応する処理を実行
                 _prevPressedKeys = Keys.None;
                 _prevPressedTime = DateTime.MinValue;
-                if (_configs.Services.Any(n => n.Keys == e.KeyCode))
+                if (e.Shift || e.Control || e.Alt)
                 {
-                    var serviceItem = _configs.Services.FirstOrDefault(n => n.Keys == e.KeyCode);
+                    //修飾キーが押されている場合は無視
+                    return;
+                }
+                if (_configs.Services.Any(n => n.Keys == e.KeyCode) ||
+                        _configs.Services.Any(n => n.KeysList != null && n.KeysList.Contains(e.KeyCode)))
+                {
+                    var serviceItem = _configs?.Services.FirstOrDefault(n => n.Keys == e.KeyCode ||
+                                           (n.KeysList != null && n.KeysList.Contains(e.KeyCode)));
                     // 該当するサービスを実行
-                    _frm.ExecuteService(serviceItem);
+                    _frm?.ExecuteService(serviceItem, e.KeyCode);
                 }
             }
             else
             {
                 _prevPressedKeys = e.KeyCode;
                 _prevPressedTime = now;
+            }
+            if (e.Shift && e.KeyCode == Keys.Enter)
+            {
+                //shift+Enterでオフセット付与ボタン押下
+                _frm?.TryClickOffsetButton();
             }
         }
 
@@ -124,9 +136,13 @@ namespace MoCapModificationHelperPlugin
             }
             if (ret == null)
                 ret = new Configs();
-            if (ret.Services.Count < 5)
-                ret.Initialize();
-
+            if (ret.Services.Count < 7)
+                ret.KeepAndInitialize();
+            if (!ret.Services.Any(n => n.ServiceType == ServiceType.InterpolateSetterService))
+            {
+                ret.Services.Add(Configs.CreateInterpolateSetterService());
+                MyUtility.Serializer.Serialize(ret, Configs.GetConfigFilePath());
+            }
             return ret;
         }
 

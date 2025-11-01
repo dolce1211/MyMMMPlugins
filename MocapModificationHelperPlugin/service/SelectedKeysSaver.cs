@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Linearstar.Keystone.IO.MikuMikuDance;
 using MikuMikuPlugin;
+using MMDUtil;
 
 namespace MoCapModificationHelperPlugin.service
 {
@@ -31,24 +32,32 @@ namespace MoCapModificationHelperPlugin.service
             var tmpSelectedKeys = new List<string>();
             foreach (var tuple in this.Scene.ActiveModel.Bones.SelectMany(b => b.Layers.Select(l => (bone: b, layer: l))))
             {
-                var selectedFrames = tuple.layer.SelectedFrames?.Select(f =>
+                if (this.Scene.ActiveModel.FindDisplayFramesFromBone(tuple.bone) != null)
                 {
-                    return (bone: tuple.bone, layer: tuple.layer, frame: f);
-                }
-                ).ToList();
-                if (selectedFrames?.Count > 0)
-                {
-                    if (tmpSelectedKeys != null)
-                        tmpSelectedKeys.AddRange(selectedFrames.Select(t => $"{t.bone.Name}|{t.layer.Name ?? ""}|{t.frame.FrameNumber}"));
+                    var selectedFrames = tuple.layer.SelectedFrames?
+
+                        .Select(f =>
+                        {
+                            return (bone: tuple.bone, layer: tuple.layer, frame: f);
+                        }
+                        ).ToList();
+                    if (selectedFrames?.Count > 0)
+                    {
+                        if (tmpSelectedKeys != null)
+                            tmpSelectedKeys.AddRange(selectedFrames.Select(t => $"{t.bone.Name}|{t.layer.Name ?? ""}|{t.frame.FrameNumber}"));
+                    }
                 }
             }
 
             var tmpSelectedMortphs = new List<string>();
             foreach (var morph in this.Scene.ActiveModel.Morphs)
             {
-                if (morph.SelectedFrames == null)
-                    continue;
-                tmpSelectedMortphs.AddRange(morph.SelectedFrames.Select(f => $"{morph.Name}|{f.FrameNumber}"));
+                if (this.Scene.ActiveModel.FindDisplayFramesFromMorph(morph) != null)
+                {
+                    if (morph.SelectedFrames == null)
+                        continue;
+                    tmpSelectedMortphs.AddRange(morph.SelectedFrames.Select(f => $"{morph.Name}|{f.FrameNumber}"));
+                }
             }
             if (tmpSelectedKeys.Count + tmpSelectedMortphs.Count == 0)
             {
@@ -94,16 +103,19 @@ namespace MoCapModificationHelperPlugin.service
                 tuple.layer.Frames.ForEach(f => f.Selected = false);
                 foreach (var f in tuple.layer.Frames)
                 {
-                    var t = (bone: tuple.bone, layer: tuple.layer, frame: f);
-                    var keyString = $"{t.bone.Name}|{t.layer.Name ?? ""}|{t.frame.FrameNumber}";
-                    if (history.SelectedBones != null && history.SelectedBones.Contains(keyString))
+                    if (this.Scene.ActiveModel.FindDisplayFramesFromBone(tuple.bone) != null)
                     {
-                        f.Selected = true;
-                        if (!tuple.layer.Selected)
-                            tuple.layer.Selected = true;
+                        var t = (bone: tuple.bone, layer: tuple.layer, frame: f);
+                        var keyString = $"{t.bone.Name}|{t.layer.Name ?? ""}|{t.frame.FrameNumber}";
+                        if (history.SelectedBones != null && history.SelectedBones.Contains(keyString))
+                        {
+                            f.Selected = true;
+                            if (!tuple.layer.Selected)
+                                tuple.layer.Selected = true;
+                        }
+                        else
+                            f.Selected = false;
                     }
-                    else
-                        f.Selected = false;
                 }
             }
             //}
@@ -111,13 +123,16 @@ namespace MoCapModificationHelperPlugin.service
             //{
             foreach (var morph in this.Scene.ActiveModel.Morphs)
             {
-                foreach (var f in morph.Frames)
+                if (this.Scene.ActiveModel.FindDisplayFramesFromMorph(morph) != null)
                 {
-                    var keyString = $"{morph.Name}|{f.FrameNumber}";
-                    if (history.SelectedMorphs != null && history.SelectedMorphs.Contains(keyString))
-                        f.Selected = true;
-                    else
-                        f.Selected = false;
+                    foreach (var f in morph.Frames)
+                    {
+                        var keyString = $"{morph.Name}|{f.FrameNumber}";
+                        if (history.SelectedMorphs != null && history.SelectedMorphs.Contains(keyString))
+                            f.Selected = true;
+                        else
+                            f.Selected = false;
+                    }
                 }
             }
             //}
