@@ -318,59 +318,59 @@ namespace MyUtility
             }
             return ret;
 
-            if (false)
-            {
-                if (mmd == null)
-                    return ret;
-                var pmminfo = GetPmmInfoFromProcess(mmd);
-                if (pmminfo == null)
-                    return ret;
+            //if (false)
+            //{
+            //    if (mmd == null)
+            //        return ret;
+            //    var pmminfo = GetPmmInfoFromProcess(mmd);
+            //    if (pmminfo == null)
+            //        return ret;
 
-                var mmdexedir = MMDUtilility.GetProgramPathFromProcess(mmd);
-                if (string.IsNullOrEmpty(mmdexedir))
-                    return ret;
-                mmdexedir = System.IO.Path.GetDirectoryName(mmdexedir);
+            //    var mmdexedir = MMDUtilility.GetProgramPathFromProcess(mmd);
+            //    if (string.IsNullOrEmpty(mmdexedir))
+            //        return ret;
+            //    mmdexedir = System.IO.Path.GetDirectoryName(mmdexedir);
 
-                if (System.IO.File.Exists(pmminfo.FullName))
-                {
-                    var pmxfiles = new List<string>();
-                    var pmdfiles = new List<string>();//pmdはサポート外
-                                                      //pmmからemmファイルを取得
-                    var emmfilepath = pmminfo.FullName.ToLower().Replace(".pmm", ".emm");
-                    if (System.IO.File.Exists(emmfilepath))
-                    {
-                        var emmlines = System.IO.File.ReadAllLines(emmfilepath, System.Text.Encoding.GetEncoding("shift_jis"));
-                        var start = false;
+            //    if (System.IO.File.Exists(pmminfo.FullName))
+            //    {
+            //        var pmxfiles = new List<string>();
+            //        var pmdfiles = new List<string>();//pmdはサポート外
+            //                                          //pmmからemmファイルを取得
+            //        var emmfilepath = pmminfo.FullName.ToLower().Replace(".pmm", ".emm");
+            //        if (System.IO.File.Exists(emmfilepath))
+            //        {
+            //            var emmlines = System.IO.File.ReadAllLines(emmfilepath, System.Text.Encoding.GetEncoding("shift_jis"));
+            //            var start = false;
 
-                        foreach (var line in emmlines)
-                        {
-                            if (start)
-                            {
-                                var array = line.Split('=');
-                                if (array[0].ToLower().Trim().IndexOf("pmd") == 0)
-                                {
-                                    var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
-                                    if (System.IO.File.Exists(pmxpath))
-                                        pmxfiles.Add(pmxpath);
-                                }
-                            }
-                            if (start && line.IndexOf("[") == 0)
-                                break;
-                            if (line.ToLower() == "[object]")
-                                start = true;
-                        }
+            //            foreach (var line in emmlines)
+            //            {
+            //                if (start)
+            //                {
+            //                    var array = line.Split('=');
+            //                    if (array[0].ToLower().Trim().IndexOf("pmd") == 0)
+            //                    {
+            //                        var pmxpath = System.IO.Path.Combine(mmdexedir.Trim(), array[1].Trim());
+            //                        if (System.IO.File.Exists(pmxpath))
+            //                            pmxfiles.Add(pmxpath);
+            //                    }
+            //                }
+            //                if (start && line.IndexOf("[") == 0)
+            //                    break;
+            //                if (line.ToLower() == "[object]")
+            //                    start = true;
+            //            }
 
-                        foreach (var pmxpath in pmxfiles)
-                        {
-                            var pmxmodel = FilePath2PmxModel(pmxpath);
-                            if (pmxmodel != null)
-                                ret.Add(pmxmodel);
-                        }
-                    }
-                }
-            }
+            //            foreach (var pmxpath in pmxfiles)
+            //            {
+            //                var pmxmodel = FilePath2PmxModel(pmxpath);
+            //                if (pmxmodel != null)
+            //                    ret.Add(pmxmodel);
+            //            }
+            //        }
+            //    }
+            //}
 
-            return ret;
+            // return ret;
         }
 
         /// <summary>
@@ -441,7 +441,7 @@ namespace MyUtility
                     var model = PmxParser.Parse(stream);
                     return model;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                 }
             }

@@ -133,48 +133,6 @@ namespace MoCapModificationHelperPlugin.offsetAdder
             return ret;
         }
 
-        public static OffsetState CreateOffsetState(Scene scene)
-        {
-            OffsetState state = new OffsetState();
-            long minFrame = long.MaxValue;
-            long maxFrame = 0;
-
-            // ActiveModel内の全ボーンのLayersを調べ、選択されているLayerの総数を取得
-            int totalSelectedLayers = 0;
-
-            foreach (var layer in scene.ActiveModel.Bones.SelectMany(b => b.SelectedLayers))
-            {
-                totalSelectedLayers += layer.SelectedFrames.Count();
-                if (totalSelectedLayers == 0)
-                    continue;
-            }
-            var allSelectedLayergroup = OffsetAdderUtil.TryGetAllSelectedLayerGroups(scene);
-            if (allSelectedLayergroup == null)
-                return null;
-            totalSelectedLayers = 0;
-            var itemsHash = new Dictionary<string, OffsetStateItem>();
-            foreach (var grp in allSelectedLayergroup)
-            {
-                totalSelectedLayers += grp.Count();
-
-                itemsHash.Add(grp.FirstOrDefault().name, new OffsetStateItem()
-                {
-                    LayerName = grp.FirstOrDefault().name,
-                    Bone = grp.FirstOrDefault().bone,
-                    Layer = grp.FirstOrDefault().layer,
-                    Frames = grp.Select(n => n.frame).ToList()
-                });
-            }
-            // 結果を返す
-            return new OffsetState()
-            {
-                MaxFrame = maxFrame,
-                MinFrame = minFrame,
-                TotalSelectedLayers = totalSelectedLayers,
-                ItemsHash = itemsHash,
-            };
-        }
-
         /// <summary>
         /// DataGridViewのカラムを設定する
         /// </summary>
@@ -213,11 +171,13 @@ namespace MoCapModificationHelperPlugin.offsetAdder
         }
 
         /// <summary>
-        /// offsetState.ItemsをDataGridViewに反映する
+        /// オフセット情報をDataGridViewに反映する
         /// </summary>
         /// <param name="itemsHash">OffsetStateItemのリスト</param>
-        public static List<OffsetGridItem> UpdateDataGridView(Scene scene, DataGridView dataGridView, Dictionary<string, IMotionFrameData> previousStates, OffsetState offsetState)
+        public static List<OffsetGridItem> UpdateDataGridView(Scene scene, DataGridView dataGridView, Dictionary<string, IMotionFrameData> previousStates)
         {
+            // 現在の各ボーンレイヤーのオフセット値を取得
+            var offsetState = OffsetAdderUtil.CreateOffsetState(scene);
             try
             {
                 // DataGridViewの描画を一時停止
@@ -278,6 +238,48 @@ namespace MoCapModificationHelperPlugin.offsetAdder
                 dataGridView.ResumeLayout();
             }
             return new List<OffsetGridItem>();
+        }
+
+        private static OffsetState CreateOffsetState(Scene scene)
+        {
+            OffsetState state = new OffsetState();
+            long minFrame = long.MaxValue;
+            long maxFrame = 0;
+
+            // ActiveModel内の全ボーンのLayersを調べ、選択されているLayerの総数を取得
+            int totalSelectedLayers = 0;
+
+            foreach (var layer in scene.ActiveModel.Bones.SelectMany(b => b.SelectedLayers))
+            {
+                totalSelectedLayers += layer.SelectedFrames.Count();
+                if (totalSelectedLayers == 0)
+                    continue;
+            }
+            var allSelectedLayergroup = OffsetAdderUtil.TryGetAllSelectedLayerGroups(scene);
+            if (allSelectedLayergroup == null)
+                return null;
+            totalSelectedLayers = 0;
+            var itemsHash = new Dictionary<string, OffsetStateItem>();
+            foreach (var grp in allSelectedLayergroup)
+            {
+                totalSelectedLayers += grp.Count();
+
+                itemsHash.Add(grp.FirstOrDefault().name, new OffsetStateItem()
+                {
+                    LayerName = grp.FirstOrDefault().name,
+                    Bone = grp.FirstOrDefault().bone,
+                    Layer = grp.FirstOrDefault().layer,
+                    Frames = grp.Select(n => n.frame).ToList()
+                });
+            }
+            // 結果を返す
+            return new OffsetState()
+            {
+                MaxFrame = maxFrame,
+                MinFrame = minFrame,
+                TotalSelectedLayers = totalSelectedLayers,
+                ItemsHash = itemsHash,
+            };
         }
 
         private static bool OffsetGridItemEqualsTo(List<OffsetGridItem> prev, List<OffsetGridItem> current)

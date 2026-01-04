@@ -18,7 +18,7 @@ namespace FaceExpressionHelper
         [DllImport("kernel32.dll")]
         private static extern bool AllocConsole();
 
-        private Args _memo = null;
+        //private Args _memo = null;
         private frmMainBase _frmMain = null;
 
         public Guid GUID => new Guid("{9005F13A-A53B-4BC3-B2C5-70903ADEDB4F}");
@@ -40,10 +40,6 @@ namespace FaceExpressionHelper
         public System.Drawing.Image SmallImage => Properties.Resources._22;
 
         public Scene Scene { get; set; }
-
-        private async Task Run(Args arg)
-        {
-        }
 
         public void Initialize()
         {
@@ -143,10 +139,7 @@ namespace FaceExpressionHelper
             buffer = new byte[stream.Length];
             int count = stream.Read(buffer, 0, buffer.Length);
             var folderPath = string.Empty;
-            int toggle = 0;
-            int addrame = 0;
-            int topmost = 0;
-            int lockMotion = 0;
+
             //PictureFormat fmt = PictureFormat.png;
             //if (count == buffer.Length)
             //{

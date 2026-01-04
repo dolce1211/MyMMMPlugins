@@ -22,7 +22,8 @@ namespace MoCapModificationHelperPlugin.service
             var inverse = config.Inverse;
             // キーボードでshiftが押下されている場合は一時的に反転
             if (Control.ModifierKeys.HasFlag(Keys.Shift))
-                inverse = !inverse;
+                if (config.Keys != Keys.ShiftKey)
+                    inverse = !inverse;
 
             //レイヤーボーンのみ選択する
             var selectedMainLayers = this.Scene.ActiveModel.Bones

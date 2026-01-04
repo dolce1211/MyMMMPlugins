@@ -43,10 +43,11 @@ namespace MoCapModificationHelperPlugin.service
             foreach (var displayFrame in displayFrames)
             {
                 var layers = displayFrame.Bones.SelectMany(b => b.Layers);
-                layers.Where(l => l.Frames.Where(f => f.FrameNumber == this.Scene.MarkerPosition) != null).ForEach(l => l.Selected = true);
-                var currentKeys = layers.Select(l => l.Frames.FirstOrDefault(f => f.FrameNumber == this.Scene.MarkerPosition))
-                    .Where(k => k != null);
-                currentKeys.ToList().ForEach(k => k.Selected = true);
+                layers.ForEach(l => l.Selected = true);
+
+                layers.Select(l => l.Frames.FirstOrDefault(f => f.FrameNumber == this.Scene.MarkerPosition))
+                    .Where(k => k != null)
+                    ?.ForEach(f => f.Selected = true);
             }
             return true;
         }

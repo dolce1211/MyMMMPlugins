@@ -97,7 +97,6 @@ namespace MoCapModificationHelperPlugin.service
 
             foreach (var selectedLayer in selectedMainLayers)
             {
-                var flg = false;
                 if (selectedLayer != null)
                 {
                     if (selectedLayer.SelectedFrames.Any(f => f.FrameNumber == Scene.MarkerPosition))
@@ -107,7 +106,6 @@ namespace MoCapModificationHelperPlugin.service
                         {
                             //カレントポジション-1にキーがあるなら対象
                             ret.Add(selectedLayer);
-                            flg = true;
                         }
                     }
                 }

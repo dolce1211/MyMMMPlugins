@@ -1,16 +1,16 @@
 ﻿using Linearstar.Keystone.IO.MikuMikuDance;
 using MikuMikuPlugin;
+using MMDUtil;
+using MoCapModificationHelperPlugin.offsetAdder;
+using MyUtility;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MyUtility;
-using MMDUtil;
-using MoCapModificationHelperPlugin.offsetAdder;
-using System.Numerics;
-using System.Diagnostics;
 
 namespace MoCapModificationHelperPlugin.service
 {
@@ -19,11 +19,10 @@ namespace MoCapModificationHelperPlugin.service
     /// </summary>
     internal class OffsetAdderService : BaseService
     {
+        public EventHandler<ProgressChangedEventArgs> ProgressChanged;
         private Dictionary<string, IMotionFrameData> _previousStates = null;
         public Dictionary<string, IMotionFrameData> PreviousStates => _previousStates;
         private long _frameNumber = 0;
-        private ProgressBar _progressBar = null;
-        private Form _frmMain = null;
 
         public void Update()
         {
@@ -32,17 +31,6 @@ namespace MoCapModificationHelperPlugin.service
                 //フレーム位置が変わった
                 this.SetPrevisouState();
             }
-        }
-
-        public void ExecuteUndo()
-        {
-        }
-
-        public void Initialize(Scene scene, IWin32Window applicationForm, Form frmMain, ProgressBar progressBar)
-        {
-            _progressBar = progressBar;
-            _frmMain = frmMain;
-            Initialize(scene, applicationForm);
         }
 
         public override void Initialize(Scene scene, IWin32Window applicationForm)
@@ -95,17 +83,20 @@ namespace MoCapModificationHelperPlugin.service
             finally
             {
                 //操作前の状態に戻す
-                currentStates.ForEach(kvp =>
-                {
-                    var currentLayer = this.Scene.ActiveModel.Bones.SelectMany(b =>
-                    {
-                        return b.Layers.Select(layer => (name: b.Name, bone: b, layer: layer));
-                    }).FirstOrDefault(tuple => kvp.Key == $"{tuple.bone.Name}{tuple.layer.Name ?? ""}");
-                    currentLayer.layer.CurrentLocalMotion = new MotionData(kvp.Value.Position, kvp.Value.Quaternion);
-                    kvp.Value.Selected = true;
-                });
-                this.Scene.MarkerPosition = currentPosition;
+                this.ApplicationForm.Refresh();
                 SetPrevisouState();
+                this.Scene.MarkerPosition = currentPosition;
+                foreach (var tuple in Scene.ActiveModel.Bones
+                                        .SelectMany(bone => (bone.Layers.Select(layer => (bone, layer))))
+                                        .Where(tuple => processingItems.Any(p => p.layerName == $"{tuple.bone.Name}{tuple.layer.Name ?? ""}")))
+
+                {
+                    foreach (var frame in tuple.layer.Frames
+                                            .Where(f => processingItems.Any(p => tuple.layer.LayerID == p.layer.LayerID && p.frameData.FrameNumber == f.FrameNumber)))
+                    {
+                        frame.Selected = true;
+                    }
+                }
             }
         }
 
@@ -151,21 +142,6 @@ namespace MoCapModificationHelperPlugin.service
 
                             var newRotation = DxMath.Vector3.Add(motionFrame.Quaternion.ToEularDxMath(), offset.rotationOffset.ToEularDxMath());
 
-                            //// 回転のオフセット適用（クォータニオンの乗算による合成）
-                            //var newRotation = new DxMath.Quaternion(
-                            //    motionFrame.Quaternion.W * offset.rotationOffset.X + motionFrame.Quaternion.X * offset.rotationOffset.W +
-                            //    motionFrame.Quaternion.Y * offset.rotationOffset.Z - motionFrame.Quaternion.Z * offset.rotationOffset.Y,
-
-                            //    motionFrame.Quaternion.W * offset.rotationOffset.Y - motionFrame.Quaternion.X * offset.rotationOffset.Z +
-                            //    motionFrame.Quaternion.Y * offset.rotationOffset.W + motionFrame.Quaternion.Z * offset.rotationOffset.X,
-
-                            //    motionFrame.Quaternion.W * offset.rotationOffset.Z + motionFrame.Quaternion.X * offset.rotationOffset.Y -
-                            //    motionFrame.Quaternion.Y * offset.rotationOffset.X + motionFrame.Quaternion.Z * offset.rotationOffset.W,
-
-                            //    motionFrame.Quaternion.W * offset.rotationOffset.W - motionFrame.Quaternion.X * offset.rotationOffset.X -
-                            //    motionFrame.Quaternion.Y * offset.rotationOffset.Y - motionFrame.Quaternion.Z * offset.rotationOffset.Z
-                            //).RoundQuaternion(3);
-
                             // フレームデータを更新
                             var newMotionData = new MotionData(newPosition, newRotation.ToQuatanionDxMath());
                             var f = new MotionFrameData(frameTuple.frame.FrameNumber, newMotionData.Move, newMotionData.Rotation);
@@ -210,9 +186,8 @@ namespace MoCapModificationHelperPlugin.service
 
         private bool ExecuteAddOffsetAsync(List<(string layerName, MotionLayer layer, MotionFrameData frameData)> processingItems)
         {
-            _progressBar.Visible = true;
-            _progressBar.Maximum = processingItems.Count;
-            _progressBar.Value = 0;
+            var value = 0;
+            ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(value, processingItems.Count));
             try
             {
                 MMDUtil.MMMUtilility.SendSpaceToApplicationForm(this.ApplicationForm);
@@ -240,20 +215,32 @@ namespace MoCapModificationHelperPlugin.service
                     layerFrameTuples.frameData.Selected = false;
                     layerFrameTuples.layer.Selected = false;
 
-                    //this.ApplicationForm.Refresh();
-                    _progressBar.Value++;
+                    value++;
+                    ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(value, processingItems.Count));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // エラーログ出力（処理は継続）
                 System.Diagnostics.Debug.WriteLine($"フレーム処理エラー");
             }
             finally
             {
-                this._progressBar.Visible = false;
+                ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(processingItems.Count, processingItems.Count));
             }
             return true;
+        }
+    }
+
+    internal class ProgressChangedEventArgs : EventArgs
+    {
+        public int Value { get; set; }
+        public int Maximum { get; set; }
+
+        public ProgressChangedEventArgs(int value, int maximum)
+        {
+            this.Value = value;
+            this.Maximum = maximum;
         }
     }
 }

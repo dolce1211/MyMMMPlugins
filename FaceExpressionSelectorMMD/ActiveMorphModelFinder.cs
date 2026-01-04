@@ -61,10 +61,9 @@ namespace FaceExpressionSelectorMMD
                     }
                     return new ActiveModelInfo(pmx.ModelNameLocal, extension, allMorphs);
                 }
-	            catch (System.Exception)
-	            {
-	            }
-                
+                catch (System.Exception)
+                {
+                }
             }
             else if (extension == ".pmd")
             {
@@ -88,7 +87,7 @@ namespace FaceExpressionSelectorMMD
                             return new ActiveModelInfo(modelNameLocal, extension, allMorphs);
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                     }
                 }

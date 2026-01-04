@@ -19,15 +19,17 @@ namespace MoCapModificationHelperPlugin
 {
     public class MoCapModificationHelperPlugin : IResidentPlugin
     {
+        private KeyboardMessageFilter _keyboardFilter;
+
         //　任意のGUIDを生成する
 
         public Guid GUID => new Guid("7F3E8A91-2B4C-4D56-9E12-A8F7C3B091E4");
 
-        public string Description => "モーキャプ修正作業ヘルパー";
+        public string Description => "かゆいところヘルパー";
 
         public IWin32Window ApplicationForm { get; set; }
 
-        public string Text => "MoCapModificationHelperPlugin";
+        public string Text => "かゆいところヘルパー";
 
         public string EnglishText => "MoCapModificationHelperPlugin";
 
@@ -46,6 +48,13 @@ namespace MoCapModificationHelperPlugin
             var mainform = (Form)ApplicationForm;
             mainform.KeyDown -= KeydownHandler;
             _frm.KeyDown -= KeydownHandler;
+
+            // メッセージフィルターを削除
+            if (_keyboardFilter != null)
+            {
+                Application.RemoveMessageFilter(_keyboardFilter);
+                _keyboardFilter = null;
+            }
         }
 
         public void Dispose()
@@ -60,10 +69,15 @@ namespace MoCapModificationHelperPlugin
 
             var mainform = (Form)ApplicationForm;
 
-            mainform.KeyDown -= KeydownHandler;
-            mainform.KeyDown += KeydownHandler;
-            _frm.KeyDown -= KeydownHandler;
-            _frm.KeyDown += KeydownHandler;
+            // IMessageFilterを使用してグローバルにキーイベントをキャプチャ
+            // (otherWindowはKeyDownイベントをキャッチできなかったので)
+            if (_keyboardFilter == null)
+            {
+                _keyboardFilter = new KeyboardMessageFilter(KeydownHandler);
+                Application.AddMessageFilter(_keyboardFilter);
+            }
+
+            // var otherWindow = MMDUtil.MMMUtilility.TryGetOtherWindowForm();
         }
 
         private Keys _prevPressedKeys = Keys.None;
@@ -71,9 +85,6 @@ namespace MoCapModificationHelperPlugin
 
         private void KeydownHandler(object sender, KeyEventArgs e)
         {
-            if (Scene.ActiveModel == null)
-                return;
-
             DateTime now = DateTime.Now;
 
             var doublePressed = false;
@@ -95,8 +106,16 @@ namespace MoCapModificationHelperPlugin
                 _prevPressedTime = DateTime.MinValue;
                 if (e.Shift || e.Control || e.Alt)
                 {
-                    //修飾キーが押されている場合は無視
-                    return;
+                    if (e.KeyValue == (int)Keys.ShiftKey ||
+                       e.KeyValue == (int)Keys.ControlKey ||
+                       e.KeyValue == (int)Keys.Menu)
+                    {
+                        //修飾キー単体の二度押しは許容
+                    }
+                    else
+                    {  //修飾キーが押されている場合は無視
+                        return;
+                    }
                 }
                 if (_configs.Services.Any(n => n.Keys == e.KeyCode) ||
                         _configs.Services.Any(n => n.KeysList != null && n.KeysList.Contains(e.KeyCode)))
@@ -104,7 +123,7 @@ namespace MoCapModificationHelperPlugin
                     var serviceItem = _configs?.Services.FirstOrDefault(n => n.Keys == e.KeyCode ||
                                            (n.KeysList != null && n.KeysList.Contains(e.KeyCode)));
                     // 該当するサービスを実行
-                    _frm?.ExecuteService(serviceItem, e.KeyCode);
+                    e.Handled = _frm?.ExecuteService(serviceItem, e.KeyCode) == true;
                 }
             }
             else
@@ -115,7 +134,7 @@ namespace MoCapModificationHelperPlugin
             if (e.Shift && e.KeyCode == Keys.Enter)
             {
                 //shift+Enterでオフセット付与ボタン押下
-                _frm?.TryClickOffsetButton();
+                e.Handled = _frm?.TryClickOffsetButton() == true;
             }
         }
 
@@ -130,13 +149,13 @@ namespace MoCapModificationHelperPlugin
                     ret = MyUtility.Serializer.Deserialize<Configs>(configPath);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ログ出力やエラーハンドリングが必要に応じて追加
             }
             if (ret == null)
                 ret = new Configs();
-            if (ret.Services.Count < 7)
+            if (ret.Services.Count < 8)
                 ret.KeepAndInitialize();
             if (!ret.Services.Any(n => n.ServiceType == ServiceType.InterpolateSetterService))
             {
@@ -153,12 +172,45 @@ namespace MoCapModificationHelperPlugin
 
         public void Update(float Frame, float ElapsedTime)
         {
-            if (this.Scene.Mode != EditMode.ModelMode)
-                return;
-
             if (ServiceFactory.IsBusy)
                 return;
             _frm?.Update(Frame, ElapsedTime);
+        }
+    }
+
+    // キーボードメッセージフィルタークラス
+    public class KeyboardMessageFilter : IMessageFilter
+    {
+        private readonly KeyEventHandler _keyDownHandler;
+        private const int WM_KEYDOWN = 0x0100;
+        private const int WM_SYSKEYDOWN = 0x0104;
+
+        public KeyboardMessageFilter(KeyEventHandler keyDownHandler)
+        {
+            _keyDownHandler = keyDownHandler;
+        }
+
+        public bool PreFilterMessage(ref Message m)
+        {
+            if (m.Msg == WM_KEYDOWN || m.Msg == WM_SYSKEYDOWN)
+            {
+                // MMMにフォーカスがある場合のみ処理
+                // キーコードを取得
+                Keys keyCode = (Keys)(int)m.WParam & Keys.KeyCode;
+
+                // 修飾キーを取得
+                Keys modifiers = Control.ModifierKeys;
+
+                // KeyEventArgsを作成
+                KeyEventArgs e = new KeyEventArgs(keyCode | modifiers);
+
+                // ハンドラーを呼び出す
+                _keyDownHandler?.Invoke(null, e);
+
+                // メッセージを他のコントロールにも伝播させる
+                return e.Handled;
+            }
+            return false;
         }
     }
 }

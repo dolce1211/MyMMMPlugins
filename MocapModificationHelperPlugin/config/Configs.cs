@@ -51,6 +51,11 @@ namespace MoCapModificationHelperPlugin
         FillDisplayFramesService,
 
         /// <summary>
+        ///選択中のまばたきモーフに対する目モーフをキャンセルする
+        /// </summary>
+        BlinkCancellerService,
+
+        /// <summary>
         /// 選択されたキーにたいしてオフセットを加える
         /// </summary>
         OffsetAdderService,
@@ -74,6 +79,8 @@ namespace MoCapModificationHelperPlugin
             Services.Add(new ConfigItem() { Keys = Keys.C, ServiceType = ServiceType.SelectedKeysSaverService });
             Services.Add(new ConfigItem() { Keys = Keys.V, ServiceType = ServiceType.SelectedKeysLoaderService });
             Services.Add(new ConfigItem() { Keys = Keys.Z, ServiceType = ServiceType.FillDisplayFramesService });
+
+            Services.Add(new ConfigItem() { Keys = Keys.B, ServiceType = ServiceType.BlinkCancellerService });
             Services.Add(CreateInterpolateSetterService());
         }
 

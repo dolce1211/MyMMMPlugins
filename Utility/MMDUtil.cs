@@ -1184,48 +1184,48 @@ namespace MMDUtil
                 _cache = new Dictionary<IntPtr, Dictionary<int, Window>>();
                 var desc = GetAllChildWindows(mmdhWnd, new List<Window>(), true);
                 desc = desc.Where(n => n.ID != 0).ToList();
-                if (false)
-                {
-                    foreach (var win in desc)
-                    {
-                        var addedstr = new StringBuilder();
-                        if (win.ClassName == "ComboBox")
-                        {
-                            var count = SendMessage(win.hWnd, CB_GETCOUNT, null, null);
-                            addedstr.Append($"{count}");
-                            int textLen = GetWindowTextLength(win.hWnd);
-                            string windowText = null;
-                            if (0 < textLen)
-                            {
-                                // ウィンドウのタイトルを取得する
-                                StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
-                                GetWindowText(win.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
-                                windowText = windowTextBuffer.ToString();
-                            }
-                            var selectedIndex = SendMessage(win.hWnd, CB_GETCURSEL, 0, "");
-                            for (int i = 0; i < Math.Min(5, count); i++)
-                            {
-                                var textlength = SendMessage(win.hWnd, CB_GETLBTEXTLEN, i, "");
-                                var sb = new StringBuilder(textlength);
-                                SendMessage(win.hWnd, CB_GETLBTEXT, i, sb);
-                                addedstr.Append($",{sb.ToString()}");
-                            }
-                        }
-                        if (win.ClassName == "Button")
-                        {
-                            StringBuilder sb = new StringBuilder(256);
-                            SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
-                            addedstr.Append(sb.ToString());
-                        }
-                        if (win.ClassName == "Edit")
-                        {
-                            StringBuilder sb = new StringBuilder(256);
-                            SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
-                            addedstr.Append(sb.ToString());
-                        }
-                        Console.WriteLine($"{win.ID},{win.ClassName},{win.Text},{addedstr.ToString()}");
-                    }
-                }
+                //if (false)
+                //{
+                //    foreach (var win in desc)
+                //    {
+                //        var addedstr = new StringBuilder();
+                //        if (win.ClassName == "ComboBox")
+                //        {
+                //            var count = SendMessage(win.hWnd, CB_GETCOUNT, null, null);
+                //            addedstr.Append($"{count}");
+                //            int textLen = GetWindowTextLength(win.hWnd);
+                //            string windowText = null;
+                //            if (0 < textLen)
+                //            {
+                //                // ウィンドウのタイトルを取得する
+                //                StringBuilder windowTextBuffer = new StringBuilder(textLen + 1);
+                //                GetWindowText(win.hWnd, windowTextBuffer, windowTextBuffer.Capacity);
+                //                windowText = windowTextBuffer.ToString();
+                //            }
+                //            var selectedIndex = SendMessage(win.hWnd, CB_GETCURSEL, 0, "");
+                //            for (int i = 0; i < Math.Min(5, count); i++)
+                //            {
+                //                var textlength = SendMessage(win.hWnd, CB_GETLBTEXTLEN, i, "");
+                //                var sb = new StringBuilder(textlength);
+                //                SendMessage(win.hWnd, CB_GETLBTEXT, i, sb);
+                //                addedstr.Append($",{sb.ToString()}");
+                //            }
+                //        }
+                //        if (win.ClassName == "Button")
+                //        {
+                //            StringBuilder sb = new StringBuilder(256);
+                //            SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
+                //            addedstr.Append(sb.ToString());
+                //        }
+                //        if (win.ClassName == "Edit")
+                //        {
+                //            StringBuilder sb = new StringBuilder(256);
+                //            SendMessage(win.hWnd, WM_GETTEXT, 255, sb);
+                //            addedstr.Append(sb.ToString());
+                //        }
+                //        Console.WriteLine($"{win.ID},{win.ClassName},{win.Text},{addedstr.ToString()}");
+                //    }
+                //}
                 if (desc.Count > 140)
                 {
                     var dict = desc.ToDictionary(n => n.ID);
@@ -1284,7 +1284,6 @@ namespace MMDUtil
                             });
 
                             return true;
-                            break;
                         }
                     }
                 }
@@ -1566,7 +1565,7 @@ namespace MMDUtil
                             //var x = tmpmmd.MainModule;
                             mmds.Add(tmpmmd);
                         }
-                        catch (Win32Exception ex)
+                        catch (Win32Exception)
                         {
                             Console.WriteLine($"32bit/64bit{tmpmmd.MainWindowTitle}");
                         }

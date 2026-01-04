@@ -46,6 +46,10 @@ namespace MoCapModificationHelperPlugin
                     ret = new service.FillDisplayFramesService();
                     break;
 
+                case ServiceType.BlinkCancellerService:
+                    ret = new service.BlinkCancellerService();
+                    break;
+
                 default:
                     return null;
             }

@@ -33,6 +33,8 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.panel = new System.Windows.Forms.Panel();
+            this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
+            this.btnBlinkCanceller = new System.Windows.Forms.Button();
             this.cboFillDisplayFrame = new System.Windows.Forms.ComboBox();
             this.btnFillDisplayFrame = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -87,8 +89,9 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(462, 227);
+            this.dataGridView1.Size = new System.Drawing.Size(462, 211);
             this.dataGridView1.TabIndex = 2;
+            this.dataGridView1.Visible = false;
             // 
             // timer1
             // 
@@ -99,6 +102,8 @@
             this.panel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel.Controls.Add(this.cboBlinkCanceller);
+            this.panel.Controls.Add(this.btnBlinkCanceller);
             this.panel.Controls.Add(this.cboFillDisplayFrame);
             this.panel.Controls.Add(this.btnFillDisplayFrame);
             this.panel.Controls.Add(this.panel1);
@@ -118,11 +123,32 @@
             this.panel.Controls.Add(this.btnGapSelector);
             this.panel.Controls.Add(this.cboGapSelector);
             this.panel.Controls.Add(this.label1);
-            this.panel.Location = new System.Drawing.Point(12, 60);
+            this.panel.Location = new System.Drawing.Point(6, 59);
             this.panel.Name = "panel";
-            this.panel.Size = new System.Drawing.Size(462, 227);
+            this.panel.Size = new System.Drawing.Size(462, 213);
             this.panel.TabIndex = 3;
             this.panel.Paint += new System.Windows.Forms.PaintEventHandler(this.panel_Paint);
+            // 
+            // cboBlinkCanceller
+            // 
+            this.cboBlinkCanceller.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboBlinkCanceller.FormattingEnabled = true;
+            this.cboBlinkCanceller.Items.AddRange(new object[] {
+            "Enter",
+            "Space"});
+            this.cboBlinkCanceller.Location = new System.Drawing.Point(293, 163);
+            this.cboBlinkCanceller.Name = "cboBlinkCanceller";
+            this.cboBlinkCanceller.Size = new System.Drawing.Size(58, 20);
+            this.cboBlinkCanceller.TabIndex = 22;
+            // 
+            // btnBlinkCanceller
+            // 
+            this.btnBlinkCanceller.Location = new System.Drawing.Point(6, 162);
+            this.btnBlinkCanceller.Name = "btnBlinkCanceller";
+            this.btnBlinkCanceller.Size = new System.Drawing.Size(280, 23);
+            this.btnBlinkCanceller.TabIndex = 21;
+            this.btnBlinkCanceller.Text = "選択中のまばたきモーフに対する目モーフをキャンセルする";
+            this.btnBlinkCanceller.UseVisualStyleBackColor = true;
             // 
             // cboFillDisplayFrame
             // 
@@ -153,7 +179,7 @@
             this.panel1.Controls.Add(this.rbInterpolateY);
             this.panel1.Controls.Add(this.rbInterpolateX);
             this.panel1.Controls.Add(this.rbInterpolateR);
-            this.panel1.Location = new System.Drawing.Point(121, 165);
+            this.panel1.Location = new System.Drawing.Point(121, 187);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(138, 24);
             this.panel1.TabIndex = 18;
@@ -224,7 +250,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label3.Location = new System.Drawing.Point(3, 168);
+            this.label3.Location = new System.Drawing.Point(3, 190);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(113, 20);
             this.label3.TabIndex = 17;
@@ -234,7 +260,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label2.Location = new System.Drawing.Point(291, 168);
+            this.label2.Location = new System.Drawing.Point(291, 190);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(35, 20);
             this.label2.TabIndex = 16;
@@ -470,7 +496,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(475, 272);
+            this.ClientSize = new System.Drawing.Size(475, 256);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.pnlOffset);
             this.Controls.Add(this.panel);
@@ -527,5 +553,7 @@
         private System.Windows.Forms.ComboBox cboFillDisplayFrame;
         private System.Windows.Forms.Button btnFillDisplayFrame;
         private System.Windows.Forms.CheckBox chkClickOffsetBtnByShiftEnter;
+        private System.Windows.Forms.ComboBox cboBlinkCanceller;
+        private System.Windows.Forms.Button btnBlinkCanceller;
     }
 }

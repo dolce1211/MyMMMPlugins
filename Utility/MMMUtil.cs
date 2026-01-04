@@ -156,6 +156,20 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// 別ウィンドウ化されている場合、そのFormを取得します
+        /// </summary>
+        /// <param name="usecache">キャッシュを使用するかどうか</param>
+        /// <returns>見つかったForm、または null</returns>
+        public static Form TryGetOtherWindowForm()
+        {
+            var window = TryGetOtherWindow(false);
+            if (window == null)
+                return null;
+
+            return TryGetFormFromWindowHandle(window.hWnd);
+        }
+
+        /// <summary>
         /// メイン画面の描画を止めます。
         /// </summary>
         /// <param name="flg">
@@ -280,6 +294,83 @@ namespace MMDUtil
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 指定したハンドルを持つControlを再帰的に検索します
+        /// </summary>
+        /// <param name="parent">検索開始コントロール</param>
+        /// <param name="handle">検索するハンドル</param>
+        /// <returns>見つかったControl、または null</returns>
+        private static Control FindControlByHandle(Control parent, IntPtr handle)
+        {
+            if (parent.Handle == handle)
+                return parent;
+
+            foreach (Control child in parent.Controls)
+            {
+                var found = FindControlByHandle(child, handle);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// TryGetOtherWindowで取得したウィンドウハンドルから対応するFormを取得します
+        /// </summary>
+        /// <param name="windowHandle">ウィンドウハンドル（TryGetOtherWindowの戻り値のhWnd）</param>
+        /// <returns>見つかったForm、または null</returns>
+        private static Form TryGetFormFromWindowHandle(IntPtr windowHandle)
+        {
+            if (windowHandle == IntPtr.Zero)
+                return null;
+
+            try
+            {
+                // Control.FromHandleを使用してハンドルからControlを取得
+                var control = Control.FromHandle(windowHandle);
+
+                // ControlがFormの場合はそのまま返す
+                if (control is Form form)
+                {
+                    return form;
+                }
+
+                // Controlの親を辿ってFormを探す
+                while (control != null)
+                {
+                    if (control is Form parentForm)
+                    {
+                        return parentForm;
+                    }
+                    control = control.Parent;
+                }
+
+                // Application.OpenFormsから一致するハンドルを持つFormを探す
+                foreach (Form openForm in Application.OpenForms)
+                {
+                    if (openForm.Handle == windowHandle)
+                    {
+                        return openForm;
+                    }
+
+                    // 子コントロールも確認
+                    var foundControl = FindControlByHandle(openForm, windowHandle);
+                    if (foundControl != null && foundControl.TopLevelControl is Form topForm)
+                    {
+                        return topForm;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // エラーが発生した場合はnullを返す
+                Debug.WriteLine($"TryGetFormFromWindowHandle error: {ex.Message}");
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -426,7 +517,7 @@ namespace MMDUtil
 
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -458,7 +549,7 @@ namespace MMDUtil
 
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -492,25 +583,26 @@ namespace MMDUtil
 
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
         }
 
-        private static readonly List<Control> _interpolatePalletteButtons = new List<Control>();
         private static readonly List<object> _topButtons = new List<object>();
         private static readonly Dictionary<string, Control> _interpolatePalletteTabs = new Dictionary<string, Control>();
+        private static readonly List<Control> _interpolatePalletteButtons = new List<Control>();
+        private static readonly List<Control> _interpolatePalletteButtons_Camera = new List<Control>();
 
         private static Dictionary<string, Control> Get_InterpolatePalletteTabs(Form applicationForm)
         {
             if (_interpolatePalletteTabs.Count == 5)
                 return _interpolatePalletteTabs;
             _interpolatePalletteTabs.Clear();
-            var captions = new string[] { "R", "X", "Y", "Z", "M" };
+            var captions = new string[] { "R", "X", "Y", "Z", "M", "移動", "回転", "距離", "Fov" };
             foreach (var c in captions)
             {
-                var tab = FindButtonByTextInControls(applicationForm, "XtraTabPage", c, 0);
+                var tab = FindButtonByTextInControls(applicationForm, "XtraTabPage", c, 0, false);
                 _interpolatePalletteTabs.Add(c, tab);
             }
             return _interpolatePalletteTabs;
@@ -518,19 +610,25 @@ namespace MMDUtil
 
         private static List<Control> Get_InterpolatePalletteButtons(Form applicationForm)
         {
-            if (_interpolatePalletteButtons.Count == 6)
-                return _interpolatePalletteButtons;
-            _interpolatePalletteButtons.Clear();
+            var cache = _interpolatePalletteButtons;
+            if (_scene?.ActiveCamera != null)
+            {
+                // カメラモード
+                cache = _interpolatePalletteButtons_Camera;
+            }
+            if (cache.Count == 6)
+                return cache;
+            cache.Clear();
             for (int i = 1; i <= 6; i++)
             {
-                var button = FindButtonByTextInControls(applicationForm, "SimpleButton", i.ToString(), 0);
+                var button = FindButtonByTextInControls(applicationForm, "SimpleButton", i.ToString(), 0, true);
                 if (button != null)
                 {
-                    _interpolatePalletteButtons.Add(button);
+                    cache.Add(button);
                 }
             }
 
-            return _interpolatePalletteButtons;
+            return cache;
         }
 
         private static List<object> Get_TopRibbonButtons(Form applicationForm)
@@ -584,7 +682,7 @@ namespace MMDUtil
                     return true;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
             return false;
@@ -618,7 +716,7 @@ namespace MMDUtil
                 // フォールバック：全体から小さなボタンを探す
                 return FindAndClickSmallButtonInControls(applicationForm);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -630,7 +728,7 @@ namespace MMDUtil
         /// <param name="parent">検索開始コントロール</param>
         /// <param name="buttonText">探すボタンのテキスト</param>
         /// <returns>見つかったボタン、または null</returns>
-        private static Control FindButtonByTextInControls(Control parent, string typeName, string text, int mode)
+        private static Control FindButtonByTextInControls(Control parent, string typeName, string text, int mode, bool forceVisible)
         {
             try
             {
@@ -651,28 +749,31 @@ namespace MMDUtil
                         if (mode == 0)
                         {
                             if (control.Text.Trim() == text)
-                                return control;
+                                if (!forceVisible || control.Visible)
+                                    return control;
                         }
                         else
                         {
                             if (control.Text.Contains(text))
-                                return control;
+                                if (!forceVisible || control.Visible)
+                                    return control;
                             var pi = control.GetType().GetProperty("ToolTip");
                             var toolTip = pi?.GetValue(control) as string;
                             if (toolTip == text)
-                                return control;
+                                if (!forceVisible || control.Visible)
+                                    return control;
                         }
                     }
 
                     // 再帰的に子コントロールを検索
-                    var result = FindButtonByTextInControls(control, typeName, text, mode);
+                    var result = FindButtonByTextInControls(control, typeName, text, mode, forceVisible);
                     if (result != null)
                     {
                         return result;
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
 
@@ -710,7 +811,7 @@ namespace MMDUtil
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
 
@@ -741,7 +842,7 @@ namespace MMDUtil
 
                 return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -770,7 +871,7 @@ namespace MMDUtil
                     FindSmallButtonsInControls(control, smallButtons);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
             }
         }
@@ -792,7 +893,7 @@ namespace MMDUtil
                 System.Threading.Thread.Sleep(50);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
@@ -844,7 +945,7 @@ namespace MMDUtil
                         ret.Add(childHandle);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // エラーが発生しても継続
                     continue;
@@ -876,22 +977,6 @@ namespace MMDUtil
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool PostMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct RECT
-        {
-            public int Left;
-            public int Top;
-            public int Right;
-            public int Bottom;
-
-            public int Width => Right - Left;
-            public int Height => Bottom - Top;
-        }
-
         private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         // 定数定義
@@ -907,7 +992,7 @@ namespace MMDUtil
         private const int VK_Z = 0x5A;
         private const int VK_Y = 0x59;
     }
- 
+
     public static class MMMExtensions
     {
         private static Dictionary<int, Dictionary<int, DisplayFrame>> _displayFrameCacheBone = new Dictionary<int, Dictionary<int, DisplayFrame>>();

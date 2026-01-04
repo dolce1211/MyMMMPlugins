@@ -140,13 +140,14 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="ServiceFactory.cs" />
+    <Compile Include="service\BlinkCancellerService.cs" />
     <Compile Include="service\FillDisplayFramesService.cs" />
     <Compile Include="service\GapSelectorService.cs" />
     <Compile Include="service\InterpolateService.cs" />
     <Compile Include="service\LayerBoneSelectorService.cs" />
     <Compile Include="service\ModifiedLayerSelectorService.cs" />
     <Compile Include="offsetAdder\OffsetAdderService.cs" />
-    <Compile Include="service\SelectedKeysSaver.cs" />
+    <Compile Include="service\SelectedKeysSaverService.cs" />
     <Compile Include="service\_BaseService.cs" />
   </ItemGroup>
   <ItemGroup>

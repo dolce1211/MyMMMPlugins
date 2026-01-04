@@ -28,9 +28,9 @@ namespace MoCapModificationHelperPlugin.service
         }
 
         // フレーム検索の高速化のためのキャッシュ
-        private static readonly Vector3 ZeroVector = Vector3.Zero;
+        private static readonly Vector3 _zeroVector = Vector3.Zero;
 
-        private static readonly Quaternion IdentityQuaternion = Quaternion.Identity;
+        private static readonly Quaternion _identityQuaternion = Quaternion.Identity;
 
         private bool ExecuteSpace(ConfigItem config)
         {
@@ -47,7 +47,7 @@ namespace MoCapModificationHelperPlugin.service
                 {
                     foreach (var tuple in bone.Layers.Select(l => (bone: bone, layer: l)))
                     {
-                        var selected = tuple.layer.CurrentLocalMotion.Move.RoundVector3(4) != ZeroVector || tuple.layer.CurrentLocalMotion.Rotation.RoundQuaternion(4) != IdentityQuaternion;
+                        var selected = tuple.layer.CurrentLocalMotion.Move.RoundVector3(4) != _zeroVector || tuple.layer.CurrentLocalMotion.Rotation.RoundQuaternion(4) != _identityQuaternion;
                         if (inverse)
                             selected = !selected;
 
@@ -71,11 +71,11 @@ namespace MoCapModificationHelperPlugin.service
                 }
             }
 
-            var gridHandle = MMMUtilility.FindTimelineGridControl(this.ApplicationForm);
-            if (gridHandle != IntPtr.Zero)
-            {
-                MMMUtilility.ClickControlAt(gridHandle, 20, 200);
-            }
+            //var gridHandle = MMMUtilility.FindTimelineGridControl(this.ApplicationForm);
+            //if (gridHandle != IntPtr.Zero)
+            //{
+            //    MMMUtilility.ClickControlAt(gridHandle, 20, 200);
+            //}
             return ret;
         }
     }

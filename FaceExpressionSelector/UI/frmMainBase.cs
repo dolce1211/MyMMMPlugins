@@ -287,7 +287,7 @@ namespace FaceExpressionHelper
                     {
                         ret = ScreenShotSaver.SaveScr(pos, shotdir, expName.TrimSafe(), this._args.LetterArgs, ref retPicturePath);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         MessageBox.Show("スクリーンショットの取得に失敗しました");
                     }

@@ -20,6 +20,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "github", "github", "{DDB4EF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoCapModificationHelperPlugin", "MocapModificationHelperPlugin\MoCapModificationHelperPlugin.csproj", "{F30AB181-DC49-469B-9053-AD6F0C7B8F98}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".amazonq", ".amazonq", "{A887C6B5-6704-4B7A-A06C-68A4BB1C5138}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "rules", "rules", "{27CD690C-0058-4FF1-8588-4921435A9979}"
+	ProjectSection(SolutionItems) = preProject
+		..\.amazonq\rules\rules.md = ..\.amazonq\rules\rules.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -90,6 +97,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{27CD690C-0058-4FF1-8588-4921435A9979} = {A887C6B5-6704-4B7A-A06C-68A4BB1C5138}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5DC5CB31-16F5-458E-8782-42149CEC7B79}

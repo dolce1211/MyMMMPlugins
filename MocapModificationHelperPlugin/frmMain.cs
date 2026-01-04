@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -26,9 +27,6 @@ namespace MoCapModificationHelperPlugin
     {
         private OffsetAdderService _offsetAdder = null;
         private Color _defBackColor = Color.Empty;
-
-        //マウスのクリック位置を記憶
-        private Point mousePoint;
 
         private Form _parentForm;
         private Scene _scene;
@@ -65,6 +63,8 @@ namespace MoCapModificationHelperPlugin
             this.cboFillDisplayFrame.Tag = ServiceType.FillDisplayFramesService;
             this.btnFillDisplayFrame.Tag = ServiceType.FillDisplayFramesService;
 
+            this.cboBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
+            this.btnBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
             this.chkClickOffsetBtnByShiftEnter.Checked = configs.ClickOffsetBtnByShiftEnter;
             CreateControls();
             this.timer1.Interval = 500;
@@ -98,13 +98,18 @@ namespace MoCapModificationHelperPlugin
             if (_offsetAdder == null)
                 // オフセット付与モードでなければ何もしない
                 return;
-
-            ExecuteUpdate();
+            if (this._scene.Mode != EditMode.ModelMode)
+                return;
+            UpdateDataGridView();
         }
 
         private List<IMotionFrameData> _prefSelectedFrames = new List<IMotionFrameData>();
 
-        private bool ExecuteUpdate()
+        /// <summary>
+        /// オフセット量をグリッドに反映する
+        /// </summary>
+        /// <returns></returns>
+        private bool UpdateDataGridView()
         {
             if (_suspendUpdate)
                 return false;
@@ -120,19 +125,15 @@ namespace MoCapModificationHelperPlugin
                 return false;
             }
             _prefSelectedFrames = currentSelectedFrames;
+            var date = DateTime.Now;
 
             this._offsetAdder.Update();
-
-            //this._offsetAdder.BeginAndEndUpdate(false);
-
             try
             {
                 if (this._scene?.ActiveModel != null)
                 {
-                    var offsetState = OffsetAdderUtil.CreateOffsetState(this._scene);
-
                     // offsetState.ItemsをDataGridViewに反映
-                    var gridData = OffsetAdderUtil.UpdateDataGridView(this._scene, dataGridView1, this._offsetAdder.PreviousStates, offsetState);
+                    var gridData = OffsetAdderUtil.UpdateDataGridView(this._scene, dataGridView1, this._offsetAdder.PreviousStates);
 
                     this.btnExecuteOffset.Enabled = gridData.Any(n => n.FrameCount > 0 && (n.MoveValue != new Vector3() || n.RotationValue != new Quaternion(0, 0, 0, 1)));
                 }
@@ -142,32 +143,11 @@ namespace MoCapModificationHelperPlugin
             }
             finally
             {
-                //this._offsetAdder.BeginAndEndUpdate(true);
                 _prefSelectedFrames = currentSelectedFrames;
+                //Debug.WriteLine($"grid update time: {(DateTime.Now - date).TotalMilliseconds} ms");
             }
             return false;
         }
-
-        //private void SwitchOffsetAddMode()
-        //{
-        //    int mode = 0;
-        //    if (_scene?.ActiveModel == null)
-        //    {
-        //        _offsetAdder = null;
-        //    }
-        //    if (_offsetAdder != null)
-        //    {
-        //        //オフセット付与モードオン
-        //        mode = 1;
-        //    }
-        //    else
-        //    {
-        //        //オフセット付与モードオフ
-        //        mode = 0;
-        //    }
-
-        //    ApplyAndGetCurrentMode(mode);
-        //}
 
         /// <summary>
         /// オフセット付与モードの適用と現在のモードの取得を行う
@@ -219,12 +199,18 @@ namespace MoCapModificationHelperPlugin
             {
                 //オフセット付与モード開始
                 _offsetAdder = new OffsetAdderService();
-                _offsetAdder.Initialize(this._scene, this._parentForm, this, this.progressBar1);
+                _offsetAdder.ProgressChanged += (s, ev) =>
+                {
+                    this.progressBar1.Maximum = ev.Maximum;
+                    this.progressBar1.Value = ev.Value;
+                };
+                _offsetAdder.Initialize(this._scene, this._parentForm);
                 OffsetAdderUtil.ConfigureDataGridViewColumns(this.dataGridView1);
             }
             else
             {
                 //オフセット付与モード解除
+                _offsetAdder.ProgressChanged = null;
                 _offsetAdder = null;
             }
             ApplyAndGetCurrentMode(_offsetAdder == null ? 0 : 1);
@@ -239,7 +225,8 @@ namespace MoCapModificationHelperPlugin
                 var keysList = new List<Keys>();
                 keysList.Add(Keys.Enter);
                 keysList.Add(Keys.Space);
-
+                keysList.Add(Keys.ShiftKey);
+                keysList.Add(Keys.ControlKey);
                 // A-Zのキーを追加
                 for (Keys key = Keys.A; key <= Keys.Z; key++)
                 {
@@ -414,12 +401,12 @@ namespace MoCapModificationHelperPlugin
                 interpolateConfig.InterpolateType = InterpolateType.R;
 
             _configs.Services.Add(interpolateConfig);
-
+            _configs.ClickOffsetBtnByShiftEnter = this.chkClickOffsetBtnByShiftEnter.Checked;
             try
             {
                 MyUtility.Serializer.Serialize(this._configs, Configs.GetConfigFilePath());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // ログ出力やエラーハンドリングが必要に応じて追加
             }
@@ -436,35 +423,46 @@ namespace MoCapModificationHelperPlugin
             ExecuteService(config);
         }
 
-        public void TryClickOffsetButton()
+        public bool TryClickOffsetButton()
         {
             if (chkClickOffsetBtnByShiftEnter.Checked)
                 if (this.btnExecuteOffset.Visible && this.btnExecuteOffset.Enabled)
+                {
                     this.btnExecuteOffset.PerformClick();
+                    return true;
+                }
+
+            return false;
         }
 
-        public void ExecuteService(ConfigItem config, Keys key = Keys.None)
+        /// <summary>
+        /// 各種サービスを実行する
+        /// </summary>
+        /// <param name="config"></param>
+        /// <param name="key"></param>
+        public bool ExecuteService(ConfigItem config, Keys key = Keys.None)
         {
             if (config == null)
-                return;
-            var service = ServiceFactory.Create(config.ServiceType, this._scene, this._parentForm);
-            if (service != null)
-            {
-                if (service is SelectedKeysLoaderService loaderService)
-                    loaderService.HistoryIndex = this.cboHistory.SelectedIndex;
-                if (service is InterpolateService interpolateSetterService)
-                {
-                    int palletteindex = GetPalletteIndex(key);
-                    InterpolateType interpolateType = GetInterpolateType();
-                    interpolateSetterService.SetTypeAndPallette(palletteindex, interpolateType);
-                    if (config.InterpolateType == InterpolateType.none)
-                        config.InterpolateType = InterpolateType.R;
-                }
-                service.Execute(config);
-                ApplyService(service, config);
-            }
+                return false;
 
+            var service = ServiceFactory.Create(config.ServiceType, this._scene, this._parentForm);
+            if (service == null)
+                return false;
+
+            if (service is SelectedKeysLoaderService loaderService)
+                loaderService.HistoryIndex = this.cboHistory.SelectedIndex;
+            if (service is InterpolateService interpolateSetterService)
+            {
+                int palletteindex = GetPalletteIndex(key);
+                InterpolateType interpolateType = GetInterpolateType();
+                interpolateSetterService.SetTypeAndPallette(palletteindex, interpolateType);
+                if (config.InterpolateType == InterpolateType.none)
+                    config.InterpolateType = InterpolateType.R;
+            }
+            service.Execute(config);
+            ApplyService(service, config);
             MMDUtilility.SetForegroundWindow(this._parentForm.Handle);
+            return true;
         }
 
         private InterpolateType GetInterpolateType()
@@ -583,17 +581,19 @@ namespace MoCapModificationHelperPlugin
 
         private void btnExecuteOffset_Click(object sender, EventArgs e)
         {
-            ExecuteUpdate();
             if (_offsetAdder == null)
+                // オフセット付与モードでなければ何もしない
                 return;
 
+            // グリッド更新
+            UpdateDataGridView();
             var gridData = dataGridView1.DataSource as List<OffsetGridItem>;
             if (gridData == null)
                 return;
 
             var offsetExecuted = gridData.Sum(n => n.FrameCount);
             var msg = $"計 {offsetExecuted}個のキーにオフセット付与します。\r\n\r\nよろしいですか？";
-            if (MessageBox.Show(msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+            if (MessageBox.Show(this._parentForm, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
                 return;
 
             _offsetAdder.Execute(new ConfigItem() { ServiceType = ServiceType.OffsetAdderService });
@@ -657,7 +657,8 @@ namespace MoCapModificationHelperPlugin
 
         private void chkClickOffsetBtnByShiftEnter_CheckedChanged(object sender, EventArgs e)
         {
-            SaveConfig();
+            if (this.Visible)
+                SaveConfig();
         }
     }
 }
