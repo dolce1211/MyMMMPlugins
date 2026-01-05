@@ -27,9 +27,10 @@ namespace MoCapModificationHelperPlugin
     {
         private OffsetAdderService _offsetAdder = null;
         private Color _defBackColor = Color.Empty;
-
+        private int _prevModelId = -1;
         private Form _parentForm;
         private Scene _scene;
+
         private Configs _configs;
 
         public frmMain(Form parentForm, Scene scene, Configs configs)
@@ -93,14 +94,37 @@ namespace MoCapModificationHelperPlugin
             {
                 return;
             }
+            if (!this.Enabled)
+                return;
             _datetime = DateTime.Now;
-            this.btnOffset.Enabled = !(_scene?.ActiveModel == null);
-            if (_offsetAdder == null)
-                // オフセット付与モードでなければ何もしない
-                return;
-            if (this._scene.Mode != EditMode.ModelMode)
-                return;
-            UpdateDataGridView();
+
+            var disableOffset = false;
+            if (_scene?.ActiveModel != null)
+            {
+                if (this._offsetAdder != null)
+                {
+                    if (this._offsetAdder.FrameNumber > 0 && this._scene.MarkerPosition != this._offsetAdder.FrameNumber)
+                        //フレーム位置が変わった→オフセット付加をオフにする
+                        disableOffset = true;
+                    if (this._prevModelId != _scene.ActiveModel.ID)
+                        //モデルが変わった→オフセット付加をオフにする
+                        disableOffset = true;
+                }
+                this._prevModelId = _scene.ActiveModel.ID;
+            }
+            else
+            {
+                //アクティブモデルが無い→オフセット付加をオフにする
+                disableOffset = true;
+            }
+            if (disableOffset && this._offsetAdder != null)
+                // オフセット付加モードを解除
+                InitializeOffsetService(false);
+
+            if (this._offsetAdder != null)
+            {
+                UpdateDataGridView();
+            }
         }
 
         private List<IMotionFrameData> _prefSelectedFrames = new List<IMotionFrameData>();
@@ -111,6 +135,11 @@ namespace MoCapModificationHelperPlugin
         /// <returns></returns>
         private bool UpdateDataGridView()
         {
+            if (_offsetAdder == null)
+                // オフセット付加モードでなければ何もしない
+                return false;
+            if (this._scene.Mode != EditMode.ModelMode)
+                return false;
             if (_suspendUpdate)
                 return false;
             var currentSelectedFrames = this._scene?.ActiveModel?.Bones.SelectMany(n => n.Layers).SelectMany(n => n.SelectedFrames).ToList();
@@ -127,7 +156,6 @@ namespace MoCapModificationHelperPlugin
             _prefSelectedFrames = currentSelectedFrames;
             var date = DateTime.Now;
 
-            this._offsetAdder.Update();
             try
             {
                 if (this._scene?.ActiveModel != null)
@@ -149,71 +177,61 @@ namespace MoCapModificationHelperPlugin
             return false;
         }
 
-        /// <summary>
-        /// オフセット付与モードの適用と現在のモードの取得を行う
-        /// </summary>
-        /// <param name="mode">
-        /// 0:オフセット付与モードオフ
-        /// 1:オフセット付与モードオン
-        /// </param>
-        /// <returns>
-        /// </returns>
-        private int ApplyAndGetCurrentMode(int mode)
+        private void InitializeOffsetService(bool mode)
         {
-            var ret = 0;
-            if (_scene?.ActiveModel == null)
+            Debug.WriteLine($"mode: {mode}");
+            if (mode)
             {
+                //オフセット付加モード開始
                 _offsetAdder = null;
-            }
-            if (mode == 1)
-            {
+                _offsetAdder = new OffsetAdderService(this);
+                _offsetAdder.ProgressChanged = null;
+                _offsetAdder.ProgressChanged += (s, ev) =>
+                {
+                    this.Invoke(new Action(() =>
+                    {
+                        if (ev.Value == ev.Maximum)
+                            this.progressBar1.Visible = false;
+                        else
+                            this.progressBar1.Visible = true;
+
+                        this.progressBar1.Maximum = ev.Maximum;
+                        this.progressBar1.Value = ev.Value;
+                    }));
+                };
+                _offsetAdder.Initialize(this._scene, this._parentForm);
+                OffsetAdderUtil.ConfigureDataGridViewColumns(this.dataGridView1);
+                // 現在の状態を保存しなおす
+
                 btnOffset.Text = "戻る";
                 this.BackColor = Color.Black;
-
-                ret = 1;
             }
             else
             {
-                btnOffset.Text = "オフセット付与準備";
+                btnOffset.Text = "オフセット付加準備";
                 this.BackColor = _defBackColor;
-                //オフセット付与モードオフなら何もしない
+                //オフセット付加モードオフなら何もしない
                 // DataGridViewもクリア
                 this.dataGridView1.DataSource = null;
+                //オフセット付加モード解除
+                if (_offsetAdder != null)
+                    _offsetAdder.ProgressChanged = null;
+                _offsetAdder = null;
             }
 
-            var visible = (mode == 1);
-            this.dataGridView1.Visible = visible;
-            this.pnlOffset.Visible = visible;
-            this.panel.Visible = !visible;
-
-            return ret;
+            this.dataGridView1.Visible = mode;
+            this.pnlOffset.Visible = mode;
+            this.panel.Visible = !mode;
         }
 
         private void btnOffset_Click(object sender, EventArgs e)
         {
+            var mode = (btnOffset.Text == "オフセット付加準備");
             if (_scene?.ActiveModel == null)
             {
-                return;
+                mode = false;
             }
-            if (_offsetAdder == null)
-            {
-                //オフセット付与モード開始
-                _offsetAdder = new OffsetAdderService();
-                _offsetAdder.ProgressChanged += (s, ev) =>
-                {
-                    this.progressBar1.Maximum = ev.Maximum;
-                    this.progressBar1.Value = ev.Value;
-                };
-                _offsetAdder.Initialize(this._scene, this._parentForm);
-                OffsetAdderUtil.ConfigureDataGridViewColumns(this.dataGridView1);
-            }
-            else
-            {
-                //オフセット付与モード解除
-                _offsetAdder.ProgressChanged = null;
-                _offsetAdder = null;
-            }
-            ApplyAndGetCurrentMode(_offsetAdder == null ? 0 : 1);
+            InitializeOffsetService(mode);
         }
 
         private void CreateControls()
@@ -582,7 +600,7 @@ namespace MoCapModificationHelperPlugin
         private void btnExecuteOffset_Click(object sender, EventArgs e)
         {
             if (_offsetAdder == null)
-                // オフセット付与モードでなければ何もしない
+                // オフセット付加モードでなければ何もしない
                 return;
 
             // グリッド更新
@@ -592,19 +610,29 @@ namespace MoCapModificationHelperPlugin
                 return;
 
             var offsetExecuted = gridData.Sum(n => n.FrameCount);
-            var msg = $"計 {offsetExecuted}個のキーにオフセット付与します。\r\n\r\nよろしいですか？";
-            if (MessageBox.Show(this._parentForm, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
+            var msg = $"計 {offsetExecuted}個のキーにオフセット付加します。\r\n\r\nよろしいですか？\r\n\r\n*処理中はPCに触れないでください。\r\n正しくオフセットが付与されなくなる可能性があります";
+            if (MessageBox.Show(this, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
                 return;
 
-            _offsetAdder.Execute(new ConfigItem() { ServiceType = ServiceType.OffsetAdderService });
-
-            this.OffsetExecuted = offsetExecuted;
+            this.Cursor = Cursors.WaitCursor;
+            this._parentForm.Cursor = Cursors.WaitCursor;
+            try
+            {
+                _offsetAdder.Execute(new ConfigItem() { ServiceType = ServiceType.OffsetAdderService });
+                this.OffsetExecuted = offsetExecuted;
+            }
+            finally
+            {
+                this.Cursor = Cursors.Default;
+                this._parentForm.Cursor = Cursors.Default;
+                InitializeOffsetService(false);
+            }
         }
 
         private void btnUndo_Click(object sender, EventArgs e)
         {
-            var msg = $"{this.OffsetExecuted}回アンドゥを行います。\r\n\r\nよろしいですか？";
-            if (MessageBox.Show(msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+            var msg = $"{this.OffsetExecuted}回アンドゥを行います。\r\n\r\nよろしいですか？\r\n\r\n*処理中はPCに触れないでください。\r\n必要な回数アンドゥが適用されなくなる可能性があります*";
+            if (MessageBox.Show(this, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
                 return;
 
             this.Enabled = false;
@@ -635,6 +663,7 @@ namespace MoCapModificationHelperPlugin
                 this.progressBar1.Visible = false;
                 this._parentForm.BeginAndEndUpdate(true);
                 ServiceFactory.IsBusy = false;
+                InitializeOffsetService(false);
             }
         }
 
@@ -649,10 +678,6 @@ namespace MoCapModificationHelperPlugin
             {
                 e.Value = $"{history.DateTime.ToString("HH:mm:ss")} (b:{history.SelectedBones.Count},m:{history.SelectedMorphs.Count})";
             }
-        }
-
-        private void panel_Paint(object sender, PaintEventArgs e)
-        {
         }
 
         private void chkClickOffsetBtnByShiftEnter_CheckedChanged(object sender, EventArgs e)

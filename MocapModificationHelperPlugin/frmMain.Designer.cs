@@ -76,7 +76,7 @@
             this.btnOffset.Name = "btnOffset";
             this.btnOffset.Size = new System.Drawing.Size(105, 25);
             this.btnOffset.TabIndex = 0;
-            this.btnOffset.Text = "オフセット付与準備";
+            this.btnOffset.Text = "オフセット付加準備";
             this.btnOffset.UseVisualStyleBackColor = true;
             this.btnOffset.Click += new System.EventHandler(this.btnOffset_Click);
             // 
@@ -89,7 +89,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(462, 211);
+            this.dataGridView1.Size = new System.Drawing.Size(467, 211);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.Visible = false;
             // 
@@ -125,9 +125,9 @@
             this.panel.Controls.Add(this.label1);
             this.panel.Location = new System.Drawing.Point(6, 59);
             this.panel.Name = "panel";
-            this.panel.Size = new System.Drawing.Size(462, 213);
+            this.panel.Size = new System.Drawing.Size(467, 213);
             this.panel.TabIndex = 3;
-            this.panel.Paint += new System.Windows.Forms.PaintEventHandler(this.panel_Paint);
+
             // 
             // cboBlinkCanceller
             // 
@@ -149,6 +149,7 @@
             this.btnBlinkCanceller.TabIndex = 21;
             this.btnBlinkCanceller.Text = "選択中のまばたきモーフに対する目モーフをキャンセルする";
             this.btnBlinkCanceller.UseVisualStyleBackColor = true;
+            this.btnBlinkCanceller.Click += new System.EventHandler(this.btnGapSelector_Click);
             // 
             // cboFillDisplayFrame
             // 
@@ -277,7 +278,7 @@
             "Space"});
             this.cboHistory.Location = new System.Drawing.Point(354, 110);
             this.cboHistory.Name = "cboHistory";
-            this.cboHistory.Size = new System.Drawing.Size(102, 20);
+            this.cboHistory.Size = new System.Drawing.Size(107, 20);
             this.cboHistory.TabIndex = 15;
             this.cboHistory.Format += new System.Windows.Forms.ListControlConvertEventHandler(this.cboHistory_Format);
             // 
@@ -438,11 +439,10 @@
             this.pnlOffset.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlOffset.Controls.Add(this.chkClickOffsetBtnByShiftEnter);
-            this.pnlOffset.Controls.Add(this.btnUndo);
             this.pnlOffset.Controls.Add(this.btnExecuteOffset);
-            this.pnlOffset.Location = new System.Drawing.Point(117, 2);
+            this.pnlOffset.Location = new System.Drawing.Point(115, 2);
             this.pnlOffset.Name = "pnlOffset";
-            this.pnlOffset.Size = new System.Drawing.Size(350, 26);
+            this.pnlOffset.Size = new System.Drawing.Size(245, 26);
             this.pnlOffset.TabIndex = 4;
             this.pnlOffset.Visible = false;
             // 
@@ -454,7 +454,7 @@
             this.chkClickOffsetBtnByShiftEnter.Name = "chkClickOffsetBtnByShiftEnter";
             this.chkClickOffsetBtnByShiftEnter.Size = new System.Drawing.Size(156, 16);
             this.chkClickOffsetBtnByShiftEnter.TabIndex = 7;
-            this.chkClickOffsetBtnByShiftEnter.Text = "shift+Enterでオフセット付与";
+            this.chkClickOffsetBtnByShiftEnter.Text = "shift+Enterでオフセット付加";
             this.chkClickOffsetBtnByShiftEnter.UseVisualStyleBackColor = true;
             this.chkClickOffsetBtnByShiftEnter.CheckedChanged += new System.EventHandler(this.chkClickOffsetBtnByShiftEnter_CheckedChanged);
             // 
@@ -462,7 +462,7 @@
             // 
             this.btnUndo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnUndo.Enabled = false;
-            this.btnUndo.Location = new System.Drawing.Point(274, 1);
+            this.btnUndo.Location = new System.Drawing.Point(397, 2);
             this.btnUndo.Name = "btnUndo";
             this.btnUndo.Size = new System.Drawing.Size(76, 25);
             this.btnUndo.TabIndex = 2;
@@ -474,11 +474,11 @@
             // 
             this.btnExecuteOffset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnExecuteOffset.BackColor = System.Drawing.Color.Orange;
-            this.btnExecuteOffset.Location = new System.Drawing.Point(190, 1);
+            this.btnExecuteOffset.Location = new System.Drawing.Point(160, 1);
             this.btnExecuteOffset.Name = "btnExecuteOffset";
             this.btnExecuteOffset.Size = new System.Drawing.Size(85, 25);
             this.btnExecuteOffset.TabIndex = 1;
-            this.btnExecuteOffset.Text = "オフセット付与";
+            this.btnExecuteOffset.Text = "オフセット付加";
             this.btnExecuteOffset.UseVisualStyleBackColor = false;
             this.btnExecuteOffset.Click += new System.EventHandler(this.btnExecuteOffset_Click);
             // 
@@ -488,7 +488,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.progressBar1.Location = new System.Drawing.Point(6, 34);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(461, 20);
+            this.progressBar1.Size = new System.Drawing.Size(466, 20);
             this.progressBar1.TabIndex = 5;
             this.progressBar1.Visible = false;
             // 
@@ -496,8 +496,9 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(475, 256);
+            this.ClientSize = new System.Drawing.Size(480, 256);
             this.Controls.Add(this.progressBar1);
+            this.Controls.Add(this.btnUndo);
             this.Controls.Add(this.pnlOffset);
             this.Controls.Add(this.panel);
             this.Controls.Add(this.dataGridView1);

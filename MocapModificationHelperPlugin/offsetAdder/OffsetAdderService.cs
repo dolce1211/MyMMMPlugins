@@ -22,30 +22,31 @@ namespace MoCapModificationHelperPlugin.service
         public EventHandler<ProgressChangedEventArgs> ProgressChanged;
         private Dictionary<string, IMotionFrameData> _previousStates = null;
         public Dictionary<string, IMotionFrameData> PreviousStates => _previousStates;
-        private long _frameNumber = 0;
+        private long _frameNumber = -1;
+        private frmMain _frmMain = null;
+        public long FrameNumber => _frameNumber;
 
-        public void Update()
+        public OffsetAdderService(frmMain frmMain)
         {
-            if (this.Scene.MarkerPosition != _frameNumber)
-            {
-                //フレーム位置が変わった
-                this.SetPrevisouState();
-            }
+            this._frmMain = frmMain;
         }
 
         public override void Initialize(Scene scene, IWin32Window applicationForm)
         {
             base.Initialize(scene, applicationForm);
-            this.SetPrevisouState();
+            this.SaveCurrentState();
         }
 
-        private void SetPrevisouState()
+        /// <summary>
+        /// 現在の状態を保存する
+        /// </summary>
+        private void SaveCurrentState()
         {
             MMDUtil.MMDUtilility.BeginAndEndUpdate(this.ApplicationForm.Handle, false);
             var otherWindow = MMDUtil.MMMUtilility.TryGetOtherWindow(true);
             if (otherWindow != null)
                 MMDUtil.MMDUtilility.BeginAndEndUpdate(otherWindow.hWnd, false);
-
+            this._frmMain.Enabled = false;
             try
             {
                 this.Scene.MarkerPosition += 1;
@@ -56,6 +57,7 @@ namespace MoCapModificationHelperPlugin.service
             }
             finally
             {
+                this._frmMain.Enabled = true;
                 MMDUtil.MMDUtilility.BeginAndEndUpdate(this.ApplicationForm.Handle, true);
                 if (otherWindow != null)
                     MMDUtil.MMDUtilility.BeginAndEndUpdate(otherWindow.hWnd, true);
@@ -84,7 +86,6 @@ namespace MoCapModificationHelperPlugin.service
             {
                 //操作前の状態に戻す
                 this.ApplicationForm.Refresh();
-                SetPrevisouState();
                 this.Scene.MarkerPosition = currentPosition;
                 foreach (var tuple in Scene.ActiveModel.Bones
                                         .SelectMany(bone => (bone.Layers.Select(layer => (bone, layer))))
@@ -97,6 +98,7 @@ namespace MoCapModificationHelperPlugin.service
                         frame.Selected = true;
                     }
                 }
+                this.SaveCurrentState();
             }
         }
 

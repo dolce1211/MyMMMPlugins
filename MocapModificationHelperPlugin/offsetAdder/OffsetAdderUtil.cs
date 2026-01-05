@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Net.Mime.MediaTypeNames;
 using MyUtility;
+using System.Diagnostics;
 
 namespace MoCapModificationHelperPlugin.offsetAdder
 {
@@ -258,6 +259,7 @@ namespace MoCapModificationHelperPlugin.offsetAdder
             var allSelectedLayergroup = OffsetAdderUtil.TryGetAllSelectedLayerGroups(scene);
             if (allSelectedLayergroup == null)
                 return null;
+
             totalSelectedLayers = 0;
             var itemsHash = new Dictionary<string, OffsetStateItem>();
             foreach (var grp in allSelectedLayergroup)

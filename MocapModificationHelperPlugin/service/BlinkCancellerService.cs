@@ -88,7 +88,7 @@ namespace MoCapModificationHelperPlugin.service
                     if (currentFrame == null)
                         continue;
 
-                    if (blinkFrame.Weight ==1 && currentFrame.Weight ==1)
+                    if (blinkFrame.Weight ==1 && currentFrame.Weight > 0)
                     {
                         // まばたき中に他の目モーフが生きている→キャンセルキーフレーム追加
                         var addingFrame = new MorphFrameData(blinkFrame.FrameNumber, currentFrame.Weight - blinkFrame.Weight < 0 ? 0 : currentFrame.Weight - blinkFrame.Weight)

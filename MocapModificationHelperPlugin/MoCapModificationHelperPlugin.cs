@@ -133,7 +133,7 @@ namespace MoCapModificationHelperPlugin
             }
             if (e.Shift && e.KeyCode == Keys.Enter)
             {
-                //shift+Enterでオフセット付与ボタン押下
+                //shift+Enterでオフセット付加ボタン押下
                 e.Handled = _frm?.TryClickOffsetButton() == true;
             }
         }
