@@ -131,5 +131,6 @@ namespace MoCapModificationHelperPlugin
         public ServiceType ServiceType { get; set; }
         public bool Inverse { get; set; }
         public InterpolateType InterpolateType { get; set; } = InterpolateType.R;
+        public bool ForSmile { get; set; }
     }
 }

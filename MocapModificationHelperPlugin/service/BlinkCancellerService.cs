@@ -46,7 +46,7 @@ namespace MoCapModificationHelperPlugin.service
             if (BlinkCancellerService._exceptions == null)
             {
                 //AutoBlinkerPluginを使っているならその例外リストを取得
-                BlinkCancellerService._exceptions= BlinkCancellerService.TryCreateExceptions();
+                BlinkCancellerService._exceptions = BlinkCancellerService.TryCreateExceptions();
             }
             return true;
         }
@@ -57,64 +57,84 @@ namespace MoCapModificationHelperPlugin.service
                 return false;
 
             var ret = false;
-            var currentPosition = Scene.MarkerPosition;   
-
-            // まばたきモーフを取得
-            var blickMorph = this.Scene.ActiveModel.Morphs.Where(m => m.PanelType == PanelType.Eyes)
-                                            .FirstOrDefault(m => m.Name.Contains("まばたき"));
-            if (blickMorph == null)
-                //まばたきモーフなし
-                return false;
-
-            // まばたきモーフで選択されているフレームを取得
-            var blinkSelectedFrames = blickMorph.SelectedFrames;
-
-            foreach (var morph in this.Scene.ActiveModel.Morphs.Where(m => m.PanelType == PanelType.Eyes))
+            var currentPosition = Scene.MarkerPosition;
+            for (int i = 0; i < 2; i++)
             {
-                if (morph.Name == blickMorph.Name)
-                    continue;
-                if (BlinkCancellerService._exceptions.Contains(morph.Name))
-                    continue;
-                var affectedFrames = new List<long>();
-                foreach (var blinkFrame in blinkSelectedFrames)
+                if (i > 0)
+                    if (!config.ForSmile)
+                        break;
+                var blinkMorph = "";
+                if (i == 0)
+                    blinkMorph = "まばたき";
+                else
+                    blinkMorph = "笑い";
+
+                // まばたきモーフを取得
+                var blickMorph = this.Scene.ActiveModel.Morphs.Where(m => m.PanelType == PanelType.Eyes)
+                                                .FirstOrDefault(m => m.Name.Contains(blinkMorph));
+                if (blickMorph == null)
+                    //まばたきモーフなし
+                    return false;
+
+                // まばたきモーフで選択されているフレームを取得
+                var blinkSelectedFrames = blickMorph.SelectedFrames;
+
+                foreach (var morph in this.Scene.ActiveModel.Morphs.Where(m => m.PanelType == PanelType.Eyes))
                 {
-                    // blinkFrame.FrameNumberより小さいFrameNumberのうち最大のものを取得
-                    var currentFrame = morph.Frames
-                        .Where(m => !affectedFrames.Contains(m.FrameNumber))
-                        .Where(m => m.FrameNumber <= blinkFrame.FrameNumber)
-                        .OrderByDescending(m => m.FrameNumber)
-                        .FirstOrDefault();
-
-                    if (currentFrame == null)
+                    if (morph.Name == blickMorph.Name)
                         continue;
-
-                    if (blinkFrame.Weight ==1 && currentFrame.Weight > 0)
+                    if (BlinkCancellerService._exceptions.Contains(morph.Name))
+                        continue;
+                    var affectedFrames = new List<long>();
+                    foreach (var blinkFrame in blinkSelectedFrames)
                     {
-                        // まばたき中に他の目モーフが生きている→キャンセルキーフレーム追加
-                        var addingFrame = new MorphFrameData(blinkFrame.FrameNumber, currentFrame.Weight - blinkFrame.Weight < 0 ? 0 : currentFrame.Weight - blinkFrame.Weight)
-                        {
-                            InterpolA = blinkFrame.InterpolA,
-                            InterpolB = blinkFrame.InterpolB
-                        };
+                        // blinkFrame.FrameNumberより小さいFrameNumberのうち最大のものを取得
+                        var currentFrame = morph.Frames
+                            .Where(m => !affectedFrames.Contains(m.FrameNumber))
+                            .Where(m => m.FrameNumber <= blinkFrame.FrameNumber)
+                            .OrderByDescending(m => m.FrameNumber)
+                            .FirstOrDefault();
 
-                        morph.Frames.AddKeyFrame(addingFrame);
+                        if (currentFrame == null)
+                            continue;
 
-                        affectedFrames.Add(blinkFrame.FrameNumber);
-                    }
-                    else if (blinkFrame.Weight == 0 && currentFrame.Weight > 0)
-                    {
-                        // まばたき開始、終了時に他の目モーフが生きている→そのままキーフレーム追加
-                        var addingFrame = new MorphFrameData(blinkFrame.FrameNumber, currentFrame.Weight)
+                        if (blinkFrame.Weight == 1 && currentFrame.Weight > 0)
                         {
-                            InterpolA = blinkFrame.InterpolA,
-                            InterpolB = blinkFrame.InterpolB
-                        };
-                        morph.Frames.AddKeyFrame(addingFrame);
+                            // まばたき中に他の目モーフが生きている→キャンセルキーフレーム追加
+                            var addingFrame = new MorphFrameData(blinkFrame.FrameNumber, currentFrame.Weight - blinkFrame.Weight < 0 ? 0 : currentFrame.Weight - blinkFrame.Weight)
+                            {
+                                InterpolA = blinkFrame.InterpolA,
+                                InterpolB = blinkFrame.InterpolB
+                            };
+
+                            morph.Frames.AddKeyFrame(addingFrame);
+
+                            affectedFrames.Add(blinkFrame.FrameNumber);
+                        }
+                        else if (blinkFrame.Weight == 0 && currentFrame.Weight > 0)
+                        {
+                            // まばたき開始、終了時に他の目モーフが生きている→そのままキーフレーム追加
+                            var addingFrame = new MorphFrameData(blinkFrame.FrameNumber, currentFrame.Weight)
+                            {
+                                InterpolA = blinkFrame.InterpolA,
+                                InterpolB = blinkFrame.InterpolB
+                            };
+                            morph.Frames.AddKeyFrame(addingFrame);
+                        }
                     }
                 }
             }
 
+            // モーフの変更を即座に反映させるために画面を更新する
+            this.Scene.MarkerPosition += 1;
+            this.Scene.MarkerPosition -= 1;
+            this.ApplicationForm.Refresh();
             return ret;
+        }
+
+        public override void PostExecute()
+        {
+            base.PostExecute();
         }
     }
 

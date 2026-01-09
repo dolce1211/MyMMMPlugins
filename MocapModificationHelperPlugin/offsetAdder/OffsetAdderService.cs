@@ -80,7 +80,7 @@ namespace MoCapModificationHelperPlugin.service
 
             try
             {
-                return ExecuteAddOffsetAsync(processingItems);
+                return ExecuteAddOffset(processingItems);
             }
             finally
             {
@@ -186,7 +186,7 @@ namespace MoCapModificationHelperPlugin.service
             return processingItems;
         }
 
-        private bool ExecuteAddOffsetAsync(List<(string layerName, MotionLayer layer, MotionFrameData frameData)> processingItems)
+        private bool ExecuteAddOffset(List<(string layerName, MotionLayer layer, MotionFrameData frameData)> processingItems)
         {
             var value = 0;
             ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(value, processingItems.Count));

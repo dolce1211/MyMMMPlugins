@@ -36,7 +36,7 @@ namespace MoCapModificationHelperPlugin
         public frmMain(Form parentForm, Scene scene, Configs configs)
         {
             InitializeComponent();
-            this.panel.Location = this.dataGridView1.Location;
+            this.pnlMain.Location = this.dataGridView1.Location;
             _parentForm = parentForm;
             _scene = scene;
             _configs = configs;
@@ -66,6 +66,7 @@ namespace MoCapModificationHelperPlugin
 
             this.cboBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
             this.btnBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
+            this.chkCancelForSmile.Tag = ServiceType.BlinkCancellerService;
             this.chkClickOffsetBtnByShiftEnter.Checked = configs.ClickOffsetBtnByShiftEnter;
             CreateControls();
             this.timer1.Interval = 500;
@@ -194,9 +195,11 @@ namespace MoCapModificationHelperPlugin
                             this.progressBar1.Visible = false;
                         else
                             this.progressBar1.Visible = true;
-
-                        this.progressBar1.Maximum = ev.Maximum;
-                        this.progressBar1.Value = ev.Value;
+                        if (ev.Value % 10 == 0 || ev.Value >= ev.Maximum)
+                        {
+                            this.progressBar1.Maximum = ev.Maximum;
+                            this.progressBar1.Value = ev.Value;
+                        }
                     }));
                 };
                 _offsetAdder.Initialize(this._scene, this._parentForm);
@@ -221,7 +224,7 @@ namespace MoCapModificationHelperPlugin
 
             this.dataGridView1.Visible = mode;
             this.pnlOffset.Visible = mode;
-            this.panel.Visible = !mode;
+            this.pnlMain.Visible = !mode;
         }
 
         private void btnOffset_Click(object sender, EventArgs e)
@@ -236,8 +239,8 @@ namespace MoCapModificationHelperPlugin
 
         private void CreateControls()
         {
-            this.panel.BeginUpdate();
-            this.panel.Enabled = false;
+            this.pnlMain.BeginUpdate();
+            this.pnlMain.Enabled = false;
             try
             {
                 var keysList = new List<Keys>();
@@ -291,6 +294,10 @@ namespace MoCapModificationHelperPlugin
                     {
                         chkbox.Checked = serviceItem.Inverse;
                     }
+                    if (serviceType == ServiceType.BlinkCancellerService && serviceItem != null)
+                    {
+                        chkCancelForSmile.Checked = serviceItem.ForSmile;
+                    }
                 }
                 var interpolateService = _configs.Services.FirstOrDefault(n => n.ServiceType == ServiceType.InterpolateSetterService);
                 if (interpolateService != null)
@@ -325,15 +332,15 @@ namespace MoCapModificationHelperPlugin
             }
             finally
             {
-                this.panel.Enabled = true;
-                this.panel.EndUpdate();
+                this.pnlMain.Enabled = true;
+                this.pnlMain.EndUpdate();
             }
         }
 
         private List<ComboBox> GetAllComboBoxes()
         {
             var list = new List<ComboBox>();
-            foreach (Control ctrl in this.panel.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
+            foreach (Control ctrl in this.pnlMain.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
             {
                 if (ctrl is ComboBox cbo)
                 {
@@ -347,7 +354,7 @@ namespace MoCapModificationHelperPlugin
         private List<CheckBox> GetAllChkBoxes()
         {
             var list = new List<CheckBox>();
-            foreach (Control ctrl in this.panel.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
+            foreach (Control ctrl in this.pnlMain.Controls.OfType<Control>().OrderBy(c => c.Location.Y))
             {
                 if (ctrl is CheckBox cbo)
                 {
@@ -377,7 +384,7 @@ namespace MoCapModificationHelperPlugin
 
         private void cboGapSelector_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!this.panel.Enabled)
+            if (!this.pnlMain.Enabled)
                 return;
 
             SaveConfig();
@@ -397,10 +404,12 @@ namespace MoCapModificationHelperPlugin
                 var key = (Keys)tmpCombo.SelectedItem;
                 var chkbox = chkBoxes.FirstOrDefault(n => n.Tag != null && n.Tag.Equals(serviceType));
                 var inverse = chkbox == null ? false : chkbox.Checked;
-
+                var forSmile = false;
+                if (serviceType == ServiceType.BlinkCancellerService)
+                    forSmile = this.chkCancelForSmile.Checked;
                 if (!_configs.Services.Any(s => s.ServiceType == serviceType))
                 {
-                    _configs.Services.Add(new ConfigItem() { ServiceType = serviceType, Keys = key, Inverse = inverse });
+                    _configs.Services.Add(new ConfigItem() { ServiceType = serviceType, Keys = key, Inverse = inverse, ForSmile = forSmile });
                 }
             }
 
@@ -610,10 +619,10 @@ namespace MoCapModificationHelperPlugin
                 return;
 
             var offsetExecuted = gridData.Sum(n => n.FrameCount);
-            var msg = $"計 {offsetExecuted}個のキーにオフセット付加します。\r\n\r\nよろしいですか？\r\n\r\n*処理中はPCに触れないでください。\r\n正しくオフセットが付与されなくなる可能性があります";
+            var msg = $"計 {offsetExecuted}個のキーにオフセット付加します。\r\n\r\nよろしいですか？\r\n";
             if (MessageBox.Show(this, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
                 return;
-
+            SetEnabled(false);
             this.Cursor = Cursors.WaitCursor;
             this._parentForm.Cursor = Cursors.WaitCursor;
             try
@@ -623,15 +632,25 @@ namespace MoCapModificationHelperPlugin
             }
             finally
             {
+                SetEnabled(true);
+
                 this.Cursor = Cursors.Default;
                 this._parentForm.Cursor = Cursors.Default;
                 InitializeOffsetService(false);
             }
         }
 
+        private void SetEnabled(bool enabled)
+        {
+            this.pnlMessage.Visible = !enabled;
+            this.pnlOffset.Enabled = enabled;
+            this.dataGridView1.Enabled = enabled;
+            this.pnlMain.Enabled = enabled;
+        }
+
         private void btnUndo_Click(object sender, EventArgs e)
         {
-            var msg = $"{this.OffsetExecuted}回アンドゥを行います。\r\n\r\nよろしいですか？\r\n\r\n*処理中はPCに触れないでください。\r\n必要な回数アンドゥが適用されなくなる可能性があります*";
+            var msg = $"{this.OffsetExecuted}回アンドゥを行います。\r\n\r\nよろしいですか？\r\n";
             if (MessageBox.Show(this, msg, "確認", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1) != DialogResult.Yes)
                 return;
 
@@ -639,8 +658,9 @@ namespace MoCapModificationHelperPlugin
             this.Cursor = Cursors.WaitCursor;
             this._parentForm.Cursor = Cursors.WaitCursor;
             this.progressBar1.Visible = true;
-            this.progressBar1.Maximum = this.OffsetExecuted;
+            this.progressBar1.Maximum = this.OffsetExecuted - 1;
             this.progressBar1.Value = 0;
+            SetEnabled(false);
             ServiceFactory.IsBusy = true;
             this._parentForm.BeginAndEndUpdate(false);
             try
@@ -650,8 +670,10 @@ namespace MoCapModificationHelperPlugin
                 {
                     MMMUtilility.SendCtrlZToFormWithKeyboardEvent(this._parentForm);
                     System.Threading.Thread.Sleep(5); // 各操作間に短い遅延を挿入
-                    this.progressBar1.Value++;
+
                     System.Windows.Forms.Application.DoEvents();
+                    if (i % 10 == 0 || i == this.OffsetExecuted - 1)
+                        this.progressBar1.Value = i;
                 }
                 this.OffsetExecuted = 0; // カウンターをリセット
             }
@@ -661,6 +683,7 @@ namespace MoCapModificationHelperPlugin
                 this.Cursor = Cursors.Default;
                 this._parentForm.Cursor = Cursors.Default;
                 this.progressBar1.Visible = false;
+                SetEnabled(true);
                 this._parentForm.BeginAndEndUpdate(true);
                 ServiceFactory.IsBusy = false;
                 InitializeOffsetService(false);
