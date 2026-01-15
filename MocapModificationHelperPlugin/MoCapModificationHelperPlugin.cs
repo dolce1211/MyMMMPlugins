@@ -101,6 +101,11 @@ namespace MoCapModificationHelperPlugin
             {
                 if (ServiceFactory.IsBusy)
                     return;
+
+                if (IsModalFormOpen())
+                    //MMMのフォームにモーダルフォームが開いている場合は無視
+                    return;
+
                 //二度押しされたキーに対応する処理を実行
                 _prevPressedKeys = Keys.None;
                 _prevPressedTime = DateTime.MinValue;
@@ -163,6 +168,28 @@ namespace MoCapModificationHelperPlugin
                 MyUtility.Serializer.Serialize(ret, Configs.GetConfigFilePath());
             }
             return ret;
+        }
+
+        /// <summary>
+        /// モーダルフォームが開いているかを判定します（簡易版）
+        /// </summary>
+        /// <returns>モーダルフォームが開いている場合true</returns>
+        private bool IsModalFormOpen()
+        {
+            var mainForm = ApplicationForm as Form;
+            if (mainForm == null)
+                return false;
+
+            // Application.OpenFormsから全てのフォームをチェック
+            foreach (Form form in Application.OpenForms)
+            {
+                // Form.Modalプロパティでモーダル表示されているか確認
+                if (form != mainForm && form != _frm && form.Modal)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void Initialize()
