@@ -14,6 +14,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using MoCapModificationHelperPlugin.service;
 
 namespace MoCapModificationHelperPlugin
 {
@@ -25,11 +26,11 @@ namespace MoCapModificationHelperPlugin
 
         public Guid GUID => new Guid("7F3E8A91-2B4C-4D56-9E12-A8F7C3B091E4");
 
-        public string Description => "かゆいところヘルパー";
+        public string Description => "かゆいところヘルパーR";
 
         public IWin32Window ApplicationForm { get; set; }
 
-        public string Text => "かゆいところヘルパー";
+        public string Text => "かゆいところヘルパーR";
 
         public string EnglishText => "MoCapModificationHelperPlugin";
 
@@ -85,8 +86,28 @@ namespace MoCapModificationHelperPlugin
 
         private void KeydownHandler(object sender, KeyEventArgs e)
         {
-            DateTime now = DateTime.Now;
+            ConfigItem config = CreateConfig(e);
 
+            if (config != null)
+            {
+                // 該当するサービスを実行
+                e.Handled = _frm?.ExecuteService(config, e.KeyCode) == true;
+            }
+            if (e.Shift && e.KeyCode == Keys.Enter)
+            {
+                //shift+Enterでオフセット付加ボタン押下
+                e.Handled = _frm?.TryClickOffsetButton() == true;
+            }
+        }
+
+        /// <summary>
+        /// キー押下からの一定時間内に同じキーが押された場合に対応するConfigItemを返す
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
+        private ConfigItem CreateConfig(KeyEventArgs e)
+        {
+            DateTime now = DateTime.Now;
             var doublePressed = false;
             if ((now - _prevPressedTime).TotalSeconds <= 0.3)
             {
@@ -100,11 +121,11 @@ namespace MoCapModificationHelperPlugin
             if (doublePressed)
             {
                 if (ServiceFactory.IsBusy)
-                    return;
+                    return null;
 
                 if (IsModalFormOpen())
                     //MMMのフォームにモーダルフォームが開いている場合は無視
-                    return;
+                    return null;
 
                 //二度押しされたキーに対応する処理を実行
                 _prevPressedKeys = Keys.None;
@@ -126,7 +147,7 @@ namespace MoCapModificationHelperPlugin
                         else
                         {
                             //修飾キー併用の二度押しは無視
-                            return;
+                            return null;
                         }
                     }
                 }
@@ -134,10 +155,8 @@ namespace MoCapModificationHelperPlugin
                 if (_configs.Services.Any(n => n.Keys == e.KeyCode) ||
                         _configs.Services.Any(n => n.KeysList != null && n.KeysList.Contains(e.KeyCode)))
                 {
-                    var serviceItem = _configs?.Services.FirstOrDefault(n => n.Keys == e.KeyCode ||
+                    return _configs?.Services.FirstOrDefault(n => n.Keys == e.KeyCode ||
                                            (n.KeysList != null && n.KeysList.Contains(e.KeyCode)));
-                    // 該当するサービスを実行
-                    e.Handled = _frm?.ExecuteService(serviceItem, e.KeyCode) == true;
                 }
             }
             else
@@ -145,11 +164,7 @@ namespace MoCapModificationHelperPlugin
                 _prevPressedKeys = e.KeyCode;
                 _prevPressedTime = now;
             }
-            if (e.Shift && e.KeyCode == Keys.Enter)
-            {
-                //shift+Enterでオフセット付加ボタン押下
-                e.Handled = _frm?.TryClickOffsetButton() == true;
-            }
+            return null;
         }
 
         private Configs LoadConfig()
