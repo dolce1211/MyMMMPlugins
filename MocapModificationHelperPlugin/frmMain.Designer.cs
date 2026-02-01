@@ -33,6 +33,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlMain = new System.Windows.Forms.Panel();
+            this.chkWEnterMorphs = new System.Windows.Forms.CheckBox();
             this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
             this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
@@ -68,7 +69,6 @@
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.pnlMessage = new System.Windows.Forms.Panel();
             this.lblMessage = new System.Windows.Forms.Label();
-            this.chkWEnterMorphs = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.pnlMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -136,6 +136,17 @@
             this.pnlMain.Name = "pnlMain";
             this.pnlMain.Size = new System.Drawing.Size(472, 244);
             this.pnlMain.TabIndex = 3;
+            // 
+            // chkWEnterMorphs
+            // 
+            this.chkWEnterMorphs.AutoSize = true;
+            this.chkWEnterMorphs.Location = new System.Drawing.Point(6, 218);
+            this.chkWEnterMorphs.Name = "chkWEnterMorphs";
+            this.chkWEnterMorphs.Size = new System.Drawing.Size(94, 16);
+            this.chkWEnterMorphs.TabIndex = 27;
+            this.chkWEnterMorphs.Text = "Wでモーフ確定";
+            this.chkWEnterMorphs.UseVisualStyleBackColor = true;
+            this.chkWEnterMorphs.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // chkMorphOnMLS
             // 
@@ -226,6 +237,7 @@
             this.rbInterpolateAll.Text = "ALL";
             this.rbInterpolateAll.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateAll.UseVisualStyleBackColor = true;
+            this.rbInterpolateAll.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateZ
             // 
@@ -238,6 +250,7 @@
             this.rbInterpolateZ.Text = "Z";
             this.rbInterpolateZ.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateZ.UseVisualStyleBackColor = true;
+            this.rbInterpolateZ.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateY
             // 
@@ -250,6 +263,7 @@
             this.rbInterpolateY.Text = "Y";
             this.rbInterpolateY.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateY.UseVisualStyleBackColor = true;
+            this.rbInterpolateY.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateX
             // 
@@ -262,6 +276,7 @@
             this.rbInterpolateX.Text = "X";
             this.rbInterpolateX.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateX.UseVisualStyleBackColor = true;
+            this.rbInterpolateX.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateR
             // 
@@ -276,6 +291,7 @@
             this.rbInterpolateR.Text = "R";
             this.rbInterpolateR.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateR.UseVisualStyleBackColor = true;
+            this.rbInterpolateR.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // label3
             // 
@@ -544,17 +560,6 @@
             this.lblMessage.TabIndex = 0;
             this.lblMessage.Text = "処理中はPCに触れないでください。\r\n\r\n必要な回数適用されなくなる可能性があります";
             this.lblMessage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // chkWEnterMorphs
-            // 
-            this.chkWEnterMorphs.AutoSize = true;
-            this.chkWEnterMorphs.Location = new System.Drawing.Point(6, 218);
-            this.chkWEnterMorphs.Name = "chkWEnterMorphs";
-            this.chkWEnterMorphs.Size = new System.Drawing.Size(94, 16);
-            this.chkWEnterMorphs.TabIndex = 27;
-            this.chkWEnterMorphs.Text = "Wでモーフ確定";
-            this.chkWEnterMorphs.UseVisualStyleBackColor = true;
-            this.chkWEnterMorphs.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // frmMain
             // 

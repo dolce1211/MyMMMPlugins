@@ -36,10 +36,10 @@ namespace MoCapModificationHelperPlugin.service
                 _ = Task.Run(async () =>
                 {
                     await Task.Delay(300);
-                    this.ApplicationForm.Invoke(new Action(() =>  Clipboard.SetData("MMM_MotionFrameData", switchedDataTuple.Item1)));
+                    this.ApplicationForm.Invoke(new Action(() => Clipboard.SetData("MMM_MotionFrameData", switchedDataTuple.Item1)));
                 });
 
-                return true;
+                return false;// 普通にWも仕事させる
             }
             else
             {

@@ -516,10 +516,10 @@ namespace MoCapModificationHelperPlugin
                 if (config.InterpolateType == InterpolateType.none)
                     config.InterpolateType = InterpolateType.R;
             }
-            service.Execute(config);
+            var ret = service.Execute(config);
             ApplyService(service, config);
             MMDUtilility.SetForegroundWindow(this._parentForm.Handle);
-            return true;
+            return ret;
         }
 
         private InterpolateType GetInterpolateType()

@@ -24,8 +24,9 @@ namespace MoCapModificationHelperPlugin.service
             this.ApplicationForm = (Form)applicationForm;
         }
 
-        public void Execute(ConfigItem config)
+        public bool Execute(ConfigItem config)
         {
+            var ret = false;
             this.ApplicationForm.Cursor = Cursors.WaitCursor;
             BeginAndEndUpdate(false);
             ServiceFactory.IsBusy = true;
@@ -33,10 +34,13 @@ namespace MoCapModificationHelperPlugin.service
             try
             {
                 if (!PreExecute())
-                    return;
+                    return ret;
 
                 if (ExecuteInternal(config))
+                {
+                    ret = true;
                     this.ApplicationForm.Refresh();
+                }
             }
             finally
             {
@@ -49,6 +53,7 @@ namespace MoCapModificationHelperPlugin.service
                 });
             }
             PostExecute();
+            return ret;
         }
 
         /// <summary>
