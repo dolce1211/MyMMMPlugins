@@ -33,7 +33,12 @@ namespace MoCapModificationHelperPlugin.service
                         true, false, false);
 
                 // ペースト後クリップボードを戻す
-                Clipboard.SetData("MMM_MotionFrameData", switchedDataTuple.Item2);
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(300);
+                    this.ApplicationForm.Invoke(new Action(() =>  Clipboard.SetData("MMM_MotionFrameData", switchedDataTuple.Item1)));
+                });
+
                 return true;
             }
             else
@@ -71,7 +76,7 @@ namespace MoCapModificationHelperPlugin.service
                 }
                 finally
                 {
-                    if (flg)
+                    if (config.WEnterMorphs) // 反転下モーフを確定する
                     {
                         // アンドゥを効かせられるよう、partnerMorph.Frames.AddKeyFrameは使わず仮想的にEnterキーを送る
                         MMDUtil.MMMUtilility.SendKeyToFormWithKeyboardEvent(

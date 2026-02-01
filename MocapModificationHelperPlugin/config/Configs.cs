@@ -59,6 +59,11 @@ namespace MoCapModificationHelperPlugin
         /// 選択されたキーにたいしてオフセットを加える
         /// </summary>
         OffsetAdderService,
+
+        /// <summary>
+        /// R
+        /// </summary>
+        EnableReverseMorphService,
     }
 
     public class Configs
@@ -81,6 +86,8 @@ namespace MoCapModificationHelperPlugin
             Services.Add(new ConfigItem() { Keys = Keys.Z, ServiceType = ServiceType.FillDisplayFramesService });
 
             Services.Add(new ConfigItem() { Keys = Keys.B, ServiceType = ServiceType.BlinkCancellerService });
+
+            Services.Add(new ConfigItem() { Keys = Keys.W, ServiceType = ServiceType.EnableReverseMorphService });
             Services.Add(CreateInterpolateSetterService());
         }
 
@@ -145,5 +152,10 @@ namespace MoCapModificationHelperPlugin
         /// BlinkCancellerService専用　笑いモーフも対象とするか
         /// </summary>
         public bool ForSmile { get; set; }
+
+        /// <summary>
+        /// EnableReverseMorphService専用　Wキーで反転後確定するか
+        /// </summary>
+        public bool WEnterMorphs { get; set; } = false;
     }
 }

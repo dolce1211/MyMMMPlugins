@@ -141,6 +141,7 @@
     </Compile>
     <Compile Include="ServiceFactory.cs" />
     <Compile Include="service\BlinkCancellerService.cs" />
+    <Compile Include="service\EnableReverseMorphService.cs" />
     <Compile Include="service\FillDisplayFramesService.cs" />
     <Compile Include="service\GapSelectorService.cs" />
     <Compile Include="service\InterpolateService.cs" />

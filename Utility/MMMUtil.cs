@@ -496,9 +496,9 @@ namespace MMDUtil
                                                                     }
                                                                 }
                                                             }
-                                                            if(!result.ContainsKey(morphName))                                                           
+                                                            if (!result.ContainsKey(morphName))
                                                                 result[morphName] = new List<IMorphFrameData>();
-                                                            
+
                                                             result[morphName].Add(morphFrameData);
                                                         }
                                                     }

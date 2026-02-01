@@ -68,6 +68,8 @@ namespace MoCapModificationHelperPlugin
             this.btnBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
             this.chkCancelForSmile.Tag = ServiceType.BlinkCancellerService;
             this.chkClickOffsetBtnByShiftEnter.Checked = configs.ClickOffsetBtnByShiftEnter;
+
+            this.chkWEnterMorphs.Tag = ServiceType.EnableReverseMorphService;
             CreateControls();
             this.timer1.Interval = 500;
             this.timer1.Enabled = false;
@@ -298,6 +300,15 @@ namespace MoCapModificationHelperPlugin
                     {
                         chkCancelForSmile.Checked = serviceItem.ForSmile;
                     }
+                    if (serviceType == ServiceType.ModifiedLayerSelectorService && serviceItem != null)
+                    {
+                        chkMorphOnMLS.Checked = serviceItem.IncludeMorphOnMLS;
+                    }
+                }
+                var enableReverseMorphService = _configs.Services.FirstOrDefault(n => n.ServiceType == ServiceType.EnableReverseMorphService);
+                if (enableReverseMorphService != null)
+                {
+                    chkWEnterMorphs.Checked = enableReverseMorphService.WEnterMorphs;
                 }
                 var interpolateService = _configs.Services.FirstOrDefault(n => n.ServiceType == ServiceType.InterpolateSetterService);
                 if (interpolateService != null)
@@ -432,6 +443,14 @@ namespace MoCapModificationHelperPlugin
                 btnModifiedLayerSelector.Text = "現Frで移動・回転が加えられてないボーンを全て選択";
             else
                 btnModifiedLayerSelector.Text = "現Frで移動・回転が加えられているボーンを全て選択";
+
+            // R
+            _configs.Services.Add(new ConfigItem()
+            {
+                ServiceType = ServiceType.EnableReverseMorphService,
+                Keys = Keys.W,
+                WEnterMorphs = chkWEnterMorphs.Checked
+            });
 
             var interpolateConfig = Configs.CreateInterpolateSetterService();
             interpolateConfig.InterpolateType = GetInterpolateType();

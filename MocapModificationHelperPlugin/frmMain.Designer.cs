@@ -33,6 +33,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlMain = new System.Windows.Forms.Panel();
+            this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
             this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
             this.btnBlinkCanceller = new System.Windows.Forms.Button();
@@ -67,7 +68,7 @@
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.pnlMessage = new System.Windows.Forms.Panel();
             this.lblMessage = new System.Windows.Forms.Label();
-            this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
+            this.chkWEnterMorphs = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.pnlMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -94,7 +95,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(472, 217);
+            this.dataGridView1.Size = new System.Drawing.Size(472, 233);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.Visible = false;
             // 
@@ -107,6 +108,7 @@
             this.pnlMain.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlMain.Controls.Add(this.chkWEnterMorphs);
             this.pnlMain.Controls.Add(this.chkMorphOnMLS);
             this.pnlMain.Controls.Add(this.chkCancelForSmile);
             this.pnlMain.Controls.Add(this.cboBlinkCanceller);
@@ -132,8 +134,19 @@
             this.pnlMain.Controls.Add(this.label1);
             this.pnlMain.Location = new System.Drawing.Point(6, 30);
             this.pnlMain.Name = "pnlMain";
-            this.pnlMain.Size = new System.Drawing.Size(472, 217);
+            this.pnlMain.Size = new System.Drawing.Size(472, 244);
             this.pnlMain.TabIndex = 3;
+            // 
+            // chkMorphOnMLS
+            // 
+            this.chkMorphOnMLS.AutoSize = true;
+            this.chkMorphOnMLS.Location = new System.Drawing.Point(392, 83);
+            this.chkMorphOnMLS.Name = "chkMorphOnMLS";
+            this.chkMorphOnMLS.Size = new System.Drawing.Size(84, 16);
+            this.chkMorphOnMLS.TabIndex = 26;
+            this.chkMorphOnMLS.Text = "モーフも適用";
+            this.chkMorphOnMLS.UseVisualStyleBackColor = true;
+            this.chkMorphOnMLS.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // chkCancelForSmile
             // 
@@ -532,22 +545,22 @@
             this.lblMessage.Text = "処理中はPCに触れないでください。\r\n\r\n必要な回数適用されなくなる可能性があります";
             this.lblMessage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // chkMorphOnMLS
+            // chkWEnterMorphs
             // 
-            this.chkMorphOnMLS.AutoSize = true;
-            this.chkMorphOnMLS.Location = new System.Drawing.Point(392, 83);
-            this.chkMorphOnMLS.Name = "chkMorphOnMLS";
-            this.chkMorphOnMLS.Size = new System.Drawing.Size(84, 16);
-            this.chkMorphOnMLS.TabIndex = 26;
-            this.chkMorphOnMLS.Text = "モーフも適用";
-            this.chkMorphOnMLS.UseVisualStyleBackColor = true;
-            this.chkMorphOnMLS.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
+            this.chkWEnterMorphs.AutoSize = true;
+            this.chkWEnterMorphs.Location = new System.Drawing.Point(6, 218);
+            this.chkWEnterMorphs.Name = "chkWEnterMorphs";
+            this.chkWEnterMorphs.Size = new System.Drawing.Size(94, 16);
+            this.chkWEnterMorphs.TabIndex = 27;
+            this.chkWEnterMorphs.Text = "Wでモーフ確定";
+            this.chkWEnterMorphs.UseVisualStyleBackColor = true;
+            this.chkWEnterMorphs.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(485, 262);
+            this.ClientSize = new System.Drawing.Size(485, 278);
             this.Controls.Add(this.pnlMessage);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btnUndo);
@@ -557,7 +570,7 @@
             this.Controls.Add(this.btnOffset);
             this.KeyPreview = true;
             this.Name = "frmMain";
-            this.Text = "色々ヘルパー";
+            this.Text = "色々ヘルパー For Repair System";
             this.TopMost = true;
             this.Load += new System.EventHandler(this.frmMain_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
@@ -613,5 +626,6 @@
         private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.CheckBox chkCancelForSmile;
         private System.Windows.Forms.CheckBox chkMorphOnMLS;
+        private System.Windows.Forms.CheckBox chkWEnterMorphs;
     }
 }
