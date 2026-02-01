@@ -109,19 +109,28 @@ namespace MoCapModificationHelperPlugin
                 //二度押しされたキーに対応する処理を実行
                 _prevPressedKeys = Keys.None;
                 _prevPressedTime = DateTime.MinValue;
-                if (e.Shift || e.Control || e.Alt)
+
+                if (e.KeyCode == Keys.W)
                 {
-                    if (e.KeyValue == (int)Keys.ShiftKey ||
-                       e.KeyValue == (int)Keys.ControlKey ||
-                       e.KeyValue == (int)Keys.Menu)
+                }
+                else
+                {
+                    if (e.Shift || e.Control || e.Alt)
                     {
-                        //修飾キー単体の二度押しは許容
-                    }
-                    else
-                    {  //修飾キーが押されている場合は無視
-                        return;
+                        if (e.KeyValue == (int)Keys.ShiftKey ||
+                           e.KeyValue == (int)Keys.ControlKey ||
+                           e.KeyValue == (int)Keys.Menu)
+                        {
+                            //修飾キー単体の二度押しは許容
+                        }
+                        else
+                        {
+                            //修飾キー併用の二度押しは無視
+                            return;
+                        }
                     }
                 }
+
                 if (_configs.Services.Any(n => n.Keys == e.KeyCode) ||
                         _configs.Services.Any(n => n.KeysList != null && n.KeysList.Contains(e.KeyCode)))
                 {

@@ -130,7 +130,20 @@ namespace MoCapModificationHelperPlugin
         public List<Keys> KeysList { get; set; } = null;
         public ServiceType ServiceType { get; set; }
         public bool Inverse { get; set; }
+
+        /// <summary>
+        /// ModifiedLayerSelectorService専用　モーフも対象とするか
+        /// </summary>
+        public bool IncludeMorphOnMLS { get; set; } = false;
+
+        /// <summary>
+        /// InterpolateSetterService専用　補完曲線タイプ
+        /// </summary>
         public InterpolateType InterpolateType { get; set; } = InterpolateType.R;
+
+        /// <summary>
+        /// BlinkCancellerService専用　笑いモーフも対象とするか
+        /// </summary>
         public bool ForSmile { get; set; }
     }
 }

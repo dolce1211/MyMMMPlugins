@@ -33,6 +33,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlMain = new System.Windows.Forms.Panel();
+            this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
             this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
             this.btnBlinkCanceller = new System.Windows.Forms.Button();
             this.cboFillDisplayFrame = new System.Windows.Forms.ComboBox();
@@ -66,7 +67,7 @@
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.pnlMessage = new System.Windows.Forms.Panel();
             this.lblMessage = new System.Windows.Forms.Label();
-            this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
+            this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.pnlMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -106,6 +107,7 @@
             this.pnlMain.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlMain.Controls.Add(this.chkMorphOnMLS);
             this.pnlMain.Controls.Add(this.chkCancelForSmile);
             this.pnlMain.Controls.Add(this.cboBlinkCanceller);
             this.pnlMain.Controls.Add(this.btnBlinkCanceller);
@@ -132,6 +134,17 @@
             this.pnlMain.Name = "pnlMain";
             this.pnlMain.Size = new System.Drawing.Size(472, 217);
             this.pnlMain.TabIndex = 3;
+            // 
+            // chkCancelForSmile
+            // 
+            this.chkCancelForSmile.AutoSize = true;
+            this.chkCancelForSmile.Location = new System.Drawing.Point(355, 165);
+            this.chkCancelForSmile.Name = "chkCancelForSmile";
+            this.chkCancelForSmile.Size = new System.Drawing.Size(88, 16);
+            this.chkCancelForSmile.TabIndex = 23;
+            this.chkCancelForSmile.Text = "笑いにも適用";
+            this.chkCancelForSmile.UseVisualStyleBackColor = true;
+            this.chkCancelForSmile.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // cboBlinkCanceller
             // 
@@ -519,16 +532,16 @@
             this.lblMessage.Text = "処理中はPCに触れないでください。\r\n\r\n必要な回数適用されなくなる可能性があります";
             this.lblMessage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // chkCancelForSmile
+            // chkMorphOnMLS
             // 
-            this.chkCancelForSmile.AutoSize = true;
-            this.chkCancelForSmile.Location = new System.Drawing.Point(355, 165);
-            this.chkCancelForSmile.Name = "chkCancelForSmile";
-            this.chkCancelForSmile.Size = new System.Drawing.Size(88, 16);
-            this.chkCancelForSmile.TabIndex = 23;
-            this.chkCancelForSmile.Text = "笑いにも適用";
-            this.chkCancelForSmile.UseVisualStyleBackColor = true;
-            this.chkCancelForSmile.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
+            this.chkMorphOnMLS.AutoSize = true;
+            this.chkMorphOnMLS.Location = new System.Drawing.Point(392, 83);
+            this.chkMorphOnMLS.Name = "chkMorphOnMLS";
+            this.chkMorphOnMLS.Size = new System.Drawing.Size(84, 16);
+            this.chkMorphOnMLS.TabIndex = 26;
+            this.chkMorphOnMLS.Text = "モーフも適用";
+            this.chkMorphOnMLS.UseVisualStyleBackColor = true;
+            this.chkMorphOnMLS.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // frmMain
             // 
@@ -599,5 +612,6 @@
         private System.Windows.Forms.Panel pnlMessage;
         private System.Windows.Forms.Label lblMessage;
         private System.Windows.Forms.CheckBox chkCancelForSmile;
+        private System.Windows.Forms.CheckBox chkMorphOnMLS;
     }
 }

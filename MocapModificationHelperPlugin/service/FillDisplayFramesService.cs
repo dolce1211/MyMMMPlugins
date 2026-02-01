@@ -16,6 +16,15 @@ namespace MoCapModificationHelperPlugin.service
             if (this.Scene.ActiveModel == null)
                 return false;
 
+            // まずモーフを扱う
+            var selectedMorphs = this.Scene.ActiveModel.Morphs.Where(m => m.Selected)
+                .Select(morph =>
+                {
+                    var df = this.Scene.ActiveModel.FindDisplayFramesFromMorph(morph);
+                    return df;
+                });
+            selectedMorphs.ForEach(f => f.Morphs.ForEach(m => m.Selected = true));
+
             var selectedLayers = this.Scene.ActiveModel.Bones
                 .SelectMany(b =>
                 {

@@ -70,7 +70,23 @@ namespace MoCapModificationHelperPlugin.service
                     morph.Selected = morph.CurrentWeight != 0.0f;
                 }
             }
-
+            if (config.IncludeMorphOnMLS)
+            {
+                //モーフも含める
+                foreach (var morph in this.Scene.ActiveModel.Morphs)
+                {
+                    if (this.Scene.ActiveModel.FindDisplayFramesFromMorph(morph) != null)// 表示枠内のモーフのみ処理
+                    {
+                        var selected = morph.CurrentWeight != 0.0f;
+                        if (inverse)
+                            selected = !selected;
+                        morph.Selected = selected;
+                        morph.Frames.FirstOrDefault().Selected = selected;
+                        if (selected)
+                            ret = true;
+                    }
+                }
+            }
             //var gridHandle = MMMUtilility.FindTimelineGridControl(this.ApplicationForm);
             //if (gridHandle != IntPtr.Zero)
             //{

@@ -385,6 +385,142 @@ namespace MMDUtil
         }
 
         /// <summary>
+        /// クリップボードからモーフフレームデータを取得します
+        /// </summary>
+        /// <returns>モーフフレームデータのリスト、取得できない場合はnull</returns>
+        public static Dictionary<string, List<IMorphFrameData>> GetMorphFrameDataFromClipboard()
+        {
+            try
+            {
+                var dataObject = Clipboard.GetDataObject();
+                if (dataObject == null || !dataObject.GetDataPresent("MMM_MotionFrameData"))
+                    return null;
+
+                var data = Clipboard.GetData("MMM_MotionFrameData");
+                if (data == null)
+                    return null;
+
+                // motiondata.data まで取得
+                var motiondataField = data.GetType().GetField("motiondata");
+                if (motiondataField == null)
+                    return null;
+
+                var motiondata = motiondataField.GetValue(data);
+                if (motiondata == null)
+                    return null;
+
+                var dataField = motiondata.GetType().GetField("data");
+                if (dataField == null)
+                    return null;
+
+                var outerDict = dataField.GetValue(motiondata) as System.Collections.IDictionary;
+                if (outerDict == null)
+                    return null;
+
+                var result = new Dictionary<string, List<IMorphFrameData>>();
+
+                // Dictionary<int, Dictionary<FrameItemType, ...>> を走査
+                foreach (System.Collections.DictionaryEntry modelEntry in outerDict)
+                {
+                    // Dictionary<FrameItemType, Dictionary<string, ...>> を取得
+                    if (modelEntry.Value is System.Collections.IDictionary frameTypeDict)
+                    {
+                        foreach (System.Collections.DictionaryEntry frameTypeEntry in frameTypeDict)
+                        {
+                            // FrameItemType が Morph の場合のみ処理
+                            if (frameTypeEntry.Key.ToString() == "Morph")
+                            {
+                                // Dictionary<string, Dictionary<int, List<FrameData>>> を取得
+                                if (frameTypeEntry.Value is System.Collections.IDictionary morphDict)
+                                {
+                                    foreach (System.Collections.DictionaryEntry morphEntry in morphDict)
+                                    {
+                                        string morphName = morphEntry.Key as string;
+
+                                        // Dictionary<int, List<FrameData>> を取得
+                                        if (morphEntry.Value is System.Collections.IDictionary frameDict)
+                                        {
+                                            foreach (System.Collections.DictionaryEntry frameEntry in frameDict)
+                                            {
+                                                // List<FrameData> を取得
+                                                if (frameEntry.Value is System.Collections.IEnumerable frameDataList)
+                                                {
+                                                    foreach (var frameData in frameDataList)
+                                                    {
+                                                        if (frameData == null)
+                                                            continue;
+
+                                                        // リフレクションで値を取得
+                                                        var frameDataType = frameData.GetType();
+
+                                                        var frameNumberField = frameDataType.GetField("frameNumber");
+                                                        var weightField = frameDataType.GetField("weight");
+                                                        var interpolAField = frameDataType.GetField("interpolA");
+                                                        var interpolBField = frameDataType.GetField("interpolB");
+
+                                                        if (frameNumberField != null && weightField != null)
+                                                        {
+                                                            var frameNumber = Convert.ToInt64(frameNumberField.GetValue(frameData));
+                                                            var weight = Convert.ToSingle(weightField.GetValue(frameData));
+                                                            var morphFrameData = new MorphFrameData(frameNumber, weight);
+
+                                                            // 補間曲線を設定
+                                                            if (interpolAField != null)
+                                                            {
+                                                                var interpolA = interpolAField.GetValue(frameData);
+                                                                if (interpolA != null)
+                                                                {
+                                                                    var xProp = interpolA.GetType().GetProperty("X");
+                                                                    var yProp = interpolA.GetType().GetProperty("Y");
+                                                                    if (xProp != null && yProp != null)
+                                                                    {
+                                                                        var x = Convert.ToInt32(xProp.GetValue(interpolA));
+                                                                        var y = Convert.ToInt32(yProp.GetValue(interpolA));
+                                                                        morphFrameData.InterpolA = new InterpolatePoint(x, y);
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            if (interpolBField != null)
+                                                            {
+                                                                var interpolB = interpolBField.GetValue(frameData);
+                                                                if (interpolB != null)
+                                                                {
+                                                                    var xProp = interpolB.GetType().GetProperty("X");
+                                                                    var yProp = interpolB.GetType().GetProperty("Y");
+                                                                    if (xProp != null && yProp != null)
+                                                                    {
+                                                                        var x = Convert.ToInt32(xProp.GetValue(interpolB));
+                                                                        var y = Convert.ToInt32(yProp.GetValue(interpolB));
+                                                                        morphFrameData.InterpolB = new InterpolatePoint(x, y);
+                                                                    }
+                                                                }
+                                                            }
+                                                            if(!result.ContainsKey(morphName))                                                           
+                                                                result[morphName] = new List<IMorphFrameData>();
+                                                            
+                                                            result[morphName].Add(morphFrameData);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                return result.Count > 0 ? result : null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GetMorphFrameDataFromClipboard failed: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// 特定のフォームに対してkeybd_eventを用いてCtrl+Zを送信します
         /// </summary>
         /// <param name="targetForm">対象のフォーム</param>

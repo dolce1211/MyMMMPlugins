@@ -358,8 +358,9 @@ namespace MoCapModificationHelperPlugin
             {
                 if (ctrl is CheckBox cbo)
                 {
-                    if (ctrl.Tag.GetType() == typeof(ServiceType))
-                        list.Add(cbo);
+                    if (ctrl.Tag != null)
+                        if (ctrl.Tag.GetType() == typeof(ServiceType))
+                            list.Add(cbo);
                 }
             }
             return list;
@@ -389,7 +390,7 @@ namespace MoCapModificationHelperPlugin
 
             SaveConfig();
 
-            this.CreateControls();
+            //this.CreateControls();
             this.cboGapSelector.Focus();
         }
 
@@ -409,7 +410,17 @@ namespace MoCapModificationHelperPlugin
                     forSmile = this.chkCancelForSmile.Checked;
                 if (!_configs.Services.Any(s => s.ServiceType == serviceType))
                 {
-                    _configs.Services.Add(new ConfigItem() { ServiceType = serviceType, Keys = key, Inverse = inverse, ForSmile = forSmile });
+                    _configs.Services.Add(new ConfigItem()
+                    {
+                        ServiceType = serviceType,
+                        Keys = key,
+                        Inverse = inverse,
+                        ForSmile = forSmile
+                    });
+                    if (serviceType == ServiceType.ModifiedLayerSelectorService)
+                    {
+                        _configs.Services.LastOrDefault().IncludeMorphOnMLS = chkMorphOnMLS.Checked;
+                    }
                 }
             }
 
@@ -418,9 +429,9 @@ namespace MoCapModificationHelperPlugin
             else
                 btnLayerBoneSelector.Text = "選択中のキーの内レイヤーボーンのみ選択";
             if (chkModifiedLayerSelector.Checked)
-                btnModifiedLayerSelector.Text = "現Frで変更が加えられてないボーンを全選択";
+                btnModifiedLayerSelector.Text = "現Frで移動・回転が加えられてないボーンを全て選択";
             else
-                btnModifiedLayerSelector.Text = "現Frで変更が加えられているボーンを全選択";
+                btnModifiedLayerSelector.Text = "現Frで移動・回転が加えられているボーンを全て選択";
 
             var interpolateConfig = Configs.CreateInterpolateSetterService();
             interpolateConfig.InterpolateType = GetInterpolateType();
