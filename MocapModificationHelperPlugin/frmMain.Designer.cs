@@ -33,6 +33,7 @@
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlMain = new System.Windows.Forms.Panel();
+            this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
             this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
             this.btnBlinkCanceller = new System.Windows.Forms.Button();
@@ -67,7 +68,6 @@
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.pnlMessage = new System.Windows.Forms.Panel();
             this.lblMessage = new System.Windows.Forms.Label();
-            this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.pnlMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -134,6 +134,17 @@
             this.pnlMain.Name = "pnlMain";
             this.pnlMain.Size = new System.Drawing.Size(472, 217);
             this.pnlMain.TabIndex = 3;
+            // 
+            // chkMorphOnMLS
+            // 
+            this.chkMorphOnMLS.AutoSize = true;
+            this.chkMorphOnMLS.Location = new System.Drawing.Point(392, 83);
+            this.chkMorphOnMLS.Name = "chkMorphOnMLS";
+            this.chkMorphOnMLS.Size = new System.Drawing.Size(84, 16);
+            this.chkMorphOnMLS.TabIndex = 26;
+            this.chkMorphOnMLS.Text = "モーフも適用";
+            this.chkMorphOnMLS.UseVisualStyleBackColor = true;
+            this.chkMorphOnMLS.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // chkCancelForSmile
             // 
@@ -206,13 +217,16 @@
             // 
             this.rbInterpolateAll.Appearance = System.Windows.Forms.Appearance.Button;
             this.rbInterpolateAll.AutoSize = true;
+            this.rbInterpolateAll.Checked = true;
             this.rbInterpolateAll.Location = new System.Drawing.Point(89, 1);
             this.rbInterpolateAll.Name = "rbInterpolateAll";
             this.rbInterpolateAll.Size = new System.Drawing.Size(35, 22);
             this.rbInterpolateAll.TabIndex = 23;
+            this.rbInterpolateAll.TabStop = true;
             this.rbInterpolateAll.Text = "ALL";
             this.rbInterpolateAll.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateAll.UseVisualStyleBackColor = true;
+            this.rbInterpolateAll.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateZ
             // 
@@ -225,6 +239,7 @@
             this.rbInterpolateZ.Text = "Z";
             this.rbInterpolateZ.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateZ.UseVisualStyleBackColor = true;
+            this.rbInterpolateZ.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateY
             // 
@@ -237,6 +252,7 @@
             this.rbInterpolateY.Text = "Y";
             this.rbInterpolateY.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateY.UseVisualStyleBackColor = true;
+            this.rbInterpolateY.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateX
             // 
@@ -249,20 +265,20 @@
             this.rbInterpolateX.Text = "X";
             this.rbInterpolateX.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateX.UseVisualStyleBackColor = true;
+            this.rbInterpolateX.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // rbInterpolateR
             // 
             this.rbInterpolateR.Appearance = System.Windows.Forms.Appearance.Button;
             this.rbInterpolateR.AutoSize = true;
-            this.rbInterpolateR.Checked = true;
             this.rbInterpolateR.Location = new System.Drawing.Point(1, 1);
             this.rbInterpolateR.Name = "rbInterpolateR";
             this.rbInterpolateR.Size = new System.Drawing.Size(23, 22);
             this.rbInterpolateR.TabIndex = 19;
-            this.rbInterpolateR.TabStop = true;
             this.rbInterpolateR.Text = "R";
             this.rbInterpolateR.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.rbInterpolateR.UseVisualStyleBackColor = true;
+            this.rbInterpolateR.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // label3
             // 
@@ -531,17 +547,6 @@
             this.lblMessage.TabIndex = 0;
             this.lblMessage.Text = "処理中はPCに触れないでください。\r\n\r\n必要な回数適用されなくなる可能性があります";
             this.lblMessage.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // chkMorphOnMLS
-            // 
-            this.chkMorphOnMLS.AutoSize = true;
-            this.chkMorphOnMLS.Location = new System.Drawing.Point(392, 83);
-            this.chkMorphOnMLS.Name = "chkMorphOnMLS";
-            this.chkMorphOnMLS.Size = new System.Drawing.Size(84, 16);
-            this.chkMorphOnMLS.TabIndex = 26;
-            this.chkMorphOnMLS.Text = "モーフも適用";
-            this.chkMorphOnMLS.UseVisualStyleBackColor = true;
-            this.chkMorphOnMLS.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
             // 
             // frmMain
             // 

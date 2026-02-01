@@ -298,6 +298,10 @@ namespace MoCapModificationHelperPlugin
                     {
                         chkCancelForSmile.Checked = serviceItem.ForSmile;
                     }
+                    if(serviceType == ServiceType.ModifiedLayerSelectorService && serviceItem != null)
+                    {
+                        chkMorphOnMLS.Checked = serviceItem.IncludeMorphOnMLS;
+                    }
                 }
                 var interpolateService = _configs.Services.FirstOrDefault(n => n.ServiceType == ServiceType.InterpolateSetterService);
                 if (interpolateService != null)
