@@ -137,7 +137,7 @@ namespace MoCapModificationHelperPlugin.service
             }
             //}
 
-            return true;
+            return false;
         }
 
         public override void PostExecute()
