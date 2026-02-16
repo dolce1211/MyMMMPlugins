@@ -173,7 +173,7 @@ namespace MoCapModificationHelperPlugin.service
                                 if (frameTypeEntry.Value is System.Collections.IDictionary morphDict)
                                 {
                                     var addMorphs = new List<(string, object)>();
-                                    var delMorphs = new List<string>();
+
                                     foreach (System.Collections.DictionaryEntry morphEntry in morphDict)
                                     {
                                         string morphName = morphEntry.Key as string;
@@ -181,17 +181,17 @@ namespace MoCapModificationHelperPlugin.service
                                         if (partner != null)
                                         {
                                             addMorphs.Add((partner.Name, morphEntry.Value));
-                                            delMorphs.Add(morphName);
                                             flg = true;
                                         }
                                     }
-                                    foreach (var morphName in delMorphs)
+                                    if (addMorphs.Count > 0)
                                     {
-                                        morphDict.Remove(morphName);
-                                    }
-                                    foreach (var addMorph in addMorphs)
-                                    {
-                                        morphDict.Add(addMorph.Item1, addMorph.Item2);
+                                        morphDict.Clear();
+                                        foreach (var addMorph in addMorphs)
+                                        {
+                                            morphDict.Add(addMorph.Item1, addMorph.Item2);
+                                        }
+                                        flg = true;
                                     }
                                 }
                             }

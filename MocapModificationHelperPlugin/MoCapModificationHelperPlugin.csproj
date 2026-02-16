@@ -149,6 +149,7 @@
     <Compile Include="service\ModifiedLayerSelectorService.cs" />
     <Compile Include="offsetAdder\OffsetAdderService.cs" />
     <Compile Include="service\SelectedKeysSaverService.cs" />
+    <Compile Include="service\XYZDividerService.cs" />
     <Compile Include="service\_BaseService.cs" />
   </ItemGroup>
   <ItemGroup>
