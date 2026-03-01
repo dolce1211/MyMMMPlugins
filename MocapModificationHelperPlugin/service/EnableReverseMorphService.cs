@@ -35,7 +35,7 @@ namespace MoCapModificationHelperPlugin.service
                 // ペースト後クリップボードを戻す
                 _ = Task.Run(async () =>
                 {
-                    await Task.Delay(300);
+                    await Task.Delay(1000);
                     this.ApplicationForm.Invoke(new Action(() => Clipboard.SetData("MMM_MotionFrameData", switchedDataTuple.Item1)));
                 });
 
