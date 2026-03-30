@@ -149,6 +149,7 @@
     <Compile Include="service\ModifiedLayerSelectorService.cs" />
     <Compile Include="offsetAdder\OffsetAdderService.cs" />
     <Compile Include="service\SelectedKeysSaverService.cs" />
+    <Compile Include="service\XYZDividerService.cs" />
     <Compile Include="service\_BaseService.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -163,6 +164,9 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CLAUDE.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

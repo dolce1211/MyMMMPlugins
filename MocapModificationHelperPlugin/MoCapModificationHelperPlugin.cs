@@ -21,7 +21,7 @@ namespace MoCapModificationHelperPlugin
     public class MoCapModificationHelperPlugin : IResidentPlugin
     {
         private KeyboardMessageFilter _keyboardFilter;
-
+        private MouseMessageFilter _mouseMessageFilter;
         //　任意のGUIDを生成する
 
         public Guid GUID => new Guid("7F3E8A91-2B4C-4D56-9E12-A8F7C3B091E4");
@@ -55,6 +55,11 @@ namespace MoCapModificationHelperPlugin
             {
                 Application.RemoveMessageFilter(_keyboardFilter);
                 _keyboardFilter = null;
+            }
+            if (_mouseMessageFilter != null)
+            {
+                Application.RemoveMessageFilter(_mouseMessageFilter);
+                _mouseMessageFilter = null;
             }
         }
 
@@ -189,7 +194,7 @@ namespace MoCapModificationHelperPlugin
             }
             if (ret == null)
                 ret = new Configs();
-            if (ret.Services.Count < 9)
+            if (ret.Services.Count < 10)
                 ret.KeepAndInitialize();
             if (!ret.Services.Any(n => n.ServiceType == ServiceType.InterpolateSetterService))
             {
@@ -228,9 +233,43 @@ namespace MoCapModificationHelperPlugin
 
         public void Update(float Frame, float ElapsedTime)
         {
+            SetMouseMessageFilter();
             if (ServiceFactory.IsBusy)
                 return;
             _frm?.Update(Frame, ElapsedTime);
+        }
+
+        private Model _activeModel = null;
+        private long _prevFrame = -1;
+
+        private void SetMouseMessageFilter()
+        {
+            var doReset = false;
+
+            if (_activeModel?.ID != Scene.ActiveModel?.ID)
+            {
+                doReset = true;
+            }
+            if (_prevFrame != Scene.MarkerPosition)
+            {
+                doReset = true;
+            }
+            _prevFrame = Scene.MarkerPosition;
+            _activeModel = Scene.ActiveModel;
+            if (doReset && _activeModel != null)
+            {
+                Application.RemoveMessageFilter(_mouseMessageFilter);
+                _mouseMessageFilter = new MouseMessageFilter(this.ApplicationForm as Form, this.Scene, _activeModel);
+                Application.AddMessageFilter(_mouseMessageFilter);
+            }
+            if (_activeModel == null)
+            {
+                if (_mouseMessageFilter != null)
+                {
+                    Application.RemoveMessageFilter(_mouseMessageFilter);
+                }
+                _mouseMessageFilter = null;
+            }
         }
     }
 
@@ -266,6 +305,148 @@ namespace MoCapModificationHelperPlugin
                 // メッセージを他のコントロールにも伝播させる
                 return e.Handled;
             }
+            return false;
+        }
+    }
+
+    // マウスメッセージフィルタークラス
+    public class MouseMessageFilter : IMessageFilter
+    {
+        private Form _applicationForm { get; set; }
+        private Scene _scene;
+        private Model _activeModel;
+        private IEnumerable<(Bone bone, MotionLayer layer)> _activeTargetLayerTuples = null;
+        private Dictionary<string, MotionData> _currentFrameDataDic;
+        private const int WM_MOUSEMOVE = 0x0200;
+        private const int WM_KEYDOWN = 0x0100;
+        private const int WM_KEYUP = 0x0101;
+        private const int WM_SYSKEYDOWN = 0x0104;
+        private const int WM_SYSKEYUP = 0x0105;
+
+        private bool _ctrlShiftPressed = false;
+        private int _origin = 0;
+        private int _delta = 0;
+
+        public MouseMessageFilter(Form applicationForm, Scene scene, Model activeModel)
+        {
+            this._applicationForm = applicationForm;
+            this._scene = scene;
+            this._activeModel = activeModel;
+            var ctrlShiftPressed = (Control.ModifierKeys & Keys.Control) != 0 && (Control.ModifierKeys & Keys.Shift) != 0;
+            if (ctrlShiftPressed)
+                onCtrlShiftPressed();
+        }
+
+        public bool TryReset()
+        {
+            Reset();
+            return true;
+        }
+
+        private void Reset()
+        {
+            _origin = 0;
+            _delta = 0;
+            _ctrlShiftPressed = false;
+            _activeTargetLayerTuples = null;
+            _currentFrameDataDic = default;
+        }
+
+        private void onCtrlShiftPressed()
+        {
+            _ctrlShiftPressed = true;
+            _origin = Cursor.Position.Y;
+
+            if (_activeModel != null)
+            {
+                var activeLayers = _activeModel.Bones.Where(b =>
+                            new string[] { "センター", "グルーブ", "左足ＩＫ", "右足ＩＫ" }.Contains(b.Name))
+                        .SelectMany(b => b.Layers.Where(l => l.Selected).Select(l => (bone: b, layer: l)));
+                if (activeLayers.Count() > 0)
+                {
+                    _activeTargetLayerTuples = activeLayers.ToList();
+                    _currentFrameDataDic = _activeTargetLayerTuples.ToDictionary(l => $"{l.bone.Name}{l.layer.LayerID}", l => l.layer.CurrentLocalMotion);
+                }
+            }
+        }
+
+        public bool PreFilterMessage(ref Message m)
+        {
+            if (m.Msg == WM_KEYDOWN || m.Msg == WM_SYSKEYDOWN)
+            {
+                // Ctrl+Shiftが押された
+                Keys keyCode = (Keys)(int)m.WParam & Keys.KeyCode;
+                bool ctrlPressed = (Control.ModifierKeys & Keys.Control) != 0;
+                bool shiftPressed = (Control.ModifierKeys & Keys.Shift) != 0;
+
+                if (ctrlPressed && shiftPressed && !_ctrlShiftPressed)
+                {
+                    Reset();
+                    Debug.WriteLine($"Ctrl+Shift pressed. Origin Y: {_origin}");
+                    onCtrlShiftPressed();
+                }
+
+                if (_ctrlShiftPressed && keyCode == Keys.Space)
+                {
+                    Console.WriteLine("space");
+                    this._applicationForm.BeginInvoke(new Action(async () =>
+                    {
+                        await Task.Delay(200);
+                        _scene.MarkerPosition += 1;
+                        _scene.MarkerPosition -= 1;
+
+                    }));
+                    
+                }
+            }
+            else if (m.Msg == WM_KEYUP || m.Msg == WM_SYSKEYUP)
+            {
+                // CtrlまたはShiftが離された
+                Keys keyCode = (Keys)(int)m.WParam & Keys.KeyCode;
+                if (keyCode == Keys.ControlKey || keyCode == Keys.ShiftKey)
+                {
+                    Debug.WriteLine("Ctrl or Shift released.");
+                    Reset();
+                }
+            }
+            else if (m.Msg == WM_MOUSEMOVE && _ctrlShiftPressed)
+            {
+                int currentY = Cursor.Position.Y;
+                int delta = currentY - _origin;
+                if (delta == _delta)
+                    return false;
+                _delta = delta;
+                if (_activeModel != null && _activeTargetLayerTuples != null)
+                {
+                    foreach (var tuple in _activeTargetLayerTuples)
+                    {
+                        var currentFrameData = _currentFrameDataDic[$"{tuple.bone.Name}{tuple.layer.LayerID}"];
+                        var _activeLayer = _activeModel.Bones.Where(b => b.Name == tuple.bone.Name)
+                                            .Select(b => (bone: b, layer: b.Layers.FirstOrDefault(l => l.LayerID == tuple.layer.LayerID))).FirstOrDefault();
+                        if (_activeLayer.layer != null)
+                        {
+                            var activeCenterLayer = _activeLayer;
+                            var options = new string[] { "x", "y", "z" };
+                            var selectedLayer = options.FirstOrDefault(o => !string.IsNullOrWhiteSpace(activeCenterLayer.layer.Name) && activeCenterLayer.layer.Name.ToLower().Contains(o));
+                            if (selectedLayer == null)
+                            {
+                                selectedLayer = "y";
+                            }
+                            var v = new Vector3(0, 0, 0);
+                            var f = typeof(Vector3).GetField(selectedLayer.ToUpper());
+                            // 構造体をobjectにボックス化
+                            object boxed = v;
+                            f.SetValue(boxed, delta * 0.025f);
+                            // ボックス化されたものを構造体に戻す
+                            v = (Vector3)boxed;
+                            Debug.WriteLine($"Mouse Y delta: {v}");
+                            activeCenterLayer.layer.CurrentLocalMotion = new MotionData(currentFrameData.Move - v, currentFrameData.Rotation);
+                            
+                        }
+                    }
+                }
+            }
+
             return false;
         }
     }

@@ -61,6 +61,11 @@ namespace MoCapModificationHelperPlugin
         OffsetAdderService,
 
         /// <summary>
+        /// 移動可能ボーンのキーをY軸、X軸、Z軸ごと分割する
+        /// </summary>
+        XYZDividerService,
+
+        /// <summary>
         /// R
         /// </summary>
         EnableReverseMorphService,
@@ -86,6 +91,7 @@ namespace MoCapModificationHelperPlugin
             Services.Add(new ConfigItem() { Keys = Keys.Z, ServiceType = ServiceType.FillDisplayFramesService });
 
             Services.Add(new ConfigItem() { Keys = Keys.B, ServiceType = ServiceType.BlinkCancellerService });
+            Services.Add(new ConfigItem() { Keys = Keys.Q, ServiceType = ServiceType.XYZDividerService });
 
             Services.Add(new ConfigItem() { Keys = Keys.W, ServiceType = ServiceType.EnableReverseMorphService });
             Services.Add(CreateInterpolateSetterService());

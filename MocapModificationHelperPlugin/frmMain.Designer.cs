@@ -34,6 +34,8 @@
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.pnlMain = new System.Windows.Forms.Panel();
             this.chkWEnterMorphs = new System.Windows.Forms.CheckBox();
+            this.cboXYZDivider = new System.Windows.Forms.ComboBox();
+            this.btnXYZDivider = new System.Windows.Forms.Button();
             this.chkMorphOnMLS = new System.Windows.Forms.CheckBox();
             this.chkCancelForSmile = new System.Windows.Forms.CheckBox();
             this.cboBlinkCanceller = new System.Windows.Forms.ComboBox();
@@ -95,7 +97,7 @@
             this.dataGridView1.Location = new System.Drawing.Point(6, 30);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowTemplate.Height = 21;
-            this.dataGridView1.Size = new System.Drawing.Size(472, 233);
+            this.dataGridView1.Size = new System.Drawing.Size(472, 252);
             this.dataGridView1.TabIndex = 2;
             this.dataGridView1.Visible = false;
             // 
@@ -109,6 +111,8 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pnlMain.Controls.Add(this.chkWEnterMorphs);
+            this.pnlMain.Controls.Add(this.cboXYZDivider);
+            this.pnlMain.Controls.Add(this.btnXYZDivider);
             this.pnlMain.Controls.Add(this.chkMorphOnMLS);
             this.pnlMain.Controls.Add(this.chkCancelForSmile);
             this.pnlMain.Controls.Add(this.cboBlinkCanceller);
@@ -134,19 +138,41 @@
             this.pnlMain.Controls.Add(this.label1);
             this.pnlMain.Location = new System.Drawing.Point(6, 30);
             this.pnlMain.Name = "pnlMain";
-            this.pnlMain.Size = new System.Drawing.Size(472, 244);
+            this.pnlMain.Size = new System.Drawing.Size(472, 263);
             this.pnlMain.TabIndex = 3;
             // 
             // chkWEnterMorphs
             // 
             this.chkWEnterMorphs.AutoSize = true;
-            this.chkWEnterMorphs.Location = new System.Drawing.Point(6, 218);
+            this.chkWEnterMorphs.Location = new System.Drawing.Point(7, 244);
             this.chkWEnterMorphs.Name = "chkWEnterMorphs";
             this.chkWEnterMorphs.Size = new System.Drawing.Size(94, 16);
             this.chkWEnterMorphs.TabIndex = 27;
             this.chkWEnterMorphs.Text = "Wでモーフ確定";
             this.chkWEnterMorphs.UseVisualStyleBackColor = true;
             this.chkWEnterMorphs.CheckedChanged += new System.EventHandler(this.cboGapSelector_SelectedIndexChanged);
+            // 
+            // cboXYZDivider
+            // 
+            this.cboXYZDivider.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboXYZDivider.FormattingEnabled = true;
+            this.cboXYZDivider.Items.AddRange(new object[] {
+            "Enter",
+            "Space"});
+            this.cboXYZDivider.Location = new System.Drawing.Point(293, 188);
+            this.cboXYZDivider.Name = "cboXYZDivider";
+            this.cboXYZDivider.Size = new System.Drawing.Size(58, 20);
+            this.cboXYZDivider.TabIndex = 28;
+            // 
+            // btnXYZDivider
+            // 
+            this.btnXYZDivider.Location = new System.Drawing.Point(6, 187);
+            this.btnXYZDivider.Name = "btnXYZDivider";
+            this.btnXYZDivider.Size = new System.Drawing.Size(280, 23);
+            this.btnXYZDivider.TabIndex = 27;
+            this.btnXYZDivider.Text = "選択中の移動ボーンフレームをXYZに分割する";
+            this.btnXYZDivider.UseVisualStyleBackColor = true;
+            this.btnXYZDivider.Click += new System.EventHandler(this.btnGapSelector_Click);
             // 
             // chkMorphOnMLS
             // 
@@ -221,7 +247,7 @@
             this.panel1.Controls.Add(this.rbInterpolateY);
             this.panel1.Controls.Add(this.rbInterpolateX);
             this.panel1.Controls.Add(this.rbInterpolateR);
-            this.panel1.Location = new System.Drawing.Point(121, 187);
+            this.panel1.Location = new System.Drawing.Point(121, 215);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(138, 24);
             this.panel1.TabIndex = 18;
@@ -297,7 +323,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label3.Location = new System.Drawing.Point(3, 190);
+            this.label3.Location = new System.Drawing.Point(3, 218);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(113, 20);
             this.label3.TabIndex = 17;
@@ -307,7 +333,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("メイリオ", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(128)));
-            this.label2.Location = new System.Drawing.Point(291, 190);
+            this.label2.Location = new System.Drawing.Point(291, 218);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(35, 20);
             this.label2.TabIndex = 16;
@@ -565,7 +591,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(485, 278);
+            this.ClientSize = new System.Drawing.Size(485, 297);
             this.Controls.Add(this.pnlMessage);
             this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btnUndo);
@@ -591,7 +617,8 @@
         }
 
         #endregion
-
+        private System.Windows.Forms.ComboBox cboXYZDivider;
+        private System.Windows.Forms.Button btnXYZDivider;
         private System.Windows.Forms.Button btnOffset;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Timer timer1;

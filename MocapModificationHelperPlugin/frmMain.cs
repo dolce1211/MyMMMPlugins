@@ -67,6 +67,9 @@ namespace MoCapModificationHelperPlugin
             this.cboBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
             this.btnBlinkCanceller.Tag = ServiceType.BlinkCancellerService;
             this.chkCancelForSmile.Tag = ServiceType.BlinkCancellerService;
+
+            this.cboXYZDivider.Tag = ServiceType.XYZDividerService;
+            this.btnXYZDivider.Tag = ServiceType.XYZDividerService;
             this.chkClickOffsetBtnByShiftEnter.Checked = configs.ClickOffsetBtnByShiftEnter;
 
             this.chkWEnterMorphs.Tag = ServiceType.EnableReverseMorphService;
@@ -187,7 +190,7 @@ namespace MoCapModificationHelperPlugin
             {
                 //オフセット付加モード開始
                 _offsetAdder = null;
-                _offsetAdder = new OffsetAdderService(this);
+                _offsetAdder = new OffsetAdderService(this, this.dataGridView1);
                 _offsetAdder.ProgressChanged = null;
                 _offsetAdder.ProgressChanged += (s, ev) =>
                 {
@@ -483,12 +486,22 @@ namespace MoCapModificationHelperPlugin
         public bool TryClickOffsetButton()
         {
             if (chkClickOffsetBtnByShiftEnter.Checked)
+            {
                 if (this.btnExecuteOffset.Visible && this.btnExecuteOffset.Enabled)
                 {
                     this.btnExecuteOffset.PerformClick();
                     return true;
                 }
-
+                else
+                {
+                    var result = this.BeginInvoke(new Action(async () =>
+                    {
+                        // なぜかここで一定以上待たないとOffsetAdderService.SaveCurrentStateのMarkerPositionを進めて戻すところで意図通りに動いてくれない。原因不明
+                        await Task.Delay(200);
+                        this.btnOffset.PerformClick();
+                    }));
+                }
+            }
             return false;
         }
 

@@ -50,6 +50,10 @@ namespace MoCapModificationHelperPlugin
                     ret = new service.BlinkCancellerService();
                     break;
 
+                case ServiceType.XYZDividerService:
+                    ret = new service.XYZDividerService();
+                    break;
+
                 case ServiceType.EnableReverseMorphService:
                     ret = new service.EnableReverseMorphService();
                     break;
