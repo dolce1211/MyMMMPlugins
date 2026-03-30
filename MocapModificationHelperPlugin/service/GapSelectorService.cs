@@ -12,7 +12,7 @@ namespace MoCapModificationHelperPlugin.service
 {
     /// <summary>
     /// 選択されたレイヤーに対して、カレントポジションの一つ前から穴が空いている所まで選択する機能を提供するクラス
-    /// </summary>
+    /// </summary>msedge.exe MikuMikuMoving.exe
     /// <returns></returns>
     internal class GapSelectorService : BaseService
     {
@@ -44,8 +44,13 @@ namespace MoCapModificationHelperPlugin.service
                 //1000フレーム以内に穴があるか確認
                 for (long i = Scene.MarkerPosition - 1; i > Scene.MarkerPosition - 1000; i--)
                 {
-                    if (i <= 1)
+                    if (i <= 0)
+                    {
+                        // 0frまで来たなら1frから選択する
+                        goal = 1;
                         break;
+                    }
+
                     var frame = layer.Frames.FirstOrDefault(f => f.FrameNumber == i);
                     if (frame == null)
                     {
@@ -67,12 +72,13 @@ namespace MoCapModificationHelperPlugin.service
             }
             if (flg)
             {
-                //現行フレームはすべて選択解除
+                // 間を埋める
                 var currentFrames = this.Scene.ActiveModel.Bones
                                                     .SelectMany(n => n.Layers)
                                                     .Select(l => l.Frames.FirstOrDefault(f => f.Selected && f.FrameNumber == Scene.MarkerPosition))
                                                     .Where(f => f != null)
                                                     .ToList();
+                // 現行フレームはすべて選択解除
                 currentFrames.ForEach(n => n.Selected = false);
                 return true;
             }

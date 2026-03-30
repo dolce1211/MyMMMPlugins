@@ -185,7 +185,7 @@ namespace MoCapModificationHelperPlugin
             {
                 //オフセット付加モード開始
                 _offsetAdder = null;
-                _offsetAdder = new OffsetAdderService(this);
+                _offsetAdder = new OffsetAdderService(this, this.dataGridView1);
                 _offsetAdder.ProgressChanged = null;
                 _offsetAdder.ProgressChanged += (s, ev) =>
                 {
@@ -298,7 +298,7 @@ namespace MoCapModificationHelperPlugin
                     {
                         chkCancelForSmile.Checked = serviceItem.ForSmile;
                     }
-                    if(serviceType == ServiceType.ModifiedLayerSelectorService && serviceItem != null)
+                    if (serviceType == ServiceType.ModifiedLayerSelectorService && serviceItem != null)
                     {
                         chkMorphOnMLS.Checked = serviceItem.IncludeMorphOnMLS;
                     }
@@ -468,12 +468,22 @@ namespace MoCapModificationHelperPlugin
         public bool TryClickOffsetButton()
         {
             if (chkClickOffsetBtnByShiftEnter.Checked)
+            {
                 if (this.btnExecuteOffset.Visible && this.btnExecuteOffset.Enabled)
                 {
                     this.btnExecuteOffset.PerformClick();
                     return true;
                 }
-
+                else
+                {
+                    var result = this.BeginInvoke(new Action(async () =>
+                    {
+                        // なぜかここで一定以上待たないとOffsetAdderService.SaveCurrentStateのMarkerPositionを進めて戻すところで意図通りに動いてくれない。原因不明
+                        await Task.Delay(200);
+                        this.btnOffset.PerformClick();
+                    }));
+                }
+            }
             return false;
         }
 

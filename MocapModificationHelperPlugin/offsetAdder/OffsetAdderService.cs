@@ -24,11 +24,13 @@ namespace MoCapModificationHelperPlugin.service
         public Dictionary<string, IMotionFrameData> PreviousStates => _previousStates;
         private long _frameNumber = -1;
         private frmMain _frmMain = null;
+        private DataGridView _dataGridView = null;
         public long FrameNumber => _frameNumber;
 
-        public OffsetAdderService(frmMain frmMain)
+        public OffsetAdderService(frmMain frmMain,DataGridView datagridview)
         {
             this._frmMain = frmMain;
+            this._dataGridView = datagridview; ;
         }
 
         public override void Initialize(Scene scene, IWin32Window applicationForm)
@@ -49,10 +51,43 @@ namespace MoCapModificationHelperPlugin.service
             this._frmMain.Enabled = false;
             try
             {
+                var currentState = OffsetAdderUtil.TryGetCurrentState(this.Scene, 0);
                 this.Scene.MarkerPosition += 1;
                 this.Scene.MarkerPosition -= 1;
+                
                 //現時点の無変更の状態を保存
                 this._previousStates = OffsetAdderUtil.TryGetCurrentState(this.Scene, 0);
+                var x = this._previousStates.Where(t => t.Key.Contains("左足"));
+
+                if (this.Scene?.ActiveModel != null)
+                {
+                    // 無変更の状態から変更があるならそれをグリッドに反映させる
+
+                    // まず選択されたレイヤーの中で動いていたボーンを抽出
+                    var selectedLayers = this.Scene.ActiveModel.Bones.SelectMany(b => b.Layers.Where(l => l.Selected).Select(l => (bone:b, layer:l)));
+                    var diffs = currentState.Where(s =>
+                    {
+                        if (selectedLayers.Any(tuple => $"{tuple.bone.Name}{tuple.layer.Name ?? ""}" == s.Key))
+                        {
+                            var previousState = this._previousStates[s.Key];
+                            return !s.Value.Equals(previousState);
+                        }
+                        return false;
+                    });
+                    if (diffs.Any())
+                    {
+                        // 動いていたボーンを無変更に戻す前の状態に戻す
+                        diffs.ForEach(d =>
+                        {
+                            var selectedLayer = selectedLayers.FirstOrDefault(tuple => $"{tuple.bone.Name}{tuple.layer.Name ?? ""}" == d.Key);
+                            selectedLayer.layer.CurrentLocalMotion=new MotionData(d.Value.Position, d.Value.Quaternion);
+                        });
+                        // で、変更量をグリッドに反映する
+                        OffsetAdderUtil.UpdateDataGridView(this.Scene, this._dataGridView, this._previousStates);
+                    }
+                }     
+
+
                 _frameNumber = this.Scene.MarkerPosition;
             }
             finally

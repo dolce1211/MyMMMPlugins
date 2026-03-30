@@ -71,7 +71,7 @@ namespace MoCapModificationHelperPlugin.service
 
                 // まばたきモーフを取得
                 var blickMorph = this.Scene.ActiveModel.Morphs.Where(m => m.PanelType == PanelType.Eyes)
-                                                .FirstOrDefault(m => m.Name.Contains(blinkMorph));
+                                                .FirstOrDefault(m => m.Name == blinkMorph);
                 if (blickMorph == null)
                     //まばたきモーフなし
                     return false;
